@@ -12,13 +12,16 @@ export type SortOption =
   | "year-newest"
   | "year-oldest"
   | "rating-highest"
-  | "rating-lowest";
+  | "rating-lowest"
+  | "energy-highest"
+  | "energy-lowest";
 
 export type FilterOption = {
   artist?: string;
   year?: number | null;
   genre?: string | null;
   rating?: number;
+  energyLevel?: 'high' | 'medium' | 'low';
 }
 
 interface AlbumFilterSortProps {
@@ -93,6 +96,8 @@ export function AlbumFilterSort({
             <option value="year-oldest">year (oldest)</option>
             <option value="rating-highest">rating (highest)</option>
             <option value="rating-lowest">rating (lowest)</option>
+            <option value="energy-highest">energy (highest)</option>
+            <option value="energy-lowest">energy (lowest)</option>
           </select>
         </div>
       </div>
@@ -172,6 +177,20 @@ export function AlbumFilterSort({
                 <option value="1">★☆☆☆☆ or higher</option>
               </select>
             </div>
+            
+            <div>
+              <label className="block font-mono text-xs mb-1">energy level</label>
+              <select 
+                value={filterOptions.energyLevel || ""}
+                onChange={(e) => handleFilterChange("energyLevel", e.target.value || undefined)}
+                className="w-full px-2 py-1 border border-black font-mono text-xs"
+              >
+                <option value="">all energy levels</option>
+                <option value="high">high energy</option>
+                <option value="medium">medium energy</option>
+                <option value="low">low energy</option>
+              </select>
+            </div>
           </div>
           
           <button 
@@ -227,6 +246,22 @@ export function sortAlbums<T extends { album: Album; addedAt: string; rating?: n
     case "rating-lowest":
       return sortedAlbums.sort((a, b) => (a.rating || 0) - (b.rating || 0));
     
+    case "energy-highest":
+      return sortedAlbums.sort((a, b) => {
+        const energyMap = { 'high': 3, 'medium': 2, 'low': 1 };
+        const aEnergy = a.album.energyLevel ? energyMap[a.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
+        const bEnergy = b.album.energyLevel ? energyMap[b.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
+        return bEnergy - aEnergy;
+      });
+    
+    case "energy-lowest":
+      return sortedAlbums.sort((a, b) => {
+        const energyMap = { 'high': 3, 'medium': 2, 'low': 1 };
+        const aEnergy = a.album.energyLevel ? energyMap[a.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
+        const bEnergy = b.album.energyLevel ? energyMap[b.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
+        return aEnergy - bEnergy;
+      });
+    
     default:
       return sortedAlbums;
   }
@@ -254,6 +289,11 @@ export function filterAlbums<T extends { album: Album; rating?: number }>(
     
     // Filter by minimum rating if specified
     if (filter.rating !== undefined && (item.rating === undefined || item.rating < filter.rating)) {
+      return false;
+    }
+    
+    // Filter by energy level if specified
+    if (filter.energyLevel !== undefined && item.album.energyLevel !== filter.energyLevel) {
       return false;
     }
     

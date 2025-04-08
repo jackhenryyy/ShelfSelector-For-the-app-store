@@ -234,26 +234,28 @@ export default function QueuePage() {
       subtitle=""
     >
       <div className="p-4 pt-0">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           {/* Filter and Sort Controls */}
-          <AlbumFilterSort
-            onSortChange={setSortOption}
-            onFilterChange={setFilterOptions}
-            selectedSort={sortOption}
-            showFilterOptions={true}
-            totalCount={filteredQueueAlbums.length}
-            uniqueArtists={uniqueArtists}
-            uniqueGenres={uniqueGenres}
-            uniqueYears={uniqueYears}
-          />
+          <div className="w-full sm:w-auto">
+            <AlbumFilterSort
+              onSortChange={setSortOption}
+              onFilterChange={setFilterOptions}
+              selectedSort={sortOption}
+              showFilterOptions={true}
+              totalCount={filteredQueueAlbums.length}
+              uniqueArtists={uniqueArtists}
+              uniqueGenres={uniqueGenres}
+              uniqueYears={uniqueYears}
+            />
+          </div>
           
           <Dialog>
             <DialogTrigger asChild>
-              <button className="px-4 py-1 border border-black bg-white font-mono text-sm">
+              <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
                 + add album
               </button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
               <DialogTitle className="font-mono">Add an album</DialogTitle>
               
               <div className="flex items-center gap-2 mt-4">
@@ -265,7 +267,7 @@ export default function QueuePage() {
                   className="w-full p-2 border border-black font-mono text-sm"
                 />
                 <button 
-                  className="px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+                  className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
                   onClick={handleSearch} 
                   disabled={isSearching}
                 >
@@ -275,8 +277,8 @@ export default function QueuePage() {
               </div>
               
               {searchResults.length > 0 && (
-                <div className="mt-4 max-h-80 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="mt-4 max-h-[50vh] overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {searchResults.map((album) => (
                       <div key={album.id} className="border border-black p-2">
                         <AlbumArt

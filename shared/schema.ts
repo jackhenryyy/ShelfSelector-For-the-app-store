@@ -33,6 +33,7 @@ export const albums = pgTable("albums", {
   imageUrl: text("image_url").notNull(),
   releaseYear: integer("release_year"),
   genre: text("genre"),
+  energyLevel: text("energy_level"), // 'high', 'medium', or 'low'
 });
 
 export const insertAlbumSchema = createInsertSchema(albums).omit({
@@ -73,6 +74,7 @@ export const albumReviews = pgTable("album_reviews", {
   rating: integer("rating").notNull(), // 1-5 stars
   review: text("review"), // One sentence review
   reviewedAt: timestamp("reviewed_at").notNull(),
+  listenedAt: timestamp("listened_at"), // When the user listened to the album
 });
 
 export const insertAlbumReviewSchema = createInsertSchema(albumReviews).omit({

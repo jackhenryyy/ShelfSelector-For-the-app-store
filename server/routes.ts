@@ -381,10 +381,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/reviews', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
+      
+      // Extract listened at date from request body if available
+      let { listenedAt, ...restBody } = req.body;
+      
+      // Convert listenedAt string to Date object if provided
+      if (listenedAt && typeof listenedAt === 'string') {
+        listenedAt = new Date(listenedAt);
+      }
+      
       const data = insertAlbumReviewSchema.parse({
-        ...req.body,
+        ...restBody,
         userId,
-        reviewedAt: new Date()
+        reviewedAt: new Date(),
+        listenedAt: listenedAt || null
       });
       
       const review = await storage.createAlbumReview(data);
@@ -409,12 +419,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate request body
       const schema = z.object({
         rating: z.number().min(1).max(5),
-        review: z.string().optional()
+        review: z.string().optional(),
+        listenedAt: z.string().optional().transform(val => val ? new Date(val) : null)
       });
       
-      const { rating, review } = schema.parse(req.body);
+      const { rating, review, listenedAt } = schema.parse(req.body);
       
-      const updatedReview = await storage.updateAlbumReview(id, rating, review || '');
+      const updatedReview = await storage.updateAlbumReview(id, rating, review || '', listenedAt);
       
       if (!updatedReview) {
         return res.status(404).json({ message: 'Review not found' });

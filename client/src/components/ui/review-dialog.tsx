@@ -5,21 +5,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlbumArt } from "@/components/ui/album-art";
 import { Album } from "@shared/schema";
 import { StarRating } from "./star-rating";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface ReviewDialogProps {
   album: Album;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (rating: number, review: string) => void;
+  onSubmit: (rating: number, review: string, listenedAt?: Date) => void;
 }
 
 export function ReviewDialog({ album, open, onOpenChange, onSubmit }: ReviewDialogProps) {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+  const [listenedAt, setListenedAt] = useState<Date | undefined>(new Date());
   
   const handleSubmit = () => {
     if (rating === 0) return; // Require at least 1 star
-    onSubmit(rating, review);
+    onSubmit(rating, review, listenedAt);
     onOpenChange(false);
   };
   
@@ -56,6 +62,32 @@ export function ReviewDialog({ album, open, onOpenChange, onSubmit }: ReviewDial
             value={review}
             onChange={(e) => setReview(e.target.value)}
           />
+        </div>
+        
+        <div className="py-2">
+          <label className="font-mono text-sm block mb-1">When did you listen to this album?</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal font-mono",
+                  !listenedAt && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {listenedAt ? format(listenedAt, "PPP") : "Select date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={listenedAt}
+                onSelect={setListenedAt}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         
         <DialogFooter>

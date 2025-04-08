@@ -5,10 +5,13 @@ import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { openInSpotify } from "@/lib/spotify";
-import { MenuIcon } from "lucide-react";
+import { MenuIcon, CalendarIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -27,6 +30,7 @@ export default function ListPage() {
   const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
   const [editRating, setEditRating] = useState(0);
   const [editReview, setEditReview] = useState("");
+  const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
@@ -81,6 +85,7 @@ export default function ListPage() {
     setActiveReview(review);
     setEditRating(review.rating);
     setEditReview(review.review || "");
+    setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
   };
   
   // Function to save edited review
@@ -90,7 +95,8 @@ export default function ListPage() {
     updateReview({
       id: activeReview.id,
       rating: editRating,
-      review: editReview
+      review: editReview,
+      listenedAt: editListenedAt
     });
     
     setActiveReview(null);
@@ -251,6 +257,32 @@ export default function ListPage() {
             <p className="font-mono text-xs text-gray-500 mt-1">
               {editReview.length}/100 characters
             </p>
+          </div>
+          
+          <div className="py-2 mt-4">
+            <label className="block font-mono text-sm mb-1">When did you listen to this album?</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal font-mono",
+                    !editListenedAt && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {editListenedAt ? format(editListenedAt, "PPP") : "Select date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={editListenedAt}
+                  onSelect={setEditListenedAt}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           
           <div className="flex justify-end gap-2 mt-4">

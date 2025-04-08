@@ -145,6 +145,7 @@ export interface AlbumReview {
   rating: number;
   review?: string;
   reviewedAt: string;
+  listenedAt?: string;
   album: SpotifyAlbum;
 }
 
@@ -178,7 +179,7 @@ export function useAlbumReviews() {
 
   // Create/update review
   const createReviewMutation = useMutation({
-    mutationFn: async (data: { albumId: number; rating: number; review?: string }) => {
+    mutationFn: async (data: { albumId: number; rating: number; review?: string; listenedAt?: Date }) => {
       const response = await apiRequest('POST', '/api/reviews', data);
       return response.json();
     },
@@ -189,7 +190,7 @@ export function useAlbumReviews() {
 
   // Update review
   const updateReviewMutation = useMutation({
-    mutationFn: async (data: { id: number; rating: number; review?: string }) => {
+    mutationFn: async (data: { id: number; rating: number; review?: string; listenedAt?: Date }) => {
       const { id, ...rest } = data;
       const response = await apiRequest('PUT', `/api/reviews/${id}`, rest);
       return response.json();
@@ -205,9 +206,9 @@ export function useAlbumReviews() {
     isLoading,
     getAlbumReview,
     searchReviews,
-    createReview: (data: { albumId: number; rating: number; review?: string }) => 
+    createReview: (data: { albumId: number; rating: number; review?: string; listenedAt?: Date }) => 
       createReviewMutation.mutate(data),
-    updateReview: (data: { id: number; rating: number; review?: string }) => 
+    updateReview: (data: { id: number; rating: number; review?: string; listenedAt?: Date }) => 
       updateReviewMutation.mutate(data),
     isCreatingReview: createReviewMutation.isPending,
     isUpdatingReview: updateReviewMutation.isPending,

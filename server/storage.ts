@@ -44,7 +44,7 @@ export interface IStorage {
   getAlbumReviews(userId: number): Promise<(AlbumReview & { album: Album })[]>;
   getAlbumReview(userId: number, albumId: number): Promise<(AlbumReview & { album: Album }) | undefined>;
   createAlbumReview(review: InsertAlbumReview): Promise<AlbumReview>;
-  updateAlbumReview(id: number, rating: number, review: string): Promise<AlbumReview | undefined>;
+  updateAlbumReview(id: number, rating: number, review: string, listenedAt?: Date | null): Promise<AlbumReview | undefined>;
   searchAlbumReviews(userId: number, query: string): Promise<(AlbumReview & { album: Album })[]>;
 }
 
@@ -290,7 +290,12 @@ export class MemStorage implements IStorage {
     return review;
   }
 
-  async updateAlbumReview(id: number, rating: number, review: string): Promise<AlbumReview | undefined> {
+  async updateAlbumReview(
+    id: number, 
+    rating: number, 
+    review: string, 
+    listenedAt: Date | null = null
+  ): Promise<AlbumReview | undefined> {
     const existingReview = this.albumReviews.get(id);
     if (!existingReview) return undefined;
 
@@ -298,6 +303,7 @@ export class MemStorage implements IStorage {
       ...existingReview,
       rating,
       review,
+      ...(listenedAt !== null && { listenedAt })
     };
 
     this.albumReviews.set(id, updatedReview);
@@ -573,10 +579,19 @@ export class DatabaseStorage implements IStorage {
     return newReview;
   }
 
-  async updateAlbumReview(id: number, rating: number, review: string): Promise<AlbumReview | undefined> {
+  async updateAlbumReview(
+    id: number, 
+    rating: number, 
+    review: string, 
+    listenedAt: Date | null = null
+  ): Promise<AlbumReview | undefined> {
     const [updatedReview] = await db
       .update(albumReviews)
-      .set({ rating, review })
+      .set({ 
+        rating, 
+        review,
+        ...(listenedAt && { listenedAt })
+      })
       .where(eq(albumReviews.id, id))
       .returning();
     return updatedReview;
