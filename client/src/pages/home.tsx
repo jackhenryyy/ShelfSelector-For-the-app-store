@@ -55,13 +55,17 @@ export default function HomePage() {
     }
   };
 
-  // For development, use the Brockhampton album cover as background
-  // In production this would be currentAlbum?.imageUrl
-  const brockhamptonAlbumUrl = "https://cdn.britannica.com/42/187842-050-40E1A83B/Brockhampton-2019.jpg";
-
   return (
-    <Layout backgroundImage={currentAlbum?.imageUrl || brockhamptonAlbumUrl}>
+    <Layout hideNav={false}>
       <div className="relative min-h-screen">
+        {currentAlbum && (
+          <BlurredBackground 
+            imageUrl={currentAlbum.imageUrl} 
+            intensity="medium"
+          />
+        )}
+        
+        <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]"></div>
         
         <div className="p-4 pt-6 relative z-10">
           <h1 className="text-3xl font-mono text-center mb-10">the shelf</h1>

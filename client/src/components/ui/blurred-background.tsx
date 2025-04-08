@@ -25,6 +25,13 @@ export function BlurredBackground({
     opacity: 0.8,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 0,
+    transform: 'scale(1.1)', // Slightly larger to cover edges during blur
   };
 
   return <div className={`blurred-bg ${className}`} style={style} />;

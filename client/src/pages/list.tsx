@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { openInSpotify } from "@/lib/spotify";
-import { SearchIcon, MoreVerticalIcon } from "lucide-react";
+import { SearchIcon, MoreVerticalIcon, MenuIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
+import { format } from "date-fns";
 
 export default function ListPage() {
   const { albumReviews, searchReviews, updateReview } = useAlbumReviews();
@@ -85,10 +86,52 @@ export default function ListPage() {
     setActiveReview(null);
   };
 
+  // Function to group reviews by month and year
+  const groupReviewsByMonthYear = (reviews: AlbumReview[]) => {
+    const groupedReviews: Record<string, AlbumReview[]> = {};
+    
+    reviews.forEach(review => {
+      const date = new Date(review.reviewedAt);
+      const monthYear = format(date, "MMMM yyyy").toLowerCase();
+      
+      if (!groupedReviews[monthYear]) {
+        groupedReviews[monthYear] = [];
+      }
+      
+      groupedReviews[monthYear].push(review);
+    });
+    
+    // Sort the reviews within each month group by date (newest first)
+    Object.keys(groupedReviews).forEach(key => {
+      groupedReviews[key].sort((a, b) => {
+        return new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime();
+      });
+    });
+    
+    return groupedReviews;
+  };
+  
+  // Group the reviews
+  const groupedReviews = searchQuery 
+    ? { "search results": filteredReviews } 
+    : groupReviewsByMonthYear(filteredReviews);
+
+  // Sort the month-year keys in reverse chronological order
+  const sortedMonthYearKeys = Object.keys(groupedReviews).sort((a, b) => {
+    // For search results, always show at the top
+    if (a === "search results") return -1;
+    if (b === "search results") return 1;
+    
+    // Otherwise, parse the month-year and compare dates
+    const dateA = new Date(a);
+    const dateB = new Date(b);
+    return dateB.getTime() - dateA.getTime();
+  });
+
   return (
     <Layout
       title="the list"
-      subtitle={currentMonth}
+      subtitle=""
     >
       <div className="p-4 pt-0">
         <div className="flex justify-between items-center mb-6">
@@ -107,57 +150,67 @@ export default function ListPage() {
         </div>
         
         <div className="space-y-6">
-          {filteredReviews.map((review, index) => (
-            <div key={review.id} className="flex gap-4">
-              <div className="w-12 text-center">
-                <div className="text-xl font-medium text-black">{index + 1}</div>
-              </div>
-              <div className="flex-grow">
-                <div className="flex gap-3">
-                  <a 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleOpenAlbumInSpotify(review.album.spotifyId);
-                    }}
-                  >
-                    <AlbumArt
-                      src={review.album.imageUrl}
-                      alt={review.album.name}
-                      size="small"
-                    />
-                  </a>
-                  <div className="flex-grow">
-                    <h3 className="text-sm font-medium text-black">{review.album.name}</h3>
-                    <p className="text-xs text-black/60">{review.album.artist}</p>
-                    <div className="mt-1">
-                      <StarRating rating={review.rating} size="small" readonly />
+          {isSearching ? (
+            <div className="text-center py-8 text-gray-500">Searching...</div>
+          ) : filteredReviews.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              {searchQuery ? "No reviews match your search" : "No reviews yet"}
+            </div>
+          ) : (
+            sortedMonthYearKeys.map(monthYear => (
+              <div key={monthYear}>
+                {/* Month-Year Header */}
+                <div className="bg-gray-100 py-2 px-4 mb-4 font-mono text-sm">
+                  {monthYear}
+                </div>
+                
+                {/* Reviews for this month */}
+                <div className="space-y-4">
+                  {groupedReviews[monthYear].map((review, index) => (
+                    <div key={review.id} className="flex gap-4">
+                      <div className="w-12 text-center">
+                        <div className="text-xl font-medium text-black">{index + 1}</div>
+                      </div>
+                      <div className="flex-grow">
+                        <div className="flex gap-3">
+                          <a 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleOpenAlbumInSpotify(review.album.spotifyId);
+                            }}
+                          >
+                            <AlbumArt
+                              src={review.album.imageUrl}
+                              alt={review.album.name}
+                              size="small"
+                            />
+                          </a>
+                          <div className="flex-grow">
+                            <h3 className="text-sm font-medium text-black">{review.album.name}</h3>
+                            <p className="text-xs text-black/60">{review.album.artist}</p>
+                            <div className="mt-1">
+                              <StarRating rating={review.rating} size="small" readonly />
+                            </div>
+                            {review.review && (
+                              <p className="text-xs mt-1 text-black/80">{review.review}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center">
+                            <button 
+                              className="text-black/60"
+                              onClick={() => handleEditReview(review)}
+                            >
+                              <MenuIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {review.review && (
-                      <p className="text-xs mt-1 text-black/80">{review.review}</p>
-                    )}
-                  </div>
-                  <div>
-                    <button 
-                      className="text-black/60"
-                      onClick={() => handleEditReview(review)}
-                    >
-                      <MoreVerticalIcon className="w-5 h-5" />
-                    </button>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          ))}
-          
-          {filteredReviews.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              {isSearching 
-                ? "Searching..." 
-                : searchQuery 
-                  ? "No reviews match your search" 
-                  : "No reviews yet"}
-            </div>
+            ))
           )}
         </div>
       </div>
