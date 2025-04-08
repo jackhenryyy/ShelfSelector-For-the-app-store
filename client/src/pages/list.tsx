@@ -3,13 +3,20 @@ import { useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { openInSpotify } from "@/lib/spotify";
-import { SearchIcon, MoreVerticalIcon, MenuIcon } from "lucide-react";
+import { MenuIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
 import { format } from "date-fns";
+import { 
+  AlbumFilterSort, 
+  SortOption, 
+  FilterOption, 
+  sortAlbums, 
+  filterAlbums, 
+  groupAlbumsByMonth 
+} from "@/components/ui/album-filter-sort";
 
 export default function ListPage() {
   const { albumReviews, searchReviews, updateReview } = useAlbumReviews();
@@ -17,35 +24,37 @@ export default function ListPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReviews, setFilteredReviews] = useState<AlbumReview[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState("");
   const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
   const [editRating, setEditRating] = useState(0);
   const [editReview, setEditReview] = useState("");
-  
-  // Set current month on component mount
-  useEffect(() => {
-    const date = new Date();
-    const monthName = date.toLocaleString('default', { month: 'long' });
-    const year = date.getFullYear();
-    setCurrentMonth(`${monthName.toLowerCase()} ${year}`);
-  }, []);
+  const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
+  const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
   // Update filtered reviews when albums or search changes
   useEffect(() => {
     if (!albumReviews) return;
     
     if (!searchQuery.trim()) {
-      setFilteredReviews(albumReviews);
+      let sortedReviews = [...albumReviews];
+      
+      // Apply sorting
+      sortedReviews = sortAlbums(sortedReviews, sortOption);
+      
+      // Apply filtering
+      sortedReviews = filterAlbums(sortedReviews, filterOptions);
+      
+      setFilteredReviews(sortedReviews);
     } else {
       handleSearch();
     }
-  }, [albumReviews, searchQuery]);
+  }, [albumReviews, searchQuery, sortOption, filterOptions]);
   
   // Function to handle search
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       if (albumReviews) {
-        setFilteredReviews(albumReviews);
+        const sortedReviews = sortAlbums(albumReviews, sortOption);
+        setFilteredReviews(sortedReviews);
       }
       return;
     }
@@ -53,7 +62,8 @@ export default function ListPage() {
     setIsSearching(true);
     try {
       const results = await searchReviews(searchQuery);
-      setFilteredReviews(results);
+      const sortedResults = sortAlbums(results, sortOption);
+      setFilteredReviews(sortedResults);
     } catch (error) {
       console.error("Search error:", error);
     } finally {
@@ -86,35 +96,23 @@ export default function ListPage() {
     setActiveReview(null);
   };
 
-  // Function to group reviews by month and year
-  const groupReviewsByMonthYear = (reviews: AlbumReview[]) => {
-    const groupedReviews: Record<string, AlbumReview[]> = {};
+  // Get unique artists, genres, and years for filters
+  const uniqueArtists = albumReviews 
+    ? [...new Set(albumReviews.map(r => r.album.artist))]
+    : [];
     
-    reviews.forEach(review => {
-      const date = new Date(review.reviewedAt);
-      const monthYear = format(date, "MMMM yyyy").toLowerCase();
-      
-      if (!groupedReviews[monthYear]) {
-        groupedReviews[monthYear] = [];
-      }
-      
-      groupedReviews[monthYear].push(review);
-    });
+  const uniqueGenres = albumReviews
+    ? [...new Set(albumReviews.map(r => r.album.genre))]
+    : [];
     
-    // Sort the reviews within each month group by date (newest first)
-    Object.keys(groupedReviews).forEach(key => {
-      groupedReviews[key].sort((a, b) => {
-        return new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime();
-      });
-    });
-    
-    return groupedReviews;
-  };
-  
-  // Group the reviews
-  const groupedReviews = searchQuery 
-    ? { "search results": filteredReviews } 
-    : groupReviewsByMonthYear(filteredReviews);
+  const uniqueYears = albumReviews
+    ? [...new Set(albumReviews.map(r => r.album.releaseYear))]
+    : [];
+
+  // Group the reviews by month/year if not searching
+  const groupedReviews = !searchQuery
+    ? groupAlbumsByMonth(filteredReviews)
+    : { "search results": filteredReviews };
 
   // Sort the month-year keys in reverse chronological order
   const sortedMonthYearKeys = Object.keys(groupedReviews).sort((a, b) => {
@@ -134,26 +132,23 @@ export default function ListPage() {
       subtitle=""
     >
       <div className="p-4 pt-0">
-        <div className="flex justify-between items-center mb-6">
-          <div></div>
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="text-xs pr-6 h-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <SearchIcon className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 text-black/50" />
-          </div>
-        </div>
+        {/* Filter and Sort Controls */}
+        <AlbumFilterSort
+          onSortChange={setSortOption}
+          onFilterChange={setFilterOptions}
+          selectedSort={sortOption}
+          showFilterOptions={true}
+          totalCount={filteredReviews.length}
+          uniqueArtists={uniqueArtists}
+          uniqueGenres={uniqueGenres}
+          uniqueYears={uniqueYears}
+        />
         
         <div className="space-y-6">
           {isSearching ? (
-            <div className="text-center py-8 text-gray-500">Searching...</div>
+            <div className="text-center py-8 font-mono">Searching...</div>
           ) : filteredReviews.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 font-mono">
               {searchQuery ? "No reviews match your search" : "No reviews yet"}
             </div>
           ) : (
@@ -167,44 +162,44 @@ export default function ListPage() {
                 {/* Reviews for this month */}
                 <div className="space-y-4">
                   {groupedReviews[monthYear].map((review, index) => (
-                    <div key={review.id} className="flex gap-4">
-                      <div className="w-12 text-center">
-                        <div className="text-xl font-medium text-black">{index + 1}</div>
+                    <div key={review.id} className="flex gap-3">
+                      {/* Position Number in Box */}
+                      <div className="w-10 h-10 flex items-center justify-center border border-black">
+                        <div className="font-mono text-sm">{index + 1}</div>
                       </div>
+                      
+                      {/* Album Art */}
+                      <a 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleOpenAlbumInSpotify(review.album.spotifyId);
+                        }}
+                      >
+                        <AlbumArt
+                          src={review.album.imageUrl}
+                          alt={review.album.name}
+                          size="small"
+                        />
+                      </a>
+                      
+                      {/* Album Details */}
                       <div className="flex-grow">
-                        <div className="flex gap-3">
-                          <a 
-                            href="#" 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleOpenAlbumInSpotify(review.album.spotifyId);
-                            }}
-                          >
-                            <AlbumArt
-                              src={review.album.imageUrl}
-                              alt={review.album.name}
-                              size="small"
-                            />
-                          </a>
-                          <div className="flex-grow">
-                            <h3 className="text-sm font-medium text-black">{review.album.name}</h3>
-                            <p className="text-xs text-black/60">{review.album.artist}</p>
-                            <div className="mt-1">
-                              <StarRating rating={review.rating} size="small" readonly />
-                            </div>
-                            {review.review && (
-                              <p className="text-xs mt-1 text-black/80">{review.review}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center">
-                            <button 
-                              className="text-black/60"
-                              onClick={() => handleEditReview(review)}
-                            >
-                              <MenuIcon className="w-4 h-4" />
-                            </button>
-                          </div>
+                        <h3 className="font-mono text-sm">{review.album.name}</h3>
+                        <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
+                        <div className="mt-1">
+                          <StarRating rating={review.rating} size="small" readonly />
                         </div>
+                      </div>
+                      
+                      {/* Menu Button */}
+                      <div className="flex items-center">
+                        <button 
+                          className="text-black/60"
+                          onClick={() => handleEditReview(review)}
+                        >
+                          <MenuIcon className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -218,10 +213,7 @@ export default function ListPage() {
       {/* Edit Review Dialog */}
       <Dialog open={!!activeReview} onOpenChange={(open) => !open && setActiveReview(null)}>
         <DialogContent>
-          <DialogTitle>Edit Review</DialogTitle>
-          <DialogDescription>
-            Update your rating and review for this album
-          </DialogDescription>
+          <DialogTitle className="font-mono">Edit Review</DialogTitle>
           
           {activeReview && (
             <div className="flex items-center gap-3 mt-2">
@@ -231,14 +223,14 @@ export default function ListPage() {
                 size="small"
               />
               <div>
-                <h3 className="font-medium">{activeReview.album.name}</h3>
-                <p className="text-sm text-gray-500">{activeReview.album.artist}</p>
+                <h3 className="font-mono">{activeReview.album.name}</h3>
+                <p className="font-mono text-sm text-gray-500">{activeReview.album.artist}</p>
               </div>
             </div>
           )}
           
           <div className="mt-4">
-            <label className="block text-sm font-medium mb-1">Rating</label>
+            <label className="block font-mono text-sm mb-1">Rating</label>
             <StarRating 
               rating={editRating} 
               onChange={setEditRating}
@@ -247,23 +239,30 @@ export default function ListPage() {
           </div>
           
           <div className="mt-4">
-            <label className="block text-sm font-medium mb-1">Review</label>
-            <Input
+            <label className="block font-mono text-sm mb-1">Review</label>
+            <textarea
               value={editReview}
               onChange={(e) => setEditReview(e.target.value)}
               placeholder="Write a short review..."
               maxLength={100}
+              className="w-full p-2 border border-black font-mono text-sm"
+              rows={3}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="font-mono text-xs text-gray-500 mt-1">
               {editReview.length}/100 characters
             </p>
           </div>
           
           <div className="flex justify-end gap-2 mt-4">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <button className="px-4 py-1 border border-black bg-white text-black font-mono text-sm">Cancel</button>
             </DialogClose>
-            <Button onClick={handleSaveReview}>Save Changes</Button>
+            <button 
+              onClick={handleSaveReview}
+              className="px-4 py-1 border border-black bg-black text-white font-mono text-sm"
+            >
+              Save Changes
+            </button>
           </div>
         </DialogContent>
       </Dialog>

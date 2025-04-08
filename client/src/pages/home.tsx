@@ -65,12 +65,25 @@ export default function HomePage() {
           />
         )}
         
-        <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px]"></div>
-        
         <div className="p-4 pt-6 relative z-10">
-          <h1 className="text-3xl font-mono text-center mb-10">the shelf</h1>
+          <h1 className="text-4xl font-mono text-center mb-10">t h e  s h e l f</h1>
           
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-between mb-4 mx-4">
+            <div className="flex">
+              <button 
+                className={`px-4 py-1 border border-black ${!shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
+                onClick={() => setShuffleSource(false)}
+              >
+                the queue
+              </button>
+              <button 
+                className={`px-4 py-1 border border-black border-l-0 ${shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
+                onClick={() => setShuffleSource(true)}
+              >
+                no skips
+              </button>
+            </div>
+            
             <button 
               className="px-4 py-1 border border-black bg-white text-black font-mono text-sm"
               onClick={handleShuffle}
@@ -79,19 +92,10 @@ export default function HomePage() {
             </button>
           </div>
           
-          <div className="flex justify-center items-center mb-6">
-            <ToggleSwitch 
-              leftLabel="the queue" 
-              rightLabel="no skips" 
-              defaultChecked={shuffleSource}
-              onChange={setShuffleSource}
-            />
-          </div>
-          
           <div className="flex justify-center mt-8">
             {currentAlbum ? (
               <div 
-                className="block w-64 shadow-lg cursor-pointer bg-white p-1 border border-black"
+                className="block w-64 shadow-lg cursor-pointer"
                 onClick={handleOpenInSpotify}
               >
                 <AlbumArt 
@@ -101,7 +105,7 @@ export default function HomePage() {
                 />
               </div>
             ) : (
-              <div className="w-64 h-64 bg-gray-100 flex items-center justify-center text-gray-500 border border-black">
+              <div className="w-64 h-64 bg-gray-100 flex items-center justify-center text-gray-500">
                 <p className="font-mono">No albums available</p>
               </div>
             )}

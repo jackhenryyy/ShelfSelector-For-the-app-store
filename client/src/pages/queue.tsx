@@ -1,16 +1,72 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useQueueAlbums, useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { openInSpotify } from "@/lib/spotify";
 import { SearchIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewDialog } from "@/components/ui/review-dialog";
+import { 
+  AlbumFilterSort, 
+  SortOption, 
+  FilterOption
+} from "@/components/ui/album-filter-sort";
+
+// Helper function for sorting adapted to our specific needs
+function sortQueueAlbums(albums: any[], sortOption: SortOption) {
+  if (!albums) return [];
+  
+  return [...albums].sort((a, b) => {
+    switch (sortOption) {
+      case "title-asc":
+        return a.album.name.localeCompare(b.album.name);
+      case "title-desc":
+        return b.album.name.localeCompare(a.album.name);
+      case "artist-asc":
+        return a.album.artist.localeCompare(b.album.artist);
+      case "artist-desc":
+        return b.album.artist.localeCompare(a.album.artist);
+      case "year-newest":
+        return (b.album.releaseYear || 0) - (a.album.releaseYear || 0);
+      case "year-oldest":
+        return (a.album.releaseYear || 0) - (b.album.releaseYear || 0);
+      case "date-added-newest":
+      default:
+        return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+      case "date-added-oldest":
+        return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
+    }
+  });
+}
+
+// Helper function for filtering adapted to our specific needs
+function filterQueueAlbums(albums: any[], filter: FilterOption) {
+  if (!albums) return [];
+  if (!filter || Object.keys(filter).length === 0) return albums;
+  
+  return albums.filter(item => {
+    // Filter by artist
+    if (filter.artist && item.album.artist !== filter.artist) {
+      return false;
+    }
+    
+    // Filter by year
+    if (filter.year !== undefined && filter.year !== null && 
+        item.album.releaseYear !== filter.year) {
+      return false;
+    }
+    
+    // Filter by genre
+    if (filter.genre && item.album.genre !== filter.genre) {
+      return false;
+    }
+    
+    return true;
+  });
+}
 
 export default function QueuePage() {
   const { queueAlbums, addToQueue, removeFromQueue } = useQueueAlbums();
@@ -23,29 +79,23 @@ export default function QueuePage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState<{id: number, x: number, y: number} | null>(null);
-  const [sortOrder, setSortOrder] = useState<string>("date");
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+  const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
+  const [filterOptions, setFilterOptions] = useState<FilterOption>({});
+  const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
   
-  // Function to handle sorting
-  const handleSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortOrder(e.target.value);
-  };
-  
-  // Get sorted queue albums
-  const sortedQueueAlbums = queueAlbums ? [...queueAlbums].sort((a, b) => {
-    switch (sortOrder) {
-      case "A - Z":
-        return a.album.name.localeCompare(b.album.name);
-      case "genre":
-        return (a.album.genre || "").localeCompare(b.album.genre || "");
-      case "year":
-        return (a.album.releaseYear || 0) - (b.album.releaseYear || 0);
-      case "date":
-      default:
-        return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
-    }
-  }) : [];
+  // Update filtered queue albums when sorting or filtering changes
+  useEffect(() => {
+    if (!queueAlbums) return;
+    
+    // Apply sorting and filtering
+    let processed = [...queueAlbums];
+    processed = sortQueueAlbums(processed, sortOption);
+    processed = filterQueueAlbums(processed, filterOptions);
+    
+    setFilteredQueueAlbums(processed);
+  }, [queueAlbums, sortOption, filterOptions]);
   
   // Function to handle album click
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
@@ -150,75 +200,100 @@ export default function QueuePage() {
     });
   };
 
+  // Get unique artists, genres, and years for filters
+  const uniqueArtists: string[] = [];
+  const uniqueGenres: (string | null)[] = [];
+  const uniqueYears: (number | null)[] = [];
+  
+  if (queueAlbums) {
+    // Build unique artists list
+    const artistsSet = new Set<string>();
+    queueAlbums.forEach(a => {
+      if (a.album.artist) artistsSet.add(a.album.artist);
+    });
+    uniqueArtists.push(...artistsSet);
+    
+    // Build unique genres list
+    const genresSet = new Set<string | null>();
+    queueAlbums.forEach(a => {
+      genresSet.add(a.album.genre);
+    });
+    uniqueGenres.push(...genresSet);
+    
+    // Build unique years list
+    const yearsSet = new Set<number | null>();
+    queueAlbums.forEach(a => {
+      yearsSet.add(a.album.releaseYear);
+    });
+    uniqueYears.push(...yearsSet);
+  }
+
   return (
     <Layout
       title="the queue"
-      subtitle={`${sortedQueueAlbums.length} albums`}
+      subtitle=""
     >
       <div className="p-4 pt-0">
         <div className="flex justify-between items-center mb-4">
-          <div className="w-44">
-            <select 
-              className="w-full font-mono text-base border border-black rounded p-2"
-              value={sortOrder}
-              onChange={handleSort}
-            >
-              <option value="date">sort</option>
-              <option value="A - Z">A - Z</option>
-              <option value="genre">genre</option>
-              <option value="year">year</option>
-            </select>
-          </div>
+          {/* Filter and Sort Controls */}
+          <AlbumFilterSort
+            onSortChange={setSortOption}
+            onFilterChange={setFilterOptions}
+            selectedSort={sortOption}
+            showFilterOptions={true}
+            totalCount={filteredQueueAlbums.length}
+            uniqueArtists={uniqueArtists}
+            uniqueGenres={uniqueGenres}
+            uniqueYears={uniqueYears}
+          />
           
           <Dialog>
             <DialogTrigger asChild>
-              <button className="text-xs border border-black/20 rounded p-1 px-2">+ add album</button>
+              <button className="px-4 py-1 border border-black bg-white font-mono text-sm">
+                + add album
+              </button>
             </DialogTrigger>
             <DialogContent>
-              <DialogTitle>Add an album</DialogTitle>
-              <DialogDescription>
-                Search for an album to add to your queue
-              </DialogDescription>
+              <DialogTitle className="font-mono">Add an album</DialogTitle>
               
               <div className="flex items-center gap-2 mt-4">
-                <Input
+                <input
                   placeholder="Search albums..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  className="w-full p-2 border border-black font-mono text-sm"
                 />
-                <Button 
-                  size="sm" 
+                <button 
+                  className="px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
                   onClick={handleSearch} 
                   disabled={isSearching}
                 >
                   <SearchIcon className="h-4 w-4 mr-1" />
-                  {isSearching ? "Searching..." : "Search"}
-                </Button>
+                  {isSearching ? "..." : "Search"}
+                </button>
               </div>
               
               {searchResults.length > 0 && (
                 <div className="mt-4 max-h-80 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-2">
                     {searchResults.map((album) => (
-                      <div key={album.id} className="border rounded p-2">
+                      <div key={album.id} className="border border-black p-2">
                         <AlbumArt
                           src={album.imageUrl}
                           alt={album.name}
                           size="small"
                         />
                         <div className="mt-1">
-                          <div className="text-xs font-medium truncate">{album.name}</div>
-                          <div className="text-xs text-gray-500 truncate">{album.artist}</div>
+                          <div className="font-mono text-xs truncate">{album.name}</div>
+                          <div className="font-mono text-xs text-black/60 truncate">{album.artist}</div>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full mt-2 text-xs"
+                        <button 
+                          className="w-full mt-2 px-2 py-1 border border-black bg-white font-mono text-xs"
                           onClick={() => handleAddToQueue(album.id)}
                         >
-                          Add
-                        </Button>
+                          Add to Queue
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -229,7 +304,7 @@ export default function QueuePage() {
         </div>
         
         <AlbumGrid>
-          {sortedQueueAlbums.map((queueAlbum) => (
+          {filteredQueueAlbums.map((queueAlbum) => (
             <div 
               key={queueAlbum.id}
               className="relative group mb-2"
