@@ -22,7 +22,7 @@ export function BlurredBackground({
   const style: CSSProperties = {
     backgroundImage: `url(${imageUrl})`,
     filter: `blur(${blurIntensity}px)`,
-    opacity: 0.8,
+    opacity: 0.9,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     width: '100%',
