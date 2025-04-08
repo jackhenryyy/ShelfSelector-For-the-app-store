@@ -1,0 +1,48 @@
+App Name: The Shelf
+Overview: The Shelf is a minimalistic app designed to help users decide what to listen to on Spotify. It connects to the Spotify API and allows users to shuffle through saved albums, log personal reviews, and share favorite records with friends. There will be separate user accounts so user can log in and save their data for future use.
+
+THE ATTACHED VISIAL GUIDE FROM FIGMA WILL SHOW YOU WHAT EACH PAGE SHOULD LOOK LIKE VISUALLY. PLEASE STRICTLY ADHERE TO THESE VISUAL GUIDELINES.
+
+LANDING PAGE
+Functionality:
+* The background image of the page displays random spotify album art expanded and blurred
+* Spotify Login button to connect user accounts through spotify
+
+PAGE 1: Home ("The Shelf") Functionality:
+* Display a large album art square in the center of the screen.
+* Clickable “shuffle” text above the album art.
+* A toggle switch that controls the shuffle source — either from “The Queue” or “No Skips.”
+* Tapping the album art opens that album in Spotify.
+* The background image of the page dynamically matches the currently displayed album art expanded and blurred.
+
+PAGE 2: The Queue Functionality:
+* Albums can be added to this page using the Spotify API.
+* All albums are displayed as album art squares in a scrollable view.
+* Sorting options:
+    * By date added
+    * Alphabetically (A–Z)
+    * By genre
+    * By year
+* Tapping an album opens a menu with two options:
+    * “Play on Spotify”
+    * “Add to The List”
+
+PAGE 3: No Skips
+Functionality:
+* A dedicated space to display the user’s favorite albums.
+* Each album art square links directly to Spotify.
+* The top of the page features a “Top 4” section — the user's personal “Prized Picks.”
+* This page is sharable via a link so friends can view the user’s favorite albums.
+
+PAGE 4: The List Functionality:
+* A diary-style page where users can:
+    * Leave a star rating
+    * Write a one-sentence review for each album
+* Albums are sorted by date reviewed.
+* A search bar allows users to look up albums on their list.
+
+Additional Details:
+* The app integrates with the Spotify API for:
+    * Searching for and adding albums
+* UI will be extremely minimal and clean.
+* The backend can be hosted on supabase if need be for login information.
