@@ -72,7 +72,7 @@ export default function QueuePage() {
   
   // Function to add to No Skips
   const handleAddToNoSkips = (albumId: number) => {
-    addToNoSkips(albumId);
+    addToNoSkips({ albumId, isTopFour: false });
     toast({
       title: "Added to No Skips",
       description: "Album has been added to your No Skips collection",

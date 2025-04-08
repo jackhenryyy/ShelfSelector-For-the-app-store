@@ -32,6 +32,8 @@ export interface SpotifyAlbum {
 
 export function useSpotifyAlbums() {
   const queryClient = useQueryClient();
+  const [searchResults, setSearchResults] = useState<SpotifyAlbum[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Get saved albums from Spotify
   const { data: savedAlbums, isLoading: isLoadingSaved } = useQuery<SpotifyAlbum[]>({
@@ -45,8 +47,19 @@ export function useSpotifyAlbums() {
   const searchAlbums = async (query: string): Promise<SpotifyAlbum[]> => {
     if (!query.trim()) return [];
     
-    const response = await apiRequest('GET', `/api/spotify/albums/search?query=${encodeURIComponent(query)}`);
-    return response.json();
+    try {
+      setIsSearching(true);
+      const response = await apiRequest('GET', `/api/spotify/albums/search?query=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      setSearchResults(data);
+      return data;
+    } catch (error) {
+      console.error('Error searching albums:', error);
+      setSearchResults([]);
+      return [];
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // Get album details
@@ -59,6 +72,8 @@ export function useSpotifyAlbums() {
     savedAlbums,
     isLoadingSaved,
     searchAlbums,
-    getAlbumDetails
+    getAlbumDetails,
+    searchResults,
+    isSearching
   };
 }

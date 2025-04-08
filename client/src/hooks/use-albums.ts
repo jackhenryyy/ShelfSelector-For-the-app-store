@@ -85,8 +85,8 @@ export function useNoSkipsAlbums() {
 
   // Add album to no skips
   const addToNoSkipsMutation = useMutation({
-    mutationFn: async (albumId: number) => {
-      const response = await apiRequest('POST', '/api/no-skips', { albumId });
+    mutationFn: async (data: { albumId: number; isTopFour?: boolean }) => {
+      const response = await apiRequest('POST', '/api/no-skips', data);
       return response.json();
     },
     onSuccess: () => {
@@ -127,7 +127,7 @@ export function useNoSkipsAlbums() {
     noSkipsAlbums,
     topFourAlbums,
     isLoading,
-    addToNoSkips: (albumId: number) => addToNoSkipsMutation.mutate(albumId),
+    addToNoSkips: (data: { albumId: number; isTopFour?: boolean }) => addToNoSkipsMutation.mutate(data),
     removeFromNoSkips: (albumId: number) => removeFromNoSkipsMutation.mutate(albumId),
     updateTopFour: (topFour: {albumId: number, position: number}[]) => updateTopFourMutation.mutate(topFour),
     isAddingToNoSkips: addToNoSkipsMutation.isPending,
