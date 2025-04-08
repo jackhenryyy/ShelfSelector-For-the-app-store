@@ -8,48 +8,15 @@ interface SpotifyUser {
   spotifyId: string;
 }
 
+// This auth function is no longer needed as we're using native auth system now
+// Keeping the interface definition for type compatibility
 export function useSpotifyAuth() {
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const { data: user, isLoading: isLoadingUser, refetch } = useQuery<SpotifyUser | null>({
-    queryKey: ['/api/auth/user'],
-    throwOnError: false,
-    retry: false,
-    onError: () => null,
-    staleTime: 0
-  });
-
-  const login = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await apiRequest('GET', '/api/auth/login');
-      const { loginUrl } = await response.json();
-      window.location.href = loginUrl;
-    } catch (error) {
-      console.error('Login error:', error);
-      setIsLoading(false);
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await apiRequest('GET', '/api/auth/logout');
-      // Force refetch to update auth state
-      await refetch();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [refetch]);
-
   return {
-    user,
-    isAuthenticated: !!user,
-    isLoading: isLoading || isLoadingUser,
-    login,
-    logout
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: () => {},
+    logout: () => {}
   };
 }
 

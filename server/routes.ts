@@ -38,6 +38,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication with passport
   setupAuth(app);
   
+  // Get Spotify access token using client credentials flow
+  const getClientCredentialsToken = async () => {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret) {
+      throw new Error('Spotify credentials not found in environment variables');
+    }
+    
+    const params = new URLSearchParams({
+      grant_type: 'client_credentials'
+    });
+    
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get token: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.access_token;
+  };
+  
   // Album routes
   app.get('/api/spotify/albums/search', requireAuth, async (req, res) => {
     const { query } = req.query;
@@ -47,12 +77,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const user = req.user!;
-      if (!user.accessToken) {
-        return res.status(400).json({ message: 'Spotify authentication required' });
-      }
+      // Get access token using client credentials (no user login required)
+      const accessToken = await getClientCredentialsToken();
       
-      const results = await searchSpotifyAlbums(user.accessToken, query);
+      const results = await searchSpotifyAlbums(accessToken, query);
       
       const albums = [];
       for (const item of results.albums.items) {
@@ -64,6 +92,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Album search error:', error);
       res.status(500).json({ message: 'Failed to search albums' });
+    }
+  });
+  
+  // Get specific album details
+  app.get('/api/spotify/albums/:spotifyId', requireAuth, async (req, res) => {
+    const { spotifyId } = req.params;
+    
+    if (!spotifyId) {
+      return res.status(400).json({ message: 'Invalid album ID' });
+    }
+    
+    try {
+      // First check if we already have the album in our database
+      let album = await storage.getAlbumBySpotifyId(spotifyId);
+      
+      // If not found in database, fetch from Spotify API and save
+      if (!album) {
+        const accessToken = await getClientCredentialsToken();
+        const albumData = await getAlbumDetails(accessToken, spotifyId);
+        album = await processAndSaveAlbum(albumData);
+      }
+      
+      res.json(album);
+    } catch (error) {
+      console.error('Album details error:', error);
+      res.status(500).json({ message: 'Failed to fetch album details' });
+    }
+  });
+  
+  // Get user's saved albums from Spotify (GET /api/spotify/albums/saved)
+  app.get('/api/spotify/albums/saved', requireAuth, async (req, res) => {
+    try {
+      // Since we're not using Spotify login, we'll return a set of featured albums instead
+      const accessToken = await getClientCredentialsToken();
+      
+      // Get new releases instead of saved albums
+      const response = await fetch('https://api.spotify.com/v1/browse/new-releases?limit=20', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch new releases: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      const albums = [];
+      for (const item of data.albums.items) {
+        const album = await processAndSaveAlbum(item);
+        albums.push(album);
+      }
+      
+      res.json(albums);
+    } catch (error) {
+      console.error('Get saved albums error:', error);
+      res.status(500).json({ message: 'Failed to fetch albums' });
     }
   });
   
