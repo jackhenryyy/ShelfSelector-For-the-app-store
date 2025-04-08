@@ -198,7 +198,7 @@ export default function QueuePage() {
                     Play on Spotify
                   </button>
                   <button className="text-white text-xs hover:underline">
-                    Add to No Skips
+                    Add to The List
                   </button>
                 </div>
               </div>
@@ -234,7 +234,7 @@ export default function QueuePage() {
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
                   onClick={() => handleAddToNoSkips(qa.albumId)}
                 >
-                  Add to No Skips
+                  Add to The List
                 </button>
                 <button 
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded text-red-500"

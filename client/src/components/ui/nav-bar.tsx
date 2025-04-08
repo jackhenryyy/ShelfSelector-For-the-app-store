@@ -3,6 +3,10 @@ import { Link, useLocation } from "wouter";
 // Simple nav items without icons, matching the minimal design
 const navItems = [
   {
+    path: "/",
+    label: "the shelf",
+  },
+  {
     path: "/queue",
     label: "the queue",
   },
@@ -26,9 +30,9 @@ export function NavBar() {
         
         return (
           <Link key={item.path} href={item.path}>
-            <a className={`font-mono text-base ${isActive ? 'text-black' : 'text-black/50'}`}>
+            <span className={`font-mono text-base ${isActive ? 'text-black' : 'text-black/50'}`}>
               {item.label}
-            </a>
+            </span>
           </Link>
         );
       })}

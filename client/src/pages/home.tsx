@@ -7,6 +7,7 @@ import { AlbumArt } from "@/components/ui/album-art";
 import { openInSpotify } from "@/lib/spotify";
 import { useAuth } from "@/hooks/use-auth";
 import { Album } from "@shared/schema";
+import { BlurredBackground } from "@/components/ui/blurred-background";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -54,56 +55,62 @@ export default function HomePage() {
     }
   };
 
+  // For development, use the Brockhampton album cover as background
+  // In production this would be currentAlbum?.imageUrl
+  const brockhamptonAlbumUrl = "https://cdn.britannica.com/42/187842-050-40E1A83B/Brockhampton-2019.jpg";
+
   return (
-    <Layout
-      backgroundImage={currentAlbum?.imageUrl}
-    >
-      <div className="p-6">
-        <h1 className="text-3xl font-mono text-center mb-10 text-black">the shelf</h1>
+    <Layout>
+      <div className="relative min-h-screen">
+        <BlurredBackground imageUrl={currentAlbum?.imageUrl || brockhamptonAlbumUrl} intensity="medium" />
         
-        <div className="flex justify-center mb-4">
-          <button 
-            className="text-sm font-mono text-black hover:text-black"
-            onClick={handleShuffle}
-          >
-            shuffle
-          </button>
-        </div>
-        
-        <div className="flex justify-center items-center mb-6">
-          <ToggleSwitch 
-            leftLabel="the queue" 
-            rightLabel="no skips" 
-            defaultChecked={shuffleSource}
-            onChange={setShuffleSource}
-          />
-        </div>
-        
-        <div className="flex justify-center">
-          {currentAlbum ? (
-            <div 
-              className="block w-64 h-64 shadow-lg cursor-pointer"
-              onClick={handleOpenInSpotify}
+        <div className="p-4 pt-6 relative z-10">
+          <h1 className="text-3xl font-mono text-center mb-10">the shelf</h1>
+          
+          <div className="flex justify-end mb-4">
+            <button 
+              className="px-4 py-1 border border-black bg-white text-black font-mono text-sm"
+              onClick={handleShuffle}
             >
-              <AlbumArt 
-                src={currentAlbum.imageUrl} 
-                alt={currentAlbum.name}
-                size="large"
-              />
-            </div>
-          ) : (
-            <div className="w-64 h-64 bg-gray-200 flex items-center justify-center text-gray-500 rounded shadow-lg">
-              <p className="font-mono">No albums available</p>
+              shuffle
+            </button>
+          </div>
+          
+          <div className="flex justify-center items-center mb-6">
+            <ToggleSwitch 
+              leftLabel="the queue" 
+              rightLabel="no skips" 
+              defaultChecked={shuffleSource}
+              onChange={setShuffleSource}
+            />
+          </div>
+          
+          <div className="flex justify-center mt-8">
+            {currentAlbum ? (
+              <div 
+                className="block w-64 shadow-lg cursor-pointer bg-white p-1 border border-black"
+                onClick={handleOpenInSpotify}
+              >
+                <AlbumArt 
+                  src={currentAlbum.imageUrl} 
+                  alt={currentAlbum.name}
+                  size="large"
+                />
+              </div>
+            ) : (
+              <div className="w-64 h-64 bg-gray-100 flex items-center justify-center text-gray-500 border border-black">
+                <p className="font-mono">No albums available</p>
+              </div>
+            )}
+          </div>
+          
+          {currentAlbum && (
+            <div className="text-center mt-6">
+              <h2 className="text-xl font-mono uppercase">{currentAlbum.name}</h2>
+              <p className="text-sm font-mono">{currentAlbum.artist}</p>
             </div>
           )}
         </div>
-        
-        {currentAlbum && (
-          <div className="text-center mt-6">
-            <h2 className="text-xl font-mono text-black">{currentAlbum.name}</h2>
-            <p className="text-sm font-mono text-black/80">{currentAlbum.artist}</p>
-          </div>
-        )}
       </div>
     </Layout>
   );
