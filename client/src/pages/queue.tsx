@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
-import { useQueueAlbums, useNoSkipsAlbums } from "@/hooks/use-albums";
+import { useQueueAlbums, useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { openInSpotify } from "@/lib/spotify";
 import { SearchIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ReviewDialog } from "@/components/ui/review-dialog";
 
 export default function QueuePage() {
   const { queueAlbums, addToQueue, removeFromQueue } = useQueueAlbums();
   const { addToNoSkips } = useNoSkipsAlbums();
+  const { createReview } = useAlbumReviews();
   const { searchAlbums } = useSpotifyAlbums();
   const { toast } = useToast();
   
@@ -22,6 +24,8 @@ export default function QueuePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState<{id: number, x: number, y: number} | null>(null);
   const [sortOrder, setSortOrder] = useState<string>("date");
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   
   // Function to handle sorting
   const handleSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -74,6 +78,47 @@ export default function QueuePage() {
       description: "Album has been added to your No Skips collection",
     });
     handleCloseContextMenu();
+  };
+  
+  // Function to open the review dialog
+  const handleOpenReviewDialog = (albumId: number) => {
+    const album = queueAlbums?.find(qa => qa.albumId === albumId)?.album;
+    if (album) {
+      setSelectedAlbum(album);
+      setReviewDialogOpen(true);
+      handleCloseContextMenu();
+    }
+  };
+  
+  // Function to handle submitting a review
+  const handleSubmitReview = async (rating: number, review: string) => {
+    if (!selectedAlbum) return;
+    
+    try {
+      // Create the review in the database
+      await createReview({
+        albumId: selectedAlbum.id,
+        rating,
+        review: review || "",
+      });
+      
+      // Remove the album from the queue
+      removeFromQueue(selectedAlbum.id);
+      
+      toast({
+        title: "Review submitted",
+        description: "Album has been added to your list and removed from your queue",
+      });
+      
+      setSelectedAlbum(null);
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast({
+        title: "Review failed",
+        description: "There was an error submitting your review",
+        variant: "destructive"
+      });
+    }
   };
   
   // Function to handle album search
@@ -194,11 +239,32 @@ export default function QueuePage() {
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <div className="flex flex-col">
-                  <button className="text-white text-xs mb-1 hover:underline">
+                  <button 
+                    className="text-white text-xs mb-1 hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayOnSpotify(queueAlbum.album.spotifyId);
+                    }}
+                  >
                     Play on Spotify
                   </button>
-                  <button className="text-white text-xs hover:underline">
-                    Add to The List
+                  <button 
+                    className="text-white text-xs mb-1 hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenReviewDialog(queueAlbum.albumId);
+                    }}
+                  >
+                    Review & Add to List
+                  </button>
+                  <button 
+                    className="text-white text-xs hover:underline text-red-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromQueue(queueAlbum.albumId);
+                    }}
+                  >
+                    Remove from Queue
                   </button>
                 </div>
               </div>
@@ -232,9 +298,9 @@ export default function QueuePage() {
                 </button>
                 <button 
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
-                  onClick={() => handleAddToNoSkips(qa.albumId)}
+                  onClick={() => handleOpenReviewDialog(qa.albumId)}
                 >
-                  Add to The List
+                  Review & Add to List
                 </button>
                 <button 
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded text-red-500"
@@ -249,6 +315,16 @@ export default function QueuePage() {
             ) : null)}
           </div>
         </>
+      )}
+      
+      {/* Review Dialog */}
+      {selectedAlbum && (
+        <ReviewDialog
+          album={selectedAlbum}
+          open={reviewDialogOpen}
+          onOpenChange={setReviewDialogOpen}
+          onSubmit={handleSubmitReview}
+        />
       )}
     </Layout>
   );

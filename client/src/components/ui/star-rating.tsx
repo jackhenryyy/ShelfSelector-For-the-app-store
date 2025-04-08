@@ -1,61 +1,58 @@
-import { useState } from "react";
+import { Star } from "lucide-react";
 
 interface StarRatingProps {
-  rating: number;
-  maxRating?: number;
+  value: number;
+  onChange?: (value: number) => void;
+  max?: number;
   size?: "small" | "medium" | "large";
-  onChange?: (rating: number) => void;
   readonly?: boolean;
 }
 
 export function StarRating({
-  rating,
-  maxRating = 5,
-  size = "medium",
+  value,
   onChange,
+  max = 5,
+  size = "medium",
   readonly = false,
 }: StarRatingProps) {
-  const [hoverRating, setHoverRating] = useState(0);
-
-  const sizeClass = {
+  const sizeClassName = {
     small: "w-3 h-3",
-    medium: "w-4 h-4",
-    large: "w-5 h-5",
+    medium: "w-5 h-5",
+    large: "w-6 h-6",
   }[size];
-
-  const handleMouseEnter = (index: number) => {
+  
+  const handleClick = (newValue: number) => {
     if (readonly) return;
-    setHoverRating(index);
+    
+    // Allow toggling off if same star clicked
+    if (newValue === value) {
+      onChange?.(0);
+    } else {
+      onChange?.(newValue);
+    }
   };
-
-  const handleMouseLeave = () => {
-    if (readonly) return;
-    setHoverRating(0);
-  };
-
-  const handleClick = (index: number) => {
-    if (readonly) return;
-    onChange?.(index);
-  };
-
+  
   return (
-    <div className="inline-flex">
-      {[...Array(maxRating)].map((_, index) => {
-        const starValue = index + 1;
-        const isFilled = hoverRating ? starValue <= hoverRating : starValue <= rating;
+    <div className="flex">
+      {Array.from({ length: max }).map((_, i) => {
+        const starValue = i + 1;
+        const isFilled = starValue <= value;
         
         return (
-          <span
-            key={index}
-            className={`${sizeClass} ${
-              isFilled ? "text-black" : "text-gray-300"
-            } ${!readonly ? "cursor-pointer" : ""}`}
-            onMouseEnter={() => handleMouseEnter(starValue)}
-            onMouseLeave={handleMouseLeave}
+          <button
+            key={i}
+            type="button"
             onClick={() => handleClick(starValue)}
+            className={`${readonly ? "" : "cursor-pointer"} focus:outline-none`}
+            disabled={readonly}
+            aria-label={`${starValue} star${starValue !== 1 ? "s" : ""}`}
           >
-            ★
-          </span>
+            <Star
+              className={`${sizeClassName} ${
+                isFilled ? "fill-black text-black" : "text-gray-300"
+              } transition-colors`}
+            />
+          </button>
         );
       })}
     </div>

@@ -29,11 +29,11 @@ export function Layout({
         <BlurredBackground imageUrl={backgroundImage} />
       )}
       
-      <div className="flex justify-end p-2">
+      <div className="absolute top-0 right-0 p-2 z-10">
         {user && (
           <button 
             onClick={() => logoutMutation.mutate()}
-            className="text-xs flex items-center gap-1 text-black/70 hover:text-black"
+            className="text-xs flex items-center gap-1 text-black/80 hover:text-black"
           >
             <span>logout</span>
             <LogOut className="w-3 h-3" />

@@ -60,9 +60,8 @@ export default function HomePage() {
   const brockhamptonAlbumUrl = "https://cdn.britannica.com/42/187842-050-40E1A83B/Brockhampton-2019.jpg";
 
   return (
-    <Layout>
+    <Layout backgroundImage={currentAlbum?.imageUrl || brockhamptonAlbumUrl}>
       <div className="relative min-h-screen">
-        <BlurredBackground imageUrl={currentAlbum?.imageUrl || brockhamptonAlbumUrl} intensity="medium" />
         
         <div className="p-4 pt-6 relative z-10">
           <h1 className="text-3xl font-mono text-center mb-10">the shelf</h1>
