@@ -26,10 +26,10 @@ export function Layout({
   return (
     <div className="relative min-h-screen bg-white overflow-hidden">
       {backgroundImage && (
-        <BlurredBackground imageUrl={backgroundImage} />
+        <BlurredBackground imageUrl={backgroundImage} intensity="medium" />
       )}
       
-      <div className="flex justify-end p-2">
+      <div className="flex justify-end p-2 relative z-10">
         {user && (
           <button 
             onClick={() => logoutMutation.mutate()}
@@ -42,13 +42,13 @@ export function Layout({
       </div>
       
       {(title || subtitle) && (
-        <div className="p-4 pb-0">
+        <div className="p-4 pb-0 relative z-10">
           {title && <h1 className="text-lg font-medium mb-1 text-black">{title}</h1>}
           {subtitle && <p className="text-xs text-black/60 mb-4">{subtitle}</p>}
         </div>
       )}
       
-      <div className={`pb-16 ${className}`}>
+      <div className={`pb-16 ${className} relative z-10`}>
         {children}
       </div>
       

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { RotatingBackground } from "@/components/ui/rotating-background";
 
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -70,8 +71,11 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-white px-4 overflow-hidden">
+      {/* Rotating blurred backgrounds from Spotify albums */}
+      <RotatingBackground intensity="medium" />
+      
+      <div className="w-full max-w-md relative z-10">
         <h1 className="text-center text-3xl tracking-widest mb-16 font-mono">
           t h e&nbsp;&nbsp;s h e l f
         </h1>
