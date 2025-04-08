@@ -1,16 +1,20 @@
 import { useState } from "react";
-import { useNoSkipsAlbums } from "@/hooks/use-albums";
+import { useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { SearchIcon } from "lucide-react";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
-import { useSpotifyAuth } from "@/hooks/use-spotify";
+import { useSpotifyAlbums, useSpotifyAuth } from "@/hooks/use-spotify";
 import { useToast } from "@/hooks/use-toast";
+import { TopFourDialog } from "@/components/ui/top-four-dialog";
 
 export default function NoSkipsPage() {
   const { user } = useSpotifyAuth();
+  const userId = user?.id;
   const { noSkipsAlbums, topFourAlbums, updateTopFour } = useNoSkipsAlbums();
   const { toast } = useToast();
   
@@ -49,9 +53,9 @@ export default function NoSkipsPage() {
   
   // Function to share No Skips page
   const handleShare = () => {
-    if (!user) return;
+    if (!userId) return;
     
-    const shareableLink = generateShareableLink(user.id);
+    const shareableLink = generateShareableLink(userId);
     
     // Copy link to clipboard
     navigator.clipboard.writeText(shareableLink).then(() => {
@@ -61,6 +65,9 @@ export default function NoSkipsPage() {
       });
     });
   };
+  
+  // State for the TopFourDialog
+  const [topFourDialogOpen, setTopFourDialogOpen] = useState(false);
   
   // Function to start editing Top Four
   const handleStartEditingTopFour = () => {
@@ -74,6 +81,15 @@ export default function NoSkipsPage() {
         }))
       );
     }
+  };
+  
+  // Function to handle TopFour dialog save
+  const handleTopFourDialogSave = (selections: {albumId: number, position: number}[]) => {
+    updateTopFour(selections);
+    toast({
+      title: "Top 4 updated",
+      description: "Your Top 4 albums have been updated",
+    });
   };
   
   // Function to handle selecting an album for top four
@@ -155,44 +171,48 @@ export default function NoSkipsPage() {
           )}
         </div>
         
-        <div className="top-albums mb-6">
-          {topFourAlbums?.length ? (
-            topFourAlbums
-              .sort((a, b) => (a.topFourPosition || 0) - (b.topFourPosition || 0))
-              .map((album) => (
-                <div key={album.id} className={isEditingTopFour ? "relative" : ""}>
-                  <a 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (isEditingTopFour) {
-                        handleSelectForTopFour(album.albumId);
-                      } else {
-                        handleOpenAlbumInSpotify(album.album.spotifyId);
-                      }
-                    }}
-                  >
-                    <AlbumArt
-                      src={album.album.imageUrl}
-                      alt={album.album.name}
-                      className={isEditingTopFour ? "opacity-70" : ""}
-                    />
-                  </a>
-                  {isEditingTopFour && (
-                    <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                      ×
-                    </div>
-                  )}
+        <div className="bg-black/5 p-3 mb-6 rounded">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {topFourAlbums && topFourAlbums.length > 0 ? (
+              topFourAlbums
+                .sort((a, b) => (a.topFourPosition || 0) - (b.topFourPosition || 0))
+                .map((album) => (
+                  <div key={album.id} className={isEditingTopFour ? "relative" : ""}>
+                    <a 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (isEditingTopFour) {
+                          handleSelectForTopFour(album.albumId);
+                        } else {
+                          handleOpenAlbumInSpotify(album.album.spotifyId);
+                        }
+                      }}
+                    >
+                      <AlbumArt
+                        src={album.album.imageUrl}
+                        alt={album.album.name}
+                        className={isEditingTopFour ? "opacity-70" : ""}
+                      />
+                      <div className="mt-1 text-xs truncate">{album.album.name}</div>
+                      <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
+                    </a>
+                    {isEditingTopFour && (
+                      <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                        ×
+                      </div>
+                    )}
+                  </div>
+                ))
+            ) : (
+              // Empty slots for top four
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-gray-100 rounded aspect-square flex items-center justify-center text-gray-400">
+                  {isEditingTopFour ? "Select" : "Empty"}
                 </div>
               ))
-          ) : (
-            // Empty slots for top four
-            Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="bg-gray-100 rounded aspect-square flex items-center justify-center text-gray-400">
-                {isEditingTopFour ? "Select" : "Empty"}
-              </div>
-            ))
-          )}
+            )}
+          </div>
         </div>
         
         <h2 className="text-sm font-medium mb-2 text-black">albums</h2>
@@ -230,6 +250,22 @@ export default function NoSkipsPage() {
             Share
           </button>
         </div>
+        
+        {/* Modern Dialog for Top Four editing */}
+        <button 
+          className="fixed bottom-4 right-4 bg-black text-white rounded-full p-3"
+          onClick={() => setTopFourDialogOpen(true)}
+        >
+          ✨ Edit Top 4
+        </button>
+        
+        <TopFourDialog
+          open={topFourDialogOpen}
+          onOpenChange={setTopFourDialogOpen}
+          allAlbums={noSkipsAlbums || []}
+          currentTopFour={topFourAlbums || []}
+          onSave={handleTopFourDialogSave}
+        />
       </div>
     </Layout>
   );
