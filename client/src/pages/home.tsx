@@ -1,32 +1,25 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useSpotifyAuth } from "@/hooks/use-spotify";
 import { useQueueAlbums, useNoSkipsAlbums } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { AlbumArt } from "@/components/ui/album-art";
 import { openInSpotify } from "@/lib/spotify";
-import { SpotifyAlbum } from "@/hooks/use-spotify";
+import { useAuth } from "@/hooks/use-auth";
+import { Album } from "@shared/schema";
 
 export default function HomePage() {
-  const { isAuthenticated } = useSpotifyAuth();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   
   // Shuffle source state (false = queue, true = no skips)
   const [shuffleSource, setShuffleSource] = useState(false);
   
   // Current displayed album
-  const [currentAlbum, setCurrentAlbum] = useState<SpotifyAlbum | null>(null);
+  const [currentAlbum, setCurrentAlbum] = useState<Album | null>(null);
   
   const { queueAlbums, getRandomQueueAlbum } = useQueueAlbums();
   const { noSkipsAlbums, getRandomNoSkipsAlbum } = useNoSkipsAlbums();
-  
-  // Redirect to landing if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setLocation("/login");
-    }
-  }, [isAuthenticated, setLocation]);
   
   // Get a random album on mount
   useEffect(() => {

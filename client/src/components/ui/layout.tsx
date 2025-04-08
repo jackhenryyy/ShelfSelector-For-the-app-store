@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { NavBar } from "./nav-bar";
-import { StatusBar } from "./status-bar";
 import { BlurredBackground } from "./blurred-background";
+import { useAuth } from "@/hooks/use-auth";
+import { LogOut } from "lucide-react";
 
 interface LayoutProps {
   children: ReactNode;
@@ -20,13 +21,25 @@ export function Layout({
   hideNav = false,
   className = ""
 }: LayoutProps) {
+  const { logoutMutation, user } = useAuth();
+
   return (
     <div className="relative min-h-screen bg-white overflow-hidden">
       {backgroundImage && (
         <BlurredBackground imageUrl={backgroundImage} />
       )}
       
-      <StatusBar />
+      <div className="flex justify-end p-2">
+        {user && (
+          <button 
+            onClick={() => logoutMutation.mutate()}
+            className="text-xs flex items-center gap-1 text-black/70 hover:text-black"
+          >
+            <span>logout</span>
+            <LogOut className="w-3 h-3" />
+          </button>
+        )}
+      </div>
       
       {(title || subtitle) && (
         <div className="p-4 pb-0">
