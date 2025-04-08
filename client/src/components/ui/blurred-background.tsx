@@ -14,9 +14,9 @@ export function BlurredBackground({
   if (!imageUrl) return null;
 
   const blurIntensity = {
-    light: 10,
-    medium: 20,
-    heavy: 40,
+    light: 5,
+    medium: 10,
+    heavy: 20,
   }[intensity];
 
   const style: CSSProperties = {

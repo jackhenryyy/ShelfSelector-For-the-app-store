@@ -65,7 +65,7 @@ export default function HomePage() {
           />
         )}
         
-        <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px]"></div>
         
         <div className="p-4 pt-6 relative z-10">
           <h1 className="text-3xl font-mono text-center mb-10">the shelf</h1>
