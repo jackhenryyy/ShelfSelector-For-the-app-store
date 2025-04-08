@@ -1,11 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+// We'll keep the spotify imports but they will be optional to use
 import { 
-  getSpotifyLoginUrl, 
-  handleSpotifyAuth, 
-  refreshAccessToken,
-  getUserSavedAlbums,
   searchSpotifyAlbums,
   getAlbumDetails,
   processAndSaveAlbum
@@ -16,102 +13,30 @@ import {
   insertAlbumReviewSchema 
 } from "@shared/schema";
 import { z } from "zod";
+import { setupAuth } from "./auth";
 
-// Middleware to check if user is authenticated
-async function requireAuth(req: Request, res: Response, next: Function) {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  
-  const user = await storage.getUser(req.session.userId);
-  if (!user) {
-    req.session.destroy(() => {});
-    return res.status(401).json({ message: "User not found" });
-  }
-  
-  // Check if token is expired and refresh if needed
-  if (new Date(user.tokenExpiry) <= new Date()) {
-    try {
-      const tokenData = await refreshAccessToken(user.refreshToken);
-      const expiresIn = tokenData.expires_in || 3600;
-      const tokenExpiry = new Date(Date.now() + expiresIn * 1000);
-      
-      await storage.updateUserTokens(
-        user.id,
-        tokenData.access_token,
-        tokenData.refresh_token || user.refreshToken,
-        tokenExpiry
-      );
-    } catch (error) {
-      console.error("Failed to refresh token:", error);
-      req.session.destroy(() => {});
-      return res.status(401).json({ message: "Authentication expired" });
+import { User } from "@shared/schema";
+
+// Add type augmentation for Express Request
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
     }
   }
-  
+}
+
+// Middleware to check if user is authenticated
+function requireAuth(req: Request, res: Response, next: Function) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
   next();
 }
 
-// Adding session type definitions
-declare module 'express-session' {
-  interface SessionData {
-    userId?: number;
-  }
-}
-
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup session
-  const session = await import('express-session');
-  const memorystore = await import('memorystore');
-  const MemoryStore = memorystore.default(session.default);
-  
-  app.use(session.default({
-    cookie: { maxAge: 86400000 }, // 1 day
-    store: new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    }),
-    resave: false,
-    saveUninitialized: false,
-    secret: process.env.SESSION_SECRET || 'the-shelf-secret'
-  }));
-  
-  // Authentication routes
-  app.get('/api/auth/login', (req, res) => {
-    const loginUrl = getSpotifyLoginUrl();
-    res.json({ loginUrl });
-  });
-  
-  app.get('/api/auth/callback', async (req, res) => {
-    const { code } = req.query;
-    
-    if (typeof code !== 'string') {
-      return res.status(400).json({ message: 'Missing authorization code' });
-    }
-    
-    try {
-      const user = await handleSpotifyAuth(code);
-      req.session.userId = user.id;
-      res.redirect('/');
-    } catch (error) {
-      console.error('Authentication error:', error);
-      res.status(500).json({ message: 'Authentication failed' });
-    }
-  });
-  
-  app.get('/api/auth/logout', (req, res) => {
-    req.session.destroy(() => {
-      res.json({ success: true });
-    });
-  });
-  
-  app.get('/api/auth/user', requireAuth, async (req, res) => {
-    const user = await storage.getUser(req.session.userId!);
-    res.json({
-      id: user?.id,
-      username: user?.username,
-      spotifyId: user?.spotifyId
-    });
-  });
+  // Setup authentication with passport
+  setupAuth(app);
   
   // Album routes
   app.get('/api/spotify/albums/search', requireAuth, async (req, res) => {
@@ -122,8 +47,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const user = await storage.getUser(req.session.userId!);
-      const results = await searchSpotifyAlbums(user!.accessToken, query);
+      const user = req.user!;
+      if (!user.accessToken) {
+        return res.status(400).json({ message: 'Spotify authentication required' });
+      }
+      
+      const results = await searchSpotifyAlbums(user.accessToken, query);
       
       const albums = [];
       for (const item of results.albums.items) {
@@ -138,36 +67,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get('/api/spotify/albums/saved', requireAuth, async (req, res) => {
+  app.get('/api/albums', requireAuth, async (req, res) => {
+    const { query } = req.query;
+    
     try {
-      const user = await storage.getUser(req.session.userId!);
-      const results = await getUserSavedAlbums(user!.accessToken);
+      let albums = [];
       
-      const albums = [];
-      for (const item of results.items) {
-        const album = await processAndSaveAlbum(item.album);
-        albums.push(album);
+      if (query && typeof query === 'string') {
+        albums = await storage.searchAlbums(query);
+      } else {
+        // Return a limited selection of albums
+        albums = await storage.searchAlbums("");
       }
       
       res.json(albums);
     } catch (error) {
-      console.error('Saved albums error:', error);
-      res.status(500).json({ message: 'Failed to fetch saved albums' });
+      console.error('Album search error:', error);
+      res.status(500).json({ message: 'Failed to search albums' });
     }
   });
   
-  app.get('/api/spotify/albums/:id', requireAuth, async (req, res) => {
-    const { id } = req.params;
+  app.get('/api/albums/:id', requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return res.status(400).json({ message: 'Invalid album ID' });
+    }
     
     try {
-      // First check if we have this album in our database
-      let album = await storage.getAlbumBySpotifyId(id);
+      const album = await storage.getAlbum(id);
       
       if (!album) {
-        // If not, fetch from Spotify API
-        const user = await storage.getUser(req.session.userId!);
-        const albumData = await getAlbumDetails(user!.accessToken, id);
-        album = await processAndSaveAlbum(albumData);
+        return res.status(404).json({ message: 'Album not found' });
       }
       
       res.json(album);
@@ -180,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Queue routes
   app.get('/api/queue', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const queueAlbums = await storage.getQueueAlbums(userId);
       res.json(queueAlbums);
     } catch (error) {
@@ -191,7 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/queue', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const data = insertQueueAlbumSchema.parse({
         ...req.body,
         userId,
@@ -211,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.delete('/api/queue/:albumId', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const albumId = parseInt(req.params.albumId);
       
       if (isNaN(albumId)) {
@@ -229,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // No Skips routes
   app.get('/api/no-skips', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const noSkipsAlbums = await storage.getNoSkipsAlbums(userId);
       res.json(noSkipsAlbums);
     } catch (error) {
@@ -240,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/no-skips/top-four', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const topFourAlbums = await storage.getTopFourAlbums(userId);
       res.json(topFourAlbums);
     } catch (error) {
@@ -251,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/no-skips', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const data = insertNoSkipsAlbumSchema.parse({
         ...req.body,
         userId,
@@ -272,7 +203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.delete('/api/no-skips/:albumId', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const albumId = parseInt(req.params.albumId);
       
       if (isNaN(albumId)) {
@@ -289,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/no-skips/top-four', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       
       // Validate request body
       const schema = z.array(z.object({
@@ -313,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Album reviews routes
   app.get('/api/reviews', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const reviews = await storage.getAlbumReviews(userId);
       res.json(reviews);
     } catch (error) {
@@ -330,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const reviews = await storage.searchAlbumReviews(userId, query);
       res.json(reviews);
     } catch (error) {
@@ -341,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/reviews/:albumId', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const albumId = parseInt(req.params.albumId);
       
       if (isNaN(albumId)) {
@@ -363,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/reviews', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const data = insertAlbumReviewSchema.parse({
         ...req.body,
         userId,

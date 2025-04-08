@@ -2,18 +2,26 @@ import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// User model (connected to Spotify)
+// User model with native authentication
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  spotifyId: text("spotify_id").notNull().unique(),
-  username: text("username").notNull(),
-  accessToken: text("access_token").notNull(),
-  refreshToken: text("refresh_token").notNull(),
-  tokenExpiry: timestamp("token_expiry").notNull(),
+  username: text("username").notNull().unique(),
+  email: text("email").unique(),
+  password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  spotifyId: text("spotify_id").unique(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  tokenExpiry: timestamp("token_expiry"),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  createdAt: true,
+  spotifyId: true,
+  accessToken: true,
+  refreshToken: true,
+  tokenExpiry: true,
 });
 
 // Album model

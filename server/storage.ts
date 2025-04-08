@@ -1,4 +1,9 @@
+import { eq, and, ilike, or } from "drizzle-orm";
+import { db } from "./db";
+import connectPg from "connect-pg-simple";
+import session from "express-session";
 import {
+  users, albums, queueAlbums, noSkipsAlbums, albumReviews,
   User, InsertUser,
   Album, InsertAlbum,
   QueueAlbum, InsertQueueAlbum,
@@ -7,8 +12,12 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
+  // Session store
+  sessionStore: session.SessionStore;
+  
   // User operations
   getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   getUserBySpotifyId(spotifyId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserTokens(id: number, accessToken: string, refreshToken: string, tokenExpiry: Date): Promise<User | undefined>;
@@ -52,6 +61,7 @@ export class MemStorage implements IStorage {
     noSkipsAlbum: number;
     albumReview: number;
   };
+  sessionStore: session.SessionStore;
 
   constructor() {
     this.users = new Map();
@@ -66,6 +76,11 @@ export class MemStorage implements IStorage {
       noSkipsAlbum: 1,
       albumReview: 1,
     };
+    
+    const MemoryStore = require('memorystore')(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
   }
 
   // User operations
@@ -73,6 +88,12 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.username === username
+    );
+  }
+  
   async getUserBySpotifyId(spotifyId: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
       (user) => user.spotifyId === spotifyId
@@ -308,4 +329,284 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  sessionStore: any; // Using 'any' temporarily to bypass type issues
+
+  constructor() {
+    const PostgresStore = connectPg(session);
+    this.sessionStore = new PostgresStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true
+    });
+  }
+
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async getUserBySpotifyId(spotifyId: string): Promise<User | undefined> {
+    if (!spotifyId) return undefined;
+    const [user] = await db.select().from(users).where(eq(users.spotifyId, spotifyId));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async updateUserTokens(
+    id: number, 
+    accessToken: string, 
+    refreshToken: string, 
+    tokenExpiry: Date
+  ): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ accessToken, refreshToken, tokenExpiry })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  // Album operations
+  async getAlbum(id: number): Promise<Album | undefined> {
+    const [album] = await db.select().from(albums).where(eq(albums.id, id));
+    return album;
+  }
+
+  async getAlbumBySpotifyId(spotifyId: string): Promise<Album | undefined> {
+    if (!spotifyId) return undefined;
+    const [album] = await db.select().from(albums).where(eq(albums.spotifyId, spotifyId));
+    return album;
+  }
+
+  async createAlbum(album: InsertAlbum): Promise<Album> {
+    const [newAlbum] = await db.insert(albums).values(album).returning();
+    return newAlbum;
+  }
+
+  async searchAlbums(query: string): Promise<Album[]> {
+    return db
+      .select()
+      .from(albums)
+      .where(
+        or(
+          ilike(albums.name, `%${query}%`),
+          ilike(albums.artist, `%${query}%`)
+        )
+      );
+  }
+
+  // Queue operations
+  async getQueueAlbums(userId: number): Promise<(QueueAlbum & { album: Album })[]> {
+    const result = await db
+      .select({
+        queueAlbum: queueAlbums,
+        album: albums
+      })
+      .from(queueAlbums)
+      .innerJoin(albums, eq(queueAlbums.albumId, albums.id))
+      .where(eq(queueAlbums.userId, userId));
+
+    return result.map(item => ({
+      ...item.queueAlbum,
+      album: item.album
+    }));
+  }
+
+  async addToQueue(queueAlbum: InsertQueueAlbum): Promise<QueueAlbum> {
+    const [newQueueAlbum] = await db
+      .insert(queueAlbums)
+      .values(queueAlbum)
+      .returning();
+    return newQueueAlbum;
+  }
+
+  async removeFromQueue(userId: number, albumId: number): Promise<void> {
+    await db
+      .delete(queueAlbums)
+      .where(
+        and(
+          eq(queueAlbums.userId, userId),
+          eq(queueAlbums.albumId, albumId)
+        )
+      );
+  }
+
+  // No Skips operations
+  async getNoSkipsAlbums(userId: number): Promise<(NoSkipsAlbum & { album: Album })[]> {
+    const result = await db
+      .select({
+        noSkipsAlbum: noSkipsAlbums,
+        album: albums
+      })
+      .from(noSkipsAlbums)
+      .innerJoin(albums, eq(noSkipsAlbums.albumId, albums.id))
+      .where(eq(noSkipsAlbums.userId, userId));
+
+    return result.map(item => ({
+      ...item.noSkipsAlbum,
+      album: item.album
+    }));
+  }
+
+  async getTopFourAlbums(userId: number): Promise<(NoSkipsAlbum & { album: Album })[]> {
+    const result = await db
+      .select({
+        noSkipsAlbum: noSkipsAlbums,
+        album: albums
+      })
+      .from(noSkipsAlbums)
+      .innerJoin(albums, eq(noSkipsAlbums.albumId, albums.id))
+      .where(
+        and(
+          eq(noSkipsAlbums.userId, userId),
+          eq(noSkipsAlbums.isTopFour, true)
+        )
+      )
+      .orderBy(noSkipsAlbums.topFourPosition);
+
+    return result.map(item => ({
+      ...item.noSkipsAlbum,
+      album: item.album
+    }));
+  }
+
+  async addToNoSkips(noSkipsAlbum: InsertNoSkipsAlbum): Promise<NoSkipsAlbum> {
+    const [newNoSkipsAlbum] = await db
+      .insert(noSkipsAlbums)
+      .values(noSkipsAlbum)
+      .returning();
+    return newNoSkipsAlbum;
+  }
+
+  async removeFromNoSkips(userId: number, albumId: number): Promise<void> {
+    await db
+      .delete(noSkipsAlbums)
+      .where(
+        and(
+          eq(noSkipsAlbums.userId, userId),
+          eq(noSkipsAlbums.albumId, albumId)
+        )
+      );
+  }
+
+  async updateTopFour(userId: number, topFourAlbums: {albumId: number, position: number}[]): Promise<void> {
+    // First, reset all top four flags for this user
+    await db
+      .update(noSkipsAlbums)
+      .set({ isTopFour: false, topFourPosition: null })
+      .where(
+        and(
+          eq(noSkipsAlbums.userId, userId),
+          eq(noSkipsAlbums.isTopFour, true)
+        )
+      );
+
+    // Then set the new top four
+    for (const { albumId, position } of topFourAlbums) {
+      await db
+        .update(noSkipsAlbums)
+        .set({ isTopFour: true, topFourPosition: position })
+        .where(
+          and(
+            eq(noSkipsAlbums.userId, userId),
+            eq(noSkipsAlbums.albumId, albumId)
+          )
+        );
+    }
+  }
+
+  // Album reviews operations
+  async getAlbumReviews(userId: number): Promise<(AlbumReview & { album: Album })[]> {
+    const result = await db
+      .select({
+        albumReview: albumReviews,
+        album: albums
+      })
+      .from(albumReviews)
+      .innerJoin(albums, eq(albumReviews.albumId, albums.id))
+      .where(eq(albumReviews.userId, userId));
+
+    return result.map(item => ({
+      ...item.albumReview,
+      album: item.album
+    }));
+  }
+
+  async getAlbumReview(userId: number, albumId: number): Promise<(AlbumReview & { album: Album }) | undefined> {
+    const [result] = await db
+      .select({
+        albumReview: albumReviews,
+        album: albums
+      })
+      .from(albumReviews)
+      .innerJoin(albums, eq(albumReviews.albumId, albums.id))
+      .where(
+        and(
+          eq(albumReviews.userId, userId),
+          eq(albumReviews.albumId, albumId)
+        )
+      );
+
+    if (!result) return undefined;
+
+    return {
+      ...result.albumReview,
+      album: result.album
+    };
+  }
+
+  async createAlbumReview(review: InsertAlbumReview): Promise<AlbumReview> {
+    const [newReview] = await db
+      .insert(albumReviews)
+      .values(review)
+      .returning();
+    return newReview;
+  }
+
+  async updateAlbumReview(id: number, rating: number, review: string): Promise<AlbumReview | undefined> {
+    const [updatedReview] = await db
+      .update(albumReviews)
+      .set({ rating, review })
+      .where(eq(albumReviews.id, id))
+      .returning();
+    return updatedReview;
+  }
+
+  async searchAlbumReviews(userId: number, query: string): Promise<(AlbumReview & { album: Album })[]> {
+    const result = await db
+      .select({
+        albumReview: albumReviews,
+        album: albums
+      })
+      .from(albumReviews)
+      .innerJoin(albums, eq(albumReviews.albumId, albums.id))
+      .where(
+        and(
+          eq(albumReviews.userId, userId),
+          or(
+            ilike(albums.name, `%${query}%`),
+            ilike(albums.artist, `%${query}%`),
+            ilike(albumReviews.review, `%${query}%`)
+          )
+        )
+      );
+
+    return result.map(item => ({
+      ...item.albumReview,
+      album: item.album
+    }));
+  }
+}
+
+// Use database storage
+export const storage = new DatabaseStorage();
