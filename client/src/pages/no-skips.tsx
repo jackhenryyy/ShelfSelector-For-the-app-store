@@ -4,7 +4,7 @@ import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { SearchIcon, Plus } from "lucide-react";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
@@ -171,20 +171,76 @@ export default function NoSkipsPage() {
       subtitle={`${noSkipsAlbums?.length || 0} albums`}
     >
       <div className="p-4 pt-0">
-        <div className="flex justify-between items-center">
-          <div></div>
-          <div>
+        <div className="flex justify-between items-center mb-4">
+          <div className="w-44">
             <select 
-              className="text-xs border rounded p-1"
+              className="w-full font-mono text-base border border-black rounded p-2"
               value={sortOrder}
               onChange={handleSort}
             >
-              <option value="date">date ↓</option>
+              <option value="date">sort</option>
               <option value="A - Z">A - Z</option>
               <option value="genre">genre</option>
               <option value="year">year</option>
             </select>
           </div>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="text-xs border border-black/20 rounded p-1 px-2">+ add album</button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogTitle>Add to No Skips</DialogTitle>
+              <DialogDescription>
+                Search for an album to add to your No Skips collection
+              </DialogDescription>
+              
+              <div className="flex items-center gap-2 mt-4">
+                <Input
+                  placeholder="Search albums..."
+                  value={searchQuery}
+                  onChange={handleSearchInputChange}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+                />
+                <Button 
+                  size="sm" 
+                  onClick={handleSearchSubmit} 
+                  disabled={isSearching}
+                >
+                  <SearchIcon className="h-4 w-4 mr-1" />
+                  {isSearching ? "Searching..." : "Search"}
+                </Button>
+              </div>
+              
+              {searchResults && searchResults.length > 0 && (
+                <div className="mt-4 max-h-80 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-2">
+                    {searchResults.map((album) => (
+                      <div key={album.id} className="border rounded p-2">
+                        <AlbumArt
+                          src={album.imageUrl}
+                          alt={album.name}
+                          size="small"
+                        />
+                        <div className="mt-1">
+                          <div className="text-xs font-medium truncate">{album.name}</div>
+                          <div className="text-xs text-gray-500 truncate">{album.artist}</div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full mt-2 text-xs"
+                          onClick={() => handleAddToNoSkips(album.id)}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
         
         <div className="flex justify-between items-center mt-4">
@@ -253,23 +309,19 @@ export default function NoSkipsPage() {
                     ? "border-2 border-green-500" 
                     : ""}
                 />
+                <div className="mt-1 text-xs truncate">{album.album.name}</div>
+                <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
               </a>
             </div>
           ))}
         </AlbumGrid>
         
-        <div className="flex justify-center mt-6 mb-4 gap-2">
+        <div className="flex justify-center mt-6 mb-4">
           <button 
             className="bg-[#1DB954] hover:bg-[#1ed760] text-white text-xs py-1 px-4 rounded-full"
             onClick={handleShare}
           >
             Share
-          </button>
-          <button 
-            className="bg-black hover:bg-gray-800 text-white text-xs py-1 px-4 rounded-full flex items-center gap-1"
-            onClick={() => setShowSearch(true)}
-          >
-            <Plus size={14} /> Add Album
           </button>
         </div>
         

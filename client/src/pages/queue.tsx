@@ -199,27 +199,29 @@ export default function QueuePage() {
               
               {searchResults.length > 0 && (
                 <div className="mt-4 max-h-80 overflow-y-auto">
-                  <AlbumGrid>
+                  <div className="grid grid-cols-2 gap-2">
                     {searchResults.map((album) => (
-                      <div key={album.id} className="relative group">
+                      <div key={album.id} className="border rounded p-2">
                         <AlbumArt
                           src={album.imageUrl}
                           alt={album.name}
+                          size="small"
                         />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-white"
-                            onClick={() => handleAddToQueue(album.id)}
-                          >
-                            Add to Queue
-                          </Button>
+                        <div className="mt-1">
+                          <div className="text-xs font-medium truncate">{album.name}</div>
+                          <div className="text-xs text-gray-500 truncate">{album.artist}</div>
                         </div>
-                        <p className="text-xs mt-1 truncate">{album.name}</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full mt-2 text-xs"
+                          onClick={() => handleAddToQueue(album.id)}
+                        >
+                          Add
+                        </Button>
                       </div>
                     ))}
-                  </AlbumGrid>
+                  </div>
                 </div>
               )}
             </DialogContent>
@@ -230,13 +232,15 @@ export default function QueuePage() {
           {sortedQueueAlbums.map((queueAlbum) => (
             <div 
               key={queueAlbum.id}
-              className="relative group"
+              className="relative group mb-2"
               onClick={(e) => handleAlbumClick(queueAlbum.albumId, e)}
             >
               <AlbumArt
                 src={queueAlbum.album.imageUrl}
                 alt={queueAlbum.album.name}
               />
+              <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
+              <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <div className="flex flex-col">
                   <button 
