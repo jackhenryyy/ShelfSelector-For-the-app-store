@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Courier+Prime:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,16 +10,24 @@
   }
 
   body {
-    @apply font-inter antialiased bg-background text-foreground;
+    @apply font-mono antialiased bg-background text-foreground;
     overscroll-behavior: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-mono;
+  }
+
+  select, button, input {
+    @apply font-mono;
   }
 }
 
 @layer components {
   .blurred-bg {
     @apply absolute top-0 left-0 w-full h-full bg-cover bg-center;
-    filter: blur(30px);
-    opacity: 0.7;
+    filter: blur(20px);
+    opacity: 0.8;
     z-index: -1;
   }
 
@@ -34,22 +42,6 @@
 
   .top-albums {
     @apply grid grid-cols-4 gap-1;
-  }
-
-  .nav-bar {
-    @apply h-14 fixed bottom-0 left-0 right-0 flex justify-around items-center border-t border-black/10 bg-white/80 backdrop-blur-md;
-  }
-
-  .nav-item {
-    @apply w-1/4 text-center text-xs flex flex-col items-center;
-  }
-
-  .nav-item.active {
-    @apply text-black;
-  }
-
-  .nav-item.inactive {
-    @apply text-black/50;
   }
 
   .status-bar {

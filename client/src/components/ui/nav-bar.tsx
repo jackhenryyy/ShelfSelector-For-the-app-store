@@ -1,26 +1,18 @@
 import { Link, useLocation } from "wouter";
-import { BookIcon, GridIcon, HeartIcon, LayoutListIcon } from "lucide-react";
 
+// Simple nav items without icons, matching the minimal design
 const navItems = [
-  {
-    path: "/",
-    label: "the shelf",
-    icon: BookIcon,
-  },
   {
     path: "/queue",
     label: "the queue",
-    icon: GridIcon,
   },
   {
     path: "/no-skips",
     label: "no skips",
-    icon: HeartIcon,
   },
   {
     path: "/list",
     label: "the list",
-    icon: LayoutListIcon,
   },
 ];
 
@@ -28,18 +20,14 @@ export function NavBar() {
   const [location] = useLocation();
 
   return (
-    <div className="nav-bar">
+    <div className="fixed bottom-0 left-0 right-0 flex justify-between items-center px-6 py-3 bg-white border-t border-black/20">
       {navItems.map((item) => {
         const isActive = location === item.path;
-        const statusClass = isActive ? "active" : "inactive";
-
+        
         return (
           <Link key={item.path} href={item.path}>
-            <a className={`nav-item ${statusClass}`}>
-              <div className="h-6 flex justify-center items-center">
-                <item.icon className="w-5 h-5" />
-              </div>
-              <span>{item.label}</span>
+            <a className={`font-mono text-base ${isActive ? 'text-black' : 'text-black/50'}`}>
+              {item.label}
             </a>
           </Link>
         );

@@ -7,6 +7,7 @@ export default {
     extend: {
       fontFamily: {
         inter: ["Inter", "sans-serif"],
+        mono: ["Courier Prime", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -112,16 +112,18 @@ export default function QueuePage() {
     >
       <div className="p-4 pt-0">
         <div className="flex justify-between items-center mb-4">
-          <select 
-            className="text-xs border rounded p-1"
-            value={sortOrder}
-            onChange={handleSort}
-          >
-            <option value="date">date ↓</option>
-            <option value="A - Z">A - Z</option>
-            <option value="genre">genre</option>
-            <option value="year">year</option>
-          </select>
+          <div className="w-44">
+            <select 
+              className="w-full font-mono text-base border border-black rounded p-2"
+              value={sortOrder}
+              onChange={handleSort}
+            >
+              <option value="date">sort</option>
+              <option value="A - Z">A - Z</option>
+              <option value="genre">genre</option>
+              <option value="year">year</option>
+            </select>
+          </div>
           
           <Dialog>
             <DialogTrigger asChild>
@@ -179,7 +181,7 @@ export default function QueuePage() {
           </Dialog>
         </div>
         
-        <AlbumGrid className="mb-8">
+        <AlbumGrid>
           {sortedQueueAlbums.map((queueAlbum) => (
             <div 
               key={queueAlbum.id}
@@ -203,14 +205,6 @@ export default function QueuePage() {
             </div>
           ))}
         </AlbumGrid>
-        
-        <div className="flex justify-center mt-auto mb-4">
-          <Dialog>
-            <DialogTrigger asChild>
-              <button className="border border-black/20 rounded text-xs py-1 px-4">+ add album</button>
-            </DialogTrigger>
-          </Dialog>
-        </div>
       </div>
       
       {/* Context Menu */}

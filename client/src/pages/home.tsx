@@ -59,11 +59,11 @@ export default function HomePage() {
       backgroundImage={currentAlbum?.imageUrl}
     >
       <div className="p-6">
-        <h1 className="text-2xl font-medium tracking-widest text-center mb-10 text-black">t h e &nbsp; s h e l f</h1>
+        <h1 className="text-3xl font-mono text-center mb-10 text-black">the shelf</h1>
         
         <div className="flex justify-center mb-4">
           <button 
-            className="text-sm text-black/80 hover:text-black"
+            className="text-sm font-mono text-black hover:text-black"
             onClick={handleShuffle}
           >
             shuffle
@@ -93,15 +93,15 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="w-64 h-64 bg-gray-200 flex items-center justify-center text-gray-500 rounded shadow-lg">
-              <p>No albums available</p>
+              <p className="font-mono">No albums available</p>
             </div>
           )}
         </div>
         
         {currentAlbum && (
           <div className="text-center mt-6">
-            <h2 className="text-xl font-medium text-black">{currentAlbum.name}</h2>
-            <p className="text-sm text-black/60">{currentAlbum.artist}</p>
+            <h2 className="text-xl font-mono text-black">{currentAlbum.name}</h2>
+            <p className="text-sm font-mono text-black/80">{currentAlbum.artist}</p>
           </div>
         )}
       </div>

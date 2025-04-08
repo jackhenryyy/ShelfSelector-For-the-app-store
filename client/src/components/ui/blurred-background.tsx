@@ -14,14 +14,17 @@ export function BlurredBackground({
   if (!imageUrl) return null;
 
   const blurIntensity = {
-    light: 15,
-    medium: 30,
-    heavy: 50,
+    light: 10,
+    medium: 20,
+    heavy: 40,
   }[intensity];
 
   const style: CSSProperties = {
     backgroundImage: `url(${imageUrl})`,
     filter: `blur(${blurIntensity}px)`,
+    opacity: 0.8,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
   };
 
   return <div className={`blurred-bg ${className}`} style={style} />;
