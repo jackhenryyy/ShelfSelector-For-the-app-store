@@ -1,0 +1,215 @@
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { SpotifyAlbum } from "./use-spotify";
+
+// Queue types
+export interface QueueAlbum {
+  id: number;
+  userId: number;
+  albumId: number;
+  addedAt: string;
+  album: SpotifyAlbum;
+}
+
+export function useQueueAlbums() {
+  const queryClient = useQueryClient();
+
+  // Get all albums in queue
+  const { data: queueAlbums, isLoading } = useQuery<QueueAlbum[]>({
+    queryKey: ['/api/queue'],
+  });
+
+  // Add album to queue
+  const addToQueueMutation = useMutation({
+    mutationFn: async (albumId: number) => {
+      const response = await apiRequest('POST', '/api/queue', { albumId });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/queue'] });
+    }
+  });
+
+  // Remove album from queue
+  const removeFromQueueMutation = useMutation({
+    mutationFn: async (albumId: number) => {
+      await apiRequest('DELETE', `/api/queue/${albumId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/queue'] });
+    }
+  });
+
+  // Shuffle and get a random album from queue
+  const getRandomQueueAlbum = useCallback(() => {
+    if (!queueAlbums || queueAlbums.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * queueAlbums.length);
+    return queueAlbums[randomIndex];
+  }, [queueAlbums]);
+
+  return {
+    queueAlbums,
+    isLoading,
+    addToQueue: (albumId: number) => addToQueueMutation.mutate(albumId),
+    removeFromQueue: (albumId: number) => removeFromQueueMutation.mutate(albumId),
+    isAddingToQueue: addToQueueMutation.isPending,
+    isRemovingFromQueue: removeFromQueueMutation.isPending,
+    getRandomQueueAlbum
+  };
+}
+
+// No Skips types
+export interface NoSkipsAlbum {
+  id: number;
+  userId: number;
+  albumId: number;
+  addedAt: string;
+  isTopFour: boolean;
+  topFourPosition?: number;
+  album: SpotifyAlbum;
+}
+
+export function useNoSkipsAlbums() {
+  const queryClient = useQueryClient();
+
+  // Get all no skips albums
+  const { data: noSkipsAlbums, isLoading } = useQuery<NoSkipsAlbum[]>({
+    queryKey: ['/api/no-skips'],
+  });
+
+  // Get top four albums
+  const { data: topFourAlbums } = useQuery<NoSkipsAlbum[]>({
+    queryKey: ['/api/no-skips/top-four'],
+  });
+
+  // Add album to no skips
+  const addToNoSkipsMutation = useMutation({
+    mutationFn: async (albumId: number) => {
+      const response = await apiRequest('POST', '/api/no-skips', { albumId });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/no-skips'] });
+    }
+  });
+
+  // Remove album from no skips
+  const removeFromNoSkipsMutation = useMutation({
+    mutationFn: async (albumId: number) => {
+      await apiRequest('DELETE', `/api/no-skips/${albumId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/no-skips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/no-skips/top-four'] });
+    }
+  });
+
+  // Update top four albums
+  const updateTopFourMutation = useMutation({
+    mutationFn: async (topFour: {albumId: number, position: number}[]) => {
+      await apiRequest('POST', '/api/no-skips/top-four', topFour);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/no-skips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/no-skips/top-four'] });
+    }
+  });
+
+  // Shuffle and get a random album from no skips
+  const getRandomNoSkipsAlbum = useCallback(() => {
+    if (!noSkipsAlbums || noSkipsAlbums.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * noSkipsAlbums.length);
+    return noSkipsAlbums[randomIndex];
+  }, [noSkipsAlbums]);
+
+  return {
+    noSkipsAlbums,
+    topFourAlbums,
+    isLoading,
+    addToNoSkips: (albumId: number) => addToNoSkipsMutation.mutate(albumId),
+    removeFromNoSkips: (albumId: number) => removeFromNoSkipsMutation.mutate(albumId),
+    updateTopFour: (topFour: {albumId: number, position: number}[]) => updateTopFourMutation.mutate(topFour),
+    isAddingToNoSkips: addToNoSkipsMutation.isPending,
+    isRemovingFromNoSkips: removeFromNoSkipsMutation.isPending,
+    isUpdatingTopFour: updateTopFourMutation.isPending,
+    getRandomNoSkipsAlbum
+  };
+}
+
+// Album Review types
+export interface AlbumReview {
+  id: number;
+  userId: number;
+  albumId: number;
+  rating: number;
+  review?: string;
+  reviewedAt: string;
+  album: SpotifyAlbum;
+}
+
+export function useAlbumReviews() {
+  const queryClient = useQueryClient();
+
+  // Get all album reviews
+  const { data: albumReviews, isLoading } = useQuery<AlbumReview[]>({
+    queryKey: ['/api/reviews'],
+  });
+
+  // Get review for specific album
+  const getAlbumReview = (albumId: number) => {
+    return useQuery<AlbumReview>({
+      queryKey: ['/api/reviews', albumId],
+      queryFn: async () => {
+        const response = await apiRequest('GET', `/api/reviews/${albumId}`);
+        return response.json();
+      },
+      enabled: !!albumId,
+    });
+  };
+
+  // Search reviews
+  const searchReviews = async (query: string): Promise<AlbumReview[]> => {
+    if (!query.trim()) return albumReviews || [];
+    
+    const response = await apiRequest('GET', `/api/reviews/search?query=${encodeURIComponent(query)}`);
+    return response.json();
+  };
+
+  // Create/update review
+  const createReviewMutation = useMutation({
+    mutationFn: async (data: { albumId: number; rating: number; review?: string }) => {
+      const response = await apiRequest('POST', '/api/reviews', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reviews'] });
+    }
+  });
+
+  // Update review
+  const updateReviewMutation = useMutation({
+    mutationFn: async (data: { id: number; rating: number; review?: string }) => {
+      const { id, ...rest } = data;
+      const response = await apiRequest('PUT', `/api/reviews/${id}`, rest);
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reviews', variables.id] });
+    }
+  });
+
+  return {
+    albumReviews,
+    isLoading,
+    getAlbumReview,
+    searchReviews,
+    createReview: (data: { albumId: number; rating: number; review?: string }) => 
+      createReviewMutation.mutate(data),
+    updateReview: (data: { id: number; rating: number; review?: string }) => 
+      updateReviewMutation.mutate(data),
+    isCreatingReview: createReviewMutation.isPending,
+    isUpdatingReview: updateReviewMutation.isPending,
+  };
+}

@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-inter antialiased bg-background text-foreground;
+    overscroll-behavior: none;
+  }
+}
+
+@layer components {
+  .blurred-bg {
+    @apply absolute top-0 left-0 w-full h-full bg-cover bg-center;
+    filter: blur(30px);
+    opacity: 0.7;
+    z-index: -1;
+  }
+
+  .album-art {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+
+  .album-grid {
+    @apply grid grid-cols-3 gap-2;
+  }
+
+  .top-albums {
+    @apply grid grid-cols-4 gap-1;
+  }
+
+  .nav-bar {
+    @apply h-14 fixed bottom-0 left-0 right-0 flex justify-around items-center border-t border-black/10 bg-white/80 backdrop-blur-md;
+  }
+
+  .nav-item {
+    @apply w-1/4 text-center text-xs flex flex-col items-center;
+  }
+
+  .nav-item.active {
+    @apply text-black;
+  }
+
+  .nav-item.inactive {
+    @apply text-black/50;
+  }
+
+  .status-bar {
+    @apply h-11 px-4 flex justify-between items-center;
+  }
+}

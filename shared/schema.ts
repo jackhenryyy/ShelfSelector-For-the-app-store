@@ -1,0 +1,88 @@
+import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// User model (connected to Spotify)
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  spotifyId: text("spotify_id").notNull().unique(),
+  username: text("username").notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiry: timestamp("token_expiry").notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+});
+
+// Album model
+export const albums = pgTable("albums", {
+  id: serial("id").primaryKey(),
+  spotifyId: text("spotify_id").notNull().unique(),
+  name: text("name").notNull(),
+  artist: text("artist").notNull(),
+  imageUrl: text("image_url").notNull(),
+  releaseYear: integer("release_year"),
+  genre: text("genre"),
+});
+
+export const insertAlbumSchema = createInsertSchema(albums).omit({
+  id: true,
+});
+
+// User album collection (queue)
+export const queueAlbums = pgTable("queue_albums", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  albumId: integer("album_id").notNull(),
+  addedAt: timestamp("added_at").notNull(),
+});
+
+export const insertQueueAlbumSchema = createInsertSchema(queueAlbums).omit({
+  id: true,
+});
+
+// User favorite albums (no skips)
+export const noSkipsAlbums = pgTable("no_skips_albums", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  albumId: integer("album_id").notNull(),
+  addedAt: timestamp("added_at").notNull(),
+  isTopFour: boolean("is_top_four").default(false).notNull(),
+  topFourPosition: integer("top_four_position"), // 1-4 if in top four
+});
+
+export const insertNoSkipsAlbumSchema = createInsertSchema(noSkipsAlbums).omit({
+  id: true,
+});
+
+// User album reviews (the list)
+export const albumReviews = pgTable("album_reviews", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  albumId: integer("album_id").notNull(),
+  rating: integer("rating").notNull(), // 1-5 stars
+  review: text("review"), // One sentence review
+  reviewedAt: timestamp("reviewed_at").notNull(),
+});
+
+export const insertAlbumReviewSchema = createInsertSchema(albumReviews).omit({
+  id: true,
+});
+
+// Type definitions
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Album = typeof albums.$inferSelect;
+export type InsertAlbum = z.infer<typeof insertAlbumSchema>;
+
+export type QueueAlbum = typeof queueAlbums.$inferSelect;
+export type InsertQueueAlbum = z.infer<typeof insertQueueAlbumSchema>;
+
+export type NoSkipsAlbum = typeof noSkipsAlbums.$inferSelect;
+export type InsertNoSkipsAlbum = z.infer<typeof insertNoSkipsAlbumSchema>;
+
+export type AlbumReview = typeof albumReviews.$inferSelect;
+export type InsertAlbumReview = z.infer<typeof insertAlbumReviewSchema>;
