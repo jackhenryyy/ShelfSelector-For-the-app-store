@@ -282,20 +282,21 @@ export function filterAlbums<T extends { album: Album; rating?: number }>(
   });
 }
 
-// Helper for grouping albums by date added (month and year)
-export function groupAlbumsByMonth<T extends { addedAt: string }>(
+// Helper for grouping albums by listened date (month and year) for reviews
+export function groupAlbumsByMonth<T extends { listenedAt?: string | null, addedAt?: string }>(
   albums: T[]
 ): Record<string, T[]> {
   const grouped: Record<string, T[]> = {};
   
   albums.forEach(album => {
     try {
-      // Safely parse the date - using try/catch to handle invalid dates
-      const date = new Date(album.addedAt);
+      // First try to use listenedAt date if it exists
+      const dateStr = album.listenedAt || (album.addedAt || '');
+      const date = new Date(dateStr);
       
       // Check if date is valid before formatting
       if (!isNaN(date.getTime())) {
-        const monthYear = format(date, "MMMM yyyy"); // e.g., "April 2025"
+        const monthYear = format(date, "MMMM yyyy").toLowerCase(); // e.g., "april 2025"
         
         if (!grouped[monthYear]) {
           grouped[monthYear] = [];
@@ -303,20 +304,20 @@ export function groupAlbumsByMonth<T extends { addedAt: string }>(
         
         grouped[monthYear].push(album);
       } else {
-        // For invalid dates, place in "Unknown date" group
-        if (!grouped["Unknown date"]) {
-          grouped["Unknown date"] = [];
+        // For invalid dates, place in "unknown date" group
+        if (!grouped["unknown date"]) {
+          grouped["unknown date"] = [];
         }
         
-        grouped["Unknown date"].push(album);
+        grouped["unknown date"].push(album);
       }
     } catch (error) {
-      // In case of date parsing errors, place in "Unknown date" group
-      if (!grouped["Unknown date"]) {
-        grouped["Unknown date"] = [];
+      // In case of date parsing errors, place in "unknown date" group
+      if (!grouped["unknown date"]) {
+        grouped["unknown date"] = [];
       }
       
-      grouped["Unknown date"].push(album);
+      grouped["unknown date"].push(album);
     }
   });
   

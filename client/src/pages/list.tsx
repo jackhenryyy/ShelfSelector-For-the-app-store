@@ -167,8 +167,8 @@ export default function ListPage() {
             sortedMonthYearKeys.map(monthYear => (
               <div key={monthYear}>
                 {/* Month-Year Header */}
-                <div className="bg-gray-100 py-2 px-4 mb-4 font-mono text-sm lowercase">
-                  {monthYear.toLowerCase()}
+                <div className="bg-gray-200 py-2 px-4 mb-4 font-mono text-sm">
+                  {monthYear}
                 </div>
                 
                 {/* Reviews for this month */}
@@ -176,7 +176,7 @@ export default function ListPage() {
                   {groupedReviews[monthYear].map((review, index) => (
                     <div key={review.id} className="flex gap-3">
                       {/* Day Number in Box */}
-                      <div className="w-10 h-10 flex items-center justify-center border border-black">
+                      <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
                         <div className="font-mono text-sm">{review.listenedAt ? getDay(review.listenedAt) : "--"}</div>
                       </div>
                       
@@ -198,10 +198,10 @@ export default function ListPage() {
                       {/* Album Details */}
                       <div className="flex-grow">
                         <h3 className="font-mono text-sm">{review.album.name}</h3>
-                        <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
-                        <div className="mt-1">
-                          <div className="flex items-center gap-2">
-                            <StarRating rating={review.rating} size="small" readonly />
+                        <div className="flex items-center mt-0.5">
+                          <p className="font-mono text-xs text-black/60">{review.album.artist}</p>
+                          <div className="flex items-center gap-2 ml-4">
+                            <StarRating rating={review.rating} size="medium" readonly />
                             {review.review && (
                               <p className="font-mono text-xs line-clamp-1">{review.review}</p>
                             )}
