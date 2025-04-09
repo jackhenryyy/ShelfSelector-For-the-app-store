@@ -225,7 +225,7 @@ export default function NoSkipsPage() {
     >
       <div className="p-4 pt-0">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-          <div className="w-full sm:w-auto">
+          <div className="flex gap-2 items-center">
             <AlbumFilterSort
               onSortChange={handleSortChange}
               onFilterChange={handleFilterChange}
@@ -236,6 +236,13 @@ export default function NoSkipsPage() {
               uniqueGenres={uniqueGenres}
               uniqueYears={uniqueYears}
             />
+            
+            <button 
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
+              onClick={handleShare}
+            >
+              share
+            </button>
           </div>
           
           <Dialog>
@@ -369,14 +376,7 @@ export default function NoSkipsPage() {
           ))}
         </AlbumGrid>
         
-        <div className="flex justify-center mt-6 mb-4">
-          <button 
-            className="bg-[#1DB954] hover:bg-[#1ed760] text-white text-xs py-1 px-4 rounded-full"
-            onClick={handleShare}
-          >
-            Share
-          </button>
-        </div>
+        {/* Share button moved to the top toolbar */}
         
         {/* Top Four Dialog */}
         <TopFourDialog

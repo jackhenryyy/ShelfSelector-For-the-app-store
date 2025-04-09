@@ -105,8 +105,11 @@ export default function HomePage() {
                 />
               </div>
             ) : (
-              <div className="w-64 h-64 bg-gray-100 flex items-center justify-center text-gray-500">
-                <p className="font-mono">No albums available</p>
+              <div className="w-64 h-64 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
+                <p className="font-mono text-gray-500 mb-4">No albums available</p>
+                <p className="font-mono text-xs text-gray-500">
+                  To get started, add some albums to "the queue" and "no skips" and then click the shuffle button!
+                </p>
               </div>
             )}
           </div>
