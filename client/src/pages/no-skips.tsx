@@ -224,8 +224,8 @@ export default function NoSkipsPage() {
       subtitle={`${noSkipsAlbums?.length || 0} albums`}
     >
       <div className="p-4 pt-0">
-        <div className="flex justify-between items-center mb-4">
-          <div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+          <div className="w-full sm:w-auto">
             <AlbumFilterSort
               onSortChange={handleSortChange}
               onFilterChange={handleFilterChange}
@@ -240,53 +240,53 @@ export default function NoSkipsPage() {
           
           <Dialog>
             <DialogTrigger asChild>
-              <button className="text-xs border border-black/20 rounded p-1 px-2">+ add album</button>
+              <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
+                + add album
+              </button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogTitle>Add to No Skips</DialogTitle>
-              <DialogDescription>
-                Search for an album to add to your No Skips collection
-              </DialogDescription>
+            <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+              <DialogTitle className="font-mono">Add an album</DialogTitle>
               
               <div className="flex items-center gap-2 mt-4">
-                <Input
+                <input
                   placeholder="Search albums..."
                   value={searchQuery}
                   onChange={handleSearchInputChange}
                   onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+                  className="w-full p-2 border border-black font-mono text-sm"
                 />
-                <Button 
-                  size="sm" 
-                  onClick={handleSearchSubmit} 
+                <button 
+                  className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+                  onClick={handleSearchSubmit}
                   disabled={isSearching}
                 >
                   <SearchIcon className="h-4 w-4 mr-1" />
-                  {isSearching ? "Searching..." : "Search"}
-                </Button>
+                  {isSearching ? "..." : "Search"}
+                </button>
               </div>
               
               {searchResults && searchResults.length > 0 && (
                 <div className="mt-4 max-h-80 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-3">
                     {searchResults.map((album) => (
-                      <div key={album.id} className="border rounded p-2">
-                        <AlbumArt
-                          src={album.imageUrl}
-                          alt={album.name}
-                          size="small"
-                        />
-                        <div className="mt-1">
-                          <div className="text-xs font-medium truncate">{album.name}</div>
-                          <div className="text-xs text-gray-500 truncate">{album.artist}</div>
+                      <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <div className="flex items-center gap-2">
+                          <AlbumArt
+                            src={album.imageUrl}
+                            alt={album.name}
+                            size="small"
+                          />
+                          <div>
+                            <div className="font-mono text-sm">{album.name}</div>
+                            <div className="font-mono text-xs text-gray-500">{album.artist}</div>
+                          </div>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full mt-2 text-xs"
+                        <button 
+                          className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
                           onClick={() => handleAddToNoSkips(album.id)}
                         >
                           Add
-                        </Button>
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -387,61 +387,64 @@ export default function NoSkipsPage() {
           onSave={handleTopFourDialogSave}
         />
         
-        {/* Album Search Dialog */}
+        {/* Album Search Dialog (Optional secondary Dialog - keep for now) */}
         <Dialog open={showSearch} onOpenChange={setShowSearch}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogTitle>Add to No Skips</DialogTitle>
-            <DialogDescription>
-              Search for an album to add to your No Skips collection.
-            </DialogDescription>
+          <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+            <DialogTitle className="font-mono">Add an album</DialogTitle>
             
-            <form onSubmit={handleSearchSubmit} className="flex mb-4">
-              <Input
-                placeholder="Search for an album..."
+            <div className="flex items-center gap-2 mt-4">
+              <input
+                placeholder="Search albums..."
                 value={searchQuery}
                 onChange={handleSearchInputChange}
-                className="mr-2"
+                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+                className="w-full p-2 border border-black font-mono text-sm"
               />
-              <Button type="submit" size="sm">
-                <SearchIcon size={16} />
-              </Button>
-            </form>
+              <button 
+                className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+                onClick={handleSearchSubmit}
+                disabled={isSearching}
+              >
+                <SearchIcon className="h-4 w-4 mr-1" />
+                {isSearching ? "..." : "Search"}
+              </button>
+            </div>
             
-            <div className="max-h-[300px] overflow-y-auto">
+            <div className="max-h-[300px] overflow-y-auto mt-4">
               {isSearching ? (
                 <div className="py-8 flex justify-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
                 </div>
               ) : searchResults && searchResults.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-3">
                   {searchResults.map((album) => (
-                    <div key={album.id} className="border rounded p-2">
-                      <AlbumArt
-                        src={album.imageUrl}
-                        alt={album.name}
-                        size="small"
-                      />
-                      <div className="mt-1">
-                        <div className="text-xs font-medium truncate">{album.name}</div>
-                        <div className="text-xs text-gray-500 truncate">{album.artist}</div>
+                    <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                      <div className="flex items-center gap-2">
+                        <AlbumArt
+                          src={album.imageUrl}
+                          alt={album.name}
+                          size="small"
+                        />
+                        <div>
+                          <div className="font-mono text-sm">{album.name}</div>
+                          <div className="font-mono text-xs text-gray-500">{album.artist}</div>
+                        </div>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-2 text-xs"
+                      <button 
+                        className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
                         onClick={() => handleAddToNoSkips(album.id)}
                       >
                         Add
-                      </Button>
+                      </button>
                     </div>
                   ))}
                 </div>
               ) : searchQuery ? (
-                <div className="py-8 text-center text-gray-500">
+                <div className="py-8 text-center text-gray-500 font-mono">
                   No results found for "{searchQuery}"
                 </div>
               ) : (
-                <div className="py-8 text-center text-gray-500">
+                <div className="py-8 text-center text-gray-500 font-mono">
                   Search for an album to add to your collection
                 </div>
               )}

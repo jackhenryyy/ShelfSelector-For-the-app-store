@@ -199,11 +199,13 @@ export default function ListPage() {
                       <div className="flex-grow">
                         <h3 className="font-mono text-sm">{review.album.name}</h3>
                         <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
-                        <div className="mt-1 flex flex-col gap-0.5">
-                          <StarRating rating={review.rating} size="small" readonly />
-                          {review.review && (
-                            <p className="font-mono text-xs line-clamp-2 mt-1">{review.review}</p>
-                          )}
+                        <div className="mt-1">
+                          <div className="flex items-center gap-2">
+                            <StarRating rating={review.rating} size="small" readonly />
+                            {review.review && (
+                              <p className="font-mono text-xs line-clamp-1">{review.review}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
@@ -275,7 +277,7 @@ export default function ListPage() {
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal font-mono",
+                    "w-full justify-start text-left font-normal font-mono border-black",
                     !editListenedAt && "text-muted-foreground"
                   )}
                 >
@@ -283,12 +285,23 @@ export default function ListPage() {
                   {editListenedAt ? format(editListenedAt, "PPP") : "Select date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0 border border-black rounded-none">
                 <Calendar
                   mode="single"
                   selected={editListenedAt}
                   onSelect={setEditListenedAt}
                   initialFocus
+                  className="font-mono"
+                  classNames={{
+                    day_today: "bg-black text-white font-medium",
+                    day_selected: "bg-black text-white font-medium",
+                    day: "h-8 w-8 p-0 font-normal border border-gray-200 aspect-square",
+                    head_cell: "font-mono text-xs font-normal",
+                    cell: "text-center text-xs p-0 relative focus-within:relative first:text-gray-500 last:text-gray-500",
+                    caption: "flex justify-center pt-1 relative items-center font-mono",
+                    nav_button: "border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-100",
+                    table: "border-collapse space-y-1 font-mono"
+                  }}
                 />
               </PopoverContent>
             </Popover>
