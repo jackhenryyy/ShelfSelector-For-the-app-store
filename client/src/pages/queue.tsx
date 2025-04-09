@@ -236,6 +236,10 @@ export default function QueuePage() {
       <div className="p-4 pt-0">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           {/* Filter and Sort Controls */}
+          <div className="font-mono text-xs text-black/60">
+            {filteredQueueAlbums.length} album{filteredQueueAlbums.length !== 1 ? 's' : ''}
+          </div>
+          
           <div className="flex gap-2 items-center">
             <AlbumFilterSort
               onSortChange={setSortOption}
@@ -247,9 +251,8 @@ export default function QueuePage() {
               uniqueGenres={uniqueGenres}
               uniqueYears={uniqueYears}
             />
-          </div>
-          
-          <Dialog>
+            
+            <Dialog>
             <DialogTrigger asChild>
               <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
                 + add album
