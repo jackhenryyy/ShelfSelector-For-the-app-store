@@ -80,25 +80,6 @@ export function AlbumFilterSort({
               filter
             </button>
           )}
-          
-          <select 
-            value={selectedSort}
-            onChange={handleSortChange}
-            className="px-3 py-1 border border-black font-mono text-xs appearance-none bg-white"
-          >
-            <option value="date-added-newest">newest first</option>
-            <option value="date-added-oldest">oldest first</option>
-            <option value="title-asc">title a-z</option>
-            <option value="title-desc">title z-a</option>
-            <option value="artist-asc">artist a-z</option>
-            <option value="artist-desc">artist z-a</option>
-            <option value="year-newest">year (newest)</option>
-            <option value="year-oldest">year (oldest)</option>
-            <option value="rating-highest">rating (highest)</option>
-            <option value="rating-lowest">rating (lowest)</option>
-            <option value="energy-highest">energy (highest)</option>
-            <option value="energy-lowest">energy (lowest)</option>
-          </select>
         </div>
       </div>
       

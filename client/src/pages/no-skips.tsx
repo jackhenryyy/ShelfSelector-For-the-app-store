@@ -11,6 +11,12 @@ import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums, useSpotifyAuth } from "@/hooks/use-spotify";
 import { useToast } from "@/hooks/use-toast";
 import { TopFourDialog } from "@/components/ui/top-four-dialog";
+import { 
+  AlbumFilterSort, 
+  SortOption, 
+  FilterOption, 
+  filterAlbums
+} from "@/components/ui/album-filter-sort";
 
 export default function NoSkipsPage() {
   // Hooks with contexts first
@@ -23,35 +29,82 @@ export default function NoSkipsPage() {
   const userId = user?.id;
   
   // All useState hooks together
-  const [sortOrder, setSortOrder] = useState<string>("date");
+  const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
+  const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   const [isEditingTopFour, setIsEditingTopFour] = useState(false);
   const [selectedForTopFour, setSelectedForTopFour] = useState<{albumId: number, position: number}[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [topFourDialogOpen, setTopFourDialogOpen] = useState(false);
   
-  // Function to handle sorting
-  const handleSort = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortOrder(e.target.value);
+  // Function to handle sorting and filtering
+  const handleSortChange = (sort: SortOption) => {
+    setSortOption(sort);
   };
   
-  // Get sorted no skips albums (excluding top four)
-  const sortedNoSkipsAlbums = noSkipsAlbums 
-    ? [...noSkipsAlbums]
-        .filter(album => !album.isTopFour)
-        .sort((a, b) => {
-          switch (sortOrder) {
-            case "A - Z":
-              return a.album.name.localeCompare(b.album.name);
-            case "genre":
-              return (a.album.genre || "").localeCompare(b.album.genre || "");
-            case "year":
-              return (a.album.releaseYear || 0) - (b.album.releaseYear || 0);
-            case "date":
-            default:
-              return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
-          }
-        })
+  const handleFilterChange = (filter: FilterOption) => {
+    setFilterOptions(filter);
+  };
+  
+  // Get unique artists, genres, and years for filters
+  const uniqueArtists: string[] = [];
+  const uniqueGenres: (string | null)[] = [];
+  const uniqueYears: (number | null)[] = [];
+  
+  if (noSkipsAlbums) {
+    // Build unique artists list
+    const artistsSet = new Set<string>();
+    noSkipsAlbums.forEach(a => {
+      if (a.album.artist) artistsSet.add(a.album.artist);
+    });
+    uniqueArtists.push(...Array.from(artistsSet));
+    
+    // Build unique genres list
+    const genresSet = new Set<string | null>();
+    noSkipsAlbums.forEach(a => {
+      genresSet.add(a.album.genre);
+    });
+    uniqueGenres.push(...Array.from(genresSet));
+    
+    // Build unique years list
+    const yearsSet = new Set<number | null>();
+    noSkipsAlbums.forEach(a => {
+      yearsSet.add(a.album.releaseYear);
+    });
+    uniqueYears.push(...Array.from(yearsSet));
+  }
+  
+  // Get filtered and sorted no skips albums (excluding top four)
+  const filteredNoSkipsAlbums = noSkipsAlbums 
+    ? filterAlbums(
+        [...noSkipsAlbums].filter(album => !album.isTopFour),
+        filterOptions
+      )
+    : [];
+    
+  // Sort after filtering
+  const sortedNoSkipsAlbums = filteredNoSkipsAlbums.length > 0
+    ? [...filteredNoSkipsAlbums].sort((a, b) => {
+        switch (sortOption) {
+          case "title-asc":
+            return a.album.name.localeCompare(b.album.name);
+          case "title-desc":
+            return b.album.name.localeCompare(a.album.name);
+          case "artist-asc":
+            return a.album.artist.localeCompare(b.album.artist);
+          case "artist-desc":
+            return b.album.artist.localeCompare(a.album.artist);
+          case "year-newest":
+            return (b.album.releaseYear || 0) - (a.album.releaseYear || 0);
+          case "year-oldest":
+            return (a.album.releaseYear || 0) - (b.album.releaseYear || 0);
+          case "date-added-newest":
+          default:
+            return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+          case "date-added-oldest":
+            return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
+        }
+      })
     : [];
   
   // Function to handle opening album in Spotify
@@ -172,17 +225,17 @@ export default function NoSkipsPage() {
     >
       <div className="p-4 pt-0">
         <div className="flex justify-between items-center mb-4">
-          <div className="w-44">
-            <select 
-              className="w-full font-mono text-base border border-black rounded p-2"
-              value={sortOrder}
-              onChange={handleSort}
-            >
-              <option value="date">sort</option>
-              <option value="A - Z">A - Z</option>
-              <option value="genre">genre</option>
-              <option value="year">year</option>
-            </select>
+          <div>
+            <AlbumFilterSort
+              onSortChange={handleSortChange}
+              onFilterChange={handleFilterChange}
+              selectedSort={sortOption}
+              showFilterOptions={true}
+              totalCount={filteredNoSkipsAlbums.length}
+              uniqueArtists={uniqueArtists}
+              uniqueGenres={uniqueGenres}
+              uniqueYears={uniqueYears}
+            />
           </div>
           
           <Dialog>

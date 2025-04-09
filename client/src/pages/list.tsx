@@ -119,6 +119,12 @@ export default function ListPage() {
   const groupedReviews = !searchQuery
     ? groupAlbumsByMonth(filteredReviews)
     : { "search results": filteredReviews };
+    
+  // Helper function to get day from date string
+  const getDay = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.getDate();
+  };
 
   // Sort the month-year keys in reverse chronological order
   const sortedMonthYearKeys = Object.keys(groupedReviews).sort((a, b) => {
@@ -161,17 +167,17 @@ export default function ListPage() {
             sortedMonthYearKeys.map(monthYear => (
               <div key={monthYear}>
                 {/* Month-Year Header */}
-                <div className="bg-gray-100 py-2 px-4 mb-4 font-mono text-sm">
-                  {monthYear}
+                <div className="bg-gray-100 py-2 px-4 mb-4 font-mono text-sm lowercase">
+                  {monthYear.toLowerCase()}
                 </div>
                 
                 {/* Reviews for this month */}
                 <div className="space-y-4">
                   {groupedReviews[monthYear].map((review, index) => (
                     <div key={review.id} className="flex gap-3">
-                      {/* Position Number in Box */}
+                      {/* Day Number in Box */}
                       <div className="w-10 h-10 flex items-center justify-center border border-black">
-                        <div className="font-mono text-sm">{index + 1}</div>
+                        <div className="font-mono text-sm">{review.listenedAt ? getDay(review.listenedAt) : "--"}</div>
                       </div>
                       
                       {/* Album Art */}
@@ -193,8 +199,11 @@ export default function ListPage() {
                       <div className="flex-grow">
                         <h3 className="font-mono text-sm">{review.album.name}</h3>
                         <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
-                        <div className="mt-1">
+                        <div className="mt-1 flex flex-col gap-0.5">
                           <StarRating rating={review.rating} size="small" readonly />
+                          {review.review && (
+                            <p className="font-mono text-xs line-clamp-2 mt-1">{review.review}</p>
+                          )}
                         </div>
                       </div>
                       
