@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useQueueAlbums, useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
@@ -19,7 +18,7 @@ import {
 // Helper function for sorting adapted to our specific needs
 function sortQueueAlbums(albums: any[], sortOption: SortOption) {
   if (!albums) return [];
-  
+
   return [...albums].sort((a, b) => {
     switch (sortOption) {
       case "title-asc":
@@ -47,24 +46,24 @@ function sortQueueAlbums(albums: any[], sortOption: SortOption) {
 function filterQueueAlbums(albums: any[], filter: FilterOption) {
   if (!albums) return [];
   if (!filter || Object.keys(filter).length === 0) return albums;
-  
+
   return albums.filter(item => {
     // Filter by artist
     if (filter.artist && item.album.artist !== filter.artist) {
       return false;
     }
-    
+
     // Filter by year
     if (filter.year !== undefined && filter.year !== null && 
         item.album.releaseYear !== filter.year) {
       return false;
     }
-    
+
     // Filter by genre
     if (filter.genre && item.album.genre !== filter.genre) {
       return false;
     }
-    
+
     return true;
   });
 }
@@ -75,7 +74,7 @@ export default function QueuePage() {
   const { createReview } = useAlbumReviews();
   const { searchAlbums } = useSpotifyAlbums();
   const { toast } = useToast();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -85,23 +84,25 @@ export default function QueuePage() {
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
-  
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+
   // Update filtered queue albums when sorting or filtering changes
   useEffect(() => {
     if (!queueAlbums) return;
-    
+
     // Apply sorting and filtering
     let processed = [...queueAlbums];
     processed = sortQueueAlbums(processed, sortOption);
     processed = filterQueueAlbums(processed, filterOptions);
-    
+
     setFilteredQueueAlbums(processed);
   }, [queueAlbums, sortOption, filterOptions]);
-  
+
   // Function to handle album click
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
     event.preventDefault();
-    
+
     // Show context menu at click position
     setShowContextMenu({
       id: albumId,
@@ -109,18 +110,18 @@ export default function QueuePage() {
       y: event.clientY
     });
   };
-  
+
   // Function to close context menu
   const handleCloseContextMenu = () => {
     setShowContextMenu(null);
   };
-  
+
   // Function to play album on Spotify
   const handlePlayOnSpotify = (spotifyId: string) => {
     openInSpotify(spotifyId);
     handleCloseContextMenu();
   };
-  
+
   // Function to add to No Skips
   const handleAddToNoSkips = (albumId: number) => {
     addToNoSkips({ albumId, isTopFour: false });
@@ -130,7 +131,7 @@ export default function QueuePage() {
     });
     handleCloseContextMenu();
   };
-  
+
   // Function to open the review dialog
   const handleOpenReviewDialog = (albumId: number) => {
     const album = queueAlbums?.find(qa => qa.albumId === albumId)?.album;
@@ -140,11 +141,11 @@ export default function QueuePage() {
       handleCloseContextMenu();
     }
   };
-  
+
   // Function to handle submitting a review
   const handleSubmitReview = async (rating: number, review: string) => {
     if (!selectedAlbum) return;
-    
+
     try {
       // Create the review in the database
       await createReview({
@@ -152,15 +153,15 @@ export default function QueuePage() {
         rating,
         review: review || "",
       });
-      
+
       // Remove the album from the queue
       removeFromQueue(selectedAlbum.id);
-      
+
       toast({
         title: "Review submitted",
         description: "Album has been added to your list and removed from your queue",
       });
-      
+
       setSelectedAlbum(null);
     } catch (error) {
       console.error("Error submitting review:", error);
@@ -171,11 +172,11 @@ export default function QueuePage() {
       });
     }
   };
-  
+
   // Function to handle album search
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsSearching(true);
     try {
       const results = await searchAlbums(searchQuery);
@@ -191,7 +192,7 @@ export default function QueuePage() {
       setIsSearching(false);
     }
   };
-  
+
   // Function to add album to queue
   const handleAddToQueue = (albumId: number) => {
     addToQueue(albumId);
@@ -205,7 +206,7 @@ export default function QueuePage() {
   const uniqueArtists: string[] = [];
   const uniqueGenres: (string | null)[] = [];
   const uniqueYears: (number | null)[] = [];
-  
+
   if (queueAlbums) {
     // Build unique artists list
     const artistsSet = new Set<string>();
@@ -213,14 +214,14 @@ export default function QueuePage() {
       if (a.album.artist) artistsSet.add(a.album.artist);
     });
     uniqueArtists.push(...artistsSet);
-    
+
     // Build unique genres list
     const genresSet = new Set<string | null>();
     queueAlbums.forEach(a => {
       genresSet.add(a.album.genre);
     });
     uniqueGenres.push(...genresSet);
-    
+
     // Build unique years list
     const yearsSet = new Set<number | null>();
     queueAlbums.forEach(a => {
@@ -240,7 +241,7 @@ export default function QueuePage() {
           <div className="font-mono text-xs text-black/60">
             {filteredQueueAlbums.length} album{filteredQueueAlbums.length !== 1 ? 's' : ''}
           </div>
-          
+
           <div className="flex gap-2 items-center">
             <AlbumFilterSort
               onSortChange={setSortOption}
@@ -252,16 +253,16 @@ export default function QueuePage() {
               uniqueGenres={uniqueGenres}
               uniqueYears={uniqueYears}
             />
-            
+
             <Dialog>
               <DialogTrigger asChild>
-                <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
+                <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm min-w-[100px]">
                   + add album
                 </button>
               </DialogTrigger>
               <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
                 <DialogTitle className="font-mono">Add an album</DialogTitle>
-                
+
                 <div className="flex items-center gap-2 mt-4">
                   <input
                     placeholder="Search albums..."
@@ -279,7 +280,7 @@ export default function QueuePage() {
                     {isSearching ? "..." : "Search"}
                   </button>
                 </div>
-                
+
                 {searchResults.length > 0 && (
                   <div className="mt-4 max-h-[50vh] overflow-y-auto">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -309,7 +310,7 @@ export default function QueuePage() {
             </Dialog>
           </div>
         </div>
-        
+
         <AlbumGrid>
           {filteredQueueAlbums.map((queueAlbum) => (
             <div 
@@ -358,7 +359,7 @@ export default function QueuePage() {
           ))}
         </AlbumGrid>
       </div>
-      
+
       {/* Context Menu */}
       {showContextMenu && (
         <>
@@ -402,7 +403,7 @@ export default function QueuePage() {
           </div>
         </>
       )}
-      
+
       {/* Review Dialog */}
       {selectedAlbum && (
         <ReviewDialog
