@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useQueueAlbums, useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
@@ -253,59 +254,60 @@ export default function QueuePage() {
             />
             
             <Dialog>
-            <DialogTrigger asChild>
-              <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
-                + add album
-              </button>
-            </DialogTrigger>
-            <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
-              <DialogTitle className="font-mono">Add an album</DialogTitle>
-              
-              <div className="flex items-center gap-2 mt-4">
-                <input
-                  placeholder="Search albums..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full p-2 border border-black font-mono text-sm"
-                />
-                <button 
-                  className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
-                  onClick={handleSearch} 
-                  disabled={isSearching}
-                >
-                  <SearchIcon className="h-4 w-4 mr-1" />
-                  {isSearching ? "..." : "Search"}
+              <DialogTrigger asChild>
+                <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
+                  + add album
                 </button>
-              </div>
-              
-              {searchResults.length > 0 && (
-                <div className="mt-4 max-h-[50vh] overflow-y-auto">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {searchResults.map((album) => (
-                      <div key={album.id} className="border border-black p-2">
-                        <AlbumArt
-                          src={album.imageUrl}
-                          alt={album.name}
-                          size="small"
-                        />
-                        <div className="mt-1">
-                          <div className="font-mono text-xs truncate">{album.name}</div>
-                          <div className="font-mono text-xs text-black/60 truncate">{album.artist}</div>
-                        </div>
-                        <button 
-                          className="w-full mt-2 px-2 py-1 border border-black bg-white font-mono text-xs"
-                          onClick={() => handleAddToQueue(album.id)}
-                        >
-                          Add to Queue
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+              </DialogTrigger>
+              <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+                <DialogTitle className="font-mono">Add an album</DialogTitle>
+                
+                <div className="flex items-center gap-2 mt-4">
+                  <input
+                    placeholder="Search albums..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="w-full p-2 border border-black font-mono text-sm"
+                  />
+                  <button 
+                    className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+                    onClick={handleSearch} 
+                    disabled={isSearching}
+                  >
+                    <SearchIcon className="h-4 w-4 mr-1" />
+                    {isSearching ? "..." : "Search"}
+                  </button>
                 </div>
-              )}
-            </DialogContent>
-          </Dialog>
+                
+                {searchResults.length > 0 && (
+                  <div className="mt-4 max-h-[50vh] overflow-y-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {searchResults.map((album) => (
+                        <div key={album.id} className="border border-black p-2">
+                          <AlbumArt
+                            src={album.imageUrl}
+                            alt={album.name}
+                            size="small"
+                          />
+                          <div className="mt-1">
+                            <div className="font-mono text-xs truncate">{album.name}</div>
+                            <div className="font-mono text-xs text-black/60 truncate">{album.artist}</div>
+                          </div>
+                          <button 
+                            className="w-full mt-2 px-2 py-1 border border-black bg-white font-mono text-xs"
+                            onClick={() => handleAddToQueue(album.id)}
+                          >
+                            Add to Queue
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         
         <AlbumGrid>
