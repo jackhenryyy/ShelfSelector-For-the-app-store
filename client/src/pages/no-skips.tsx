@@ -224,8 +224,9 @@ export default function NoSkipsPage() {
       subtitle={`${noSkipsAlbums?.length || 0} albums`}
     >
       <div className="p-4 pt-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-          <div className="flex gap-2 items-center">
+        <div className="flex justify-between items-center mb-4">
+          {/* Filter Controls and Share Button */}
+          <div className="flex gap-2">
             <AlbumFilterSort
               onSortChange={handleSortChange}
               onFilterChange={handleFilterChange}
