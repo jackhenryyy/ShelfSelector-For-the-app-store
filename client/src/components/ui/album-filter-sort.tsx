@@ -65,22 +65,16 @@ export function AlbumFilterSort({
   };
 
   return (
-    <div className="w-full mb-4">
-      <div className="flex justify-between items-center">
-        <div className="font-mono text-xs text-black/60">
-          {totalCount} album{totalCount !== 1 ? 's' : ''}
-        </div>
-        
-        <div className="flex gap-2">
-          {showFilterOptions && (
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="px-3 py-1 border border-black font-mono text-xs"
-            >
-              filter
-            </button>
-          )}
-        </div>
+    <div>
+      <div>
+        {showFilterOptions && (
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
+          >
+            filter
+          </button>
+        )}
       </div>
       
       {isFilterOpen && showFilterOptions && (
