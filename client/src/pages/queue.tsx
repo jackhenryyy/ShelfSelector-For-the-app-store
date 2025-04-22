@@ -85,6 +85,8 @@ export default function QueuePage() {
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isCsvUploading, setIsCsvUploading] = useState(false);
   
   // Update filtered queue albums when sorting or filtering changes
   useEffect(() => {
@@ -200,6 +202,109 @@ export default function QueuePage() {
       description: "Album has been added to your Queue",
     });
   };
+  
+  // Function to handle CSV upload
+  const handleCsvUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setIsCsvUploading(true);
+    
+    try {
+      // Read the file
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
+      
+      // Parse CSV
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      
+      // Validate headers (should have at least artist and album)
+      if (!headers.includes('artist') || !headers.includes('album')) {
+        throw new Error('CSV must have "artist" and "album" columns');
+      }
+      
+      // Process albums
+      const albumsToAdd: { artist: string; album: string }[] = [];
+      const errors: string[] = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length !== headers.length) {
+          errors.push(`Line ${i + 1} has a different number of columns than the header`);
+          continue;
+        }
+        
+        const rowData: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          rowData[header] = values[index];
+        });
+        
+        if (!rowData.artist || !rowData.album) {
+          errors.push(`Line ${i + 1} is missing artist or album name`);
+          continue;
+        }
+        
+        albumsToAdd.push({
+          artist: rowData.artist,
+          album: rowData.album
+        });
+      }
+      
+      if (errors.length > 0) {
+        throw new Error(`CSV has ${errors.length} errors. First error: ${errors[0]}`);
+      }
+      
+      // Search and add albums
+      let addedCount = 0;
+      let failedCount = 0;
+      
+      toast({
+        title: "Processing CSV",
+        description: `Found ${albumsToAdd.length} albums to import...`,
+      });
+      
+      for (const albumData of albumsToAdd) {
+        try {
+          // Search for the album
+          const searchQuery = `${albumData.artist} ${albumData.album}`;
+          const searchResults = await searchAlbums(searchQuery);
+          
+          if (searchResults && searchResults.length > 0) {
+            // Add the first matching album to queue
+            await addToQueue(searchResults[0].id);
+            addedCount++;
+          } else {
+            failedCount++;
+          }
+        } catch (err) {
+          console.error(`Error adding album ${albumData.album} by ${albumData.artist}:`, err);
+          failedCount++;
+        }
+      }
+      
+      toast({
+        title: "CSV Import Complete",
+        description: `Successfully added ${addedCount} albums to your queue. ${failedCount} albums failed.`,
+        variant: failedCount > 0 ? "default" : "default"
+      });
+      
+    } catch (error) {
+      console.error("CSV upload error:", error);
+      toast({
+        title: "CSV Import Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCsvUploading(false);
+      if (event.target) event.target.value = '';
+    }
+  };
 
   // Get unique artists, genres, and years for filters
   const uniqueArtists: string[] = [];
@@ -235,20 +340,48 @@ export default function QueuePage() {
       subtitle=""
     >
       <div className="p-4 pt-0">
+        <div className="mb-1 font-mono text-xs text-black/60">
+          {filteredQueueAlbums.length} albums
+        </div>
         <div className="flex justify-between items-center mb-4">
-          {/* Filter Controls */}
-          <div>
-            <AlbumFilterSort
-              onSortChange={setSortOption}
-              onFilterChange={setFilterOptions}
-              selectedSort={sortOption}
-              showFilterOptions={true}
-              totalCount={filteredQueueAlbums.length}
-              uniqueArtists={uniqueArtists}
-              uniqueGenres={uniqueGenres}
-              uniqueYears={uniqueYears}
+          {/* Filter Controls and Import CSV */}
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
+            >
+              filter
+            </button>
+            
+            <label 
+              htmlFor="csv-upload"
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm cursor-pointer"
+            >
+              import csv
+            </label>
+            <input 
+              id="csv-upload"
+              type="file"
+              accept=".csv"
+              onChange={handleCsvUpload}
+              className="hidden"
             />
           </div>
+          
+          {isFilterOpen && (
+            <div className="absolute z-10 mt-2 p-3 border border-black bg-white/90" style={{ top: '135px', left: '20px' }}>
+              <AlbumFilterSort
+                onSortChange={setSortOption}
+                onFilterChange={setFilterOptions}
+                selectedSort={sortOption}
+                showFilterOptions={true}
+                totalCount={filteredQueueAlbums.length}
+                uniqueArtists={uniqueArtists}
+                uniqueGenres={uniqueGenres}
+                uniqueYears={uniqueYears}
+              />
+            </div>
+          )}
           
           {/* Add Album Button */}
           <Dialog>
