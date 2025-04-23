@@ -18,8 +18,8 @@ export type SortOption =
 
 export type FilterOption = {
   artist?: string;
-  year?: number | null;
-  genre?: string | null;
+  year?: number;
+  genre?: string;
   rating?: number;
   energyLevel?: 'high' | 'medium' | 'low';
 }
@@ -31,8 +31,8 @@ interface AlbumFilterSortProps {
   showFilterOptions?: boolean;
   totalCount: number;
   uniqueArtists?: string[];
-  uniqueGenres?: (string | null)[];
-  uniqueYears?: (number | null)[];
+  uniqueGenres?: string[];
+  uniqueYears?: number[];
 }
 
 export function AlbumFilterSort({
@@ -119,15 +119,14 @@ export function AlbumFilterSort({
                 <label className="block font-mono text-xs mb-1">year</label>
                 <select 
                   value={filterOptions.year || ""}
-                  onChange={(e) => handleFilterChange("year", e.target.value ? parseInt(e.target.value) : null)}
+                  onChange={(e) => handleFilterChange("year", e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-2 py-1 border border-black font-mono text-xs"
                 >
                   <option value="">all years</option>
                   {uniqueYears
-                    .filter(year => year !== null)
-                    .sort((a, b) => (b || 0) - (a || 0))
+                    .sort((a, b) => b - a)
                     .map(year => (
-                      <option key={year} value={year || ""}>{year}</option>
+                      <option key={year} value={year}>{year}</option>
                     ))
                   }
                 </select>
