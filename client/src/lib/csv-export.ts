@@ -10,6 +10,7 @@ export interface CSVAlbumData {
   album: string;
   year?: number;
   genre?: string;
+  spotifyUrl?: string;
 }
 
 /**
@@ -38,6 +39,7 @@ export function parseCSVToAlbums(csvText: string): CSVAlbumData[] {
   // Get indices for optional fields
   const yearIndex = headers.indexOf('year');
   const genreIndex = headers.indexOf('genre');
+  const spotifyUrlIndex = headers.indexOf('spotify_url');
   
   // Process each line (skip header)
   for (let i = 1; i < lines.length; i++) {
@@ -91,6 +93,10 @@ export function parseCSVToAlbums(csvText: string): CSVAlbumData[] {
       album.genre = values[genreIndex]?.replace(/^"|"$/g, '') || '';
     }
     
+    if (spotifyUrlIndex !== -1 && values[spotifyUrlIndex]) {
+      album.spotifyUrl = values[spotifyUrlIndex]?.replace(/^"|"$/g, '') || '';
+    }
+    
     // Only add albums with both artist and album name
     if (album.artist && album.album) {
       albums.push(album);
@@ -115,7 +121,7 @@ export function exportAlbumsToCSV(
   includeTopFour: boolean = false
 ): void {
   // Define headers based on what data to include
-  const headers = ['artist', 'album', 'year', 'genre'];
+  const headers = ['artist', 'album', 'year', 'genre', 'spotify_url'];
   
   if (includeRatings) {
     headers.push('rating', 'review', 'listened_date');
@@ -134,6 +140,7 @@ export function exportAlbumsToCSV(
     const albumData = album.album || album;
     const releaseYear = albumData.releaseYear || '';
     const genre = albumData.genre || '';
+    const spotifyUrl = albumData.spotifyId ? `https://open.spotify.com/album/${albumData.spotifyId}` : '';
     
     // Basic data for all exports
     let row = [
@@ -141,7 +148,8 @@ export function exportAlbumsToCSV(
       `"${albumData.artist.replace(/"/g, '""')}"`,
       `"${albumData.name.replace(/"/g, '""')}"`,
       releaseYear,
-      `"${genre.replace(/"/g, '""')}"`
+      `"${genre.replace(/"/g, '""')}"`,
+      `"${spotifyUrl}"`
     ];
     
     // Add rating info if requested
