@@ -128,25 +128,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accessToken = await getClientCredentialsToken();
       
       // Get new releases instead of saved albums
-      const response = await fetch('https://api.spotify.com/v1/browse/new-releases?limit=20', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
+      try {
+        const response = await fetch('https://api.spotify.com/v1/browse/new-releases?limit=20', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch new releases: ${response.statusText}`);
+          const errorBody = await response.text();
+          console.error('Error response:', errorBody);
+          throw new Error(`Failed to fetch new releases: ${response.statusText}`);
         }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch new releases: ${response.statusText}`);
+        
+        const data = await response.json();
+        
+        const albums = [];
+        for (const item of data.albums.items) {
+          try {
+            const album = await processAndSaveAlbum(item, accessToken);
+            albums.push(album);
+          } catch (albumError) {
+            console.error(`Error processing album ${item.id}:`, albumError);
+            // Continue with next album
+          }
+        }
+        
+        res.json(albums);
+      } catch (fetchError) {
+        console.error('Error fetching new releases:', fetchError);
+        
+        // Fallback: if we can't get new releases, just return existing albums from our database
+        const existingAlbums = await storage.searchAlbums("");
+        res.json(existingAlbums.slice(0, 20)); // Return up to 20 albums
       }
-      
-      const data = await response.json();
-      
-      const albums = [];
-      for (const item of data.albums.items) {
-        const album = await processAndSaveAlbum(item, accessToken);
-        albums.push(album);
-      }
-      
-      res.json(albums);
     } catch (error) {
       console.error('Get saved albums error:', error);
       res.status(500).json({ message: 'Failed to fetch albums' });

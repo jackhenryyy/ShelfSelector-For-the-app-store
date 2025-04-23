@@ -198,32 +198,48 @@ export async function searchSpotifyAlbums(accessToken: string, query: string, li
 
 // Get album details from Spotify
 export async function getAlbumDetails(accessToken: string, albumId: string) {
-  const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      console.error(`Failed to get album details for ID ${albumId}: ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error('Error response:', errorBody);
+      throw new Error(`Failed to get album details: ${response.statusText}`);
     }
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to get album details: ${response.statusText}`);
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching album ${albumId}:`, error);
+    throw error;
   }
-  
-  return await response.json();
 }
 
 // Get artist details from Spotify to fetch genres
 export async function getArtistDetails(accessToken: string, artistId: string) {
-  const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      console.error(`Failed to get artist details for ID ${artistId}: ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error('Error response:', errorBody);
+      throw new Error(`Failed to get artist details: ${response.statusText}`);
     }
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to get artist details: ${response.statusText}`);
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching artist ${artistId}:`, error);
+    throw error;
   }
-  
-  return await response.json();
 }
 
 // Process album data and save to storage
