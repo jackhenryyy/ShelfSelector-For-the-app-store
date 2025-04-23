@@ -292,8 +292,8 @@ export default function QueuePage() {
   
   // Get unique artists, genres, and years for filters
   const uniqueArtists: string[] = [];
-  const uniqueGenres: (string | null)[] = [];
-  const uniqueYears: (number | null)[] = [];
+  const uniqueGenres: string[] = [];
+  const uniqueYears: number[] = [];
   
   if (queueAlbums) {
     // Build unique artists list
@@ -301,21 +301,21 @@ export default function QueuePage() {
     queueAlbums.forEach(a => {
       if (a.album.artist) artistsSet.add(a.album.artist);
     });
-    uniqueArtists.push(...artistsSet);
+    uniqueArtists.push(...Array.from(artistsSet));
     
     // Build unique genres list
-    const genresSet = new Set<string | null>();
+    const genresSet = new Set<string>();
     queueAlbums.forEach(a => {
-      genresSet.add(a.album.genre);
+      if (a.album.genre) genresSet.add(a.album.genre);
     });
-    uniqueGenres.push(...genresSet);
+    uniqueGenres.push(...Array.from(genresSet));
     
     // Build unique years list
-    const yearsSet = new Set<number | null>();
+    const yearsSet = new Set<number>();
     queueAlbums.forEach(a => {
-      yearsSet.add(a.album.releaseYear);
+      if (a.album.releaseYear) yearsSet.add(a.album.releaseYear);
     });
-    uniqueYears.push(...yearsSet);
+    uniqueYears.push(...Array.from(yearsSet));
   }
 
   return (

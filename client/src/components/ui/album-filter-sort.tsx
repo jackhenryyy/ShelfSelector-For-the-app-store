@@ -103,16 +103,13 @@ export function AlbumFilterSort({
                 <label className="block font-mono text-xs mb-1">genre</label>
                 <select 
                   value={filterOptions.genre || ""}
-                  onChange={(e) => handleFilterChange("genre", e.target.value || null)}
+                  onChange={(e) => handleFilterChange("genre", e.target.value || undefined)}
                   className="w-full px-2 py-1 border border-black font-mono text-xs"
                 >
                   <option value="">all genres</option>
-                  {uniqueGenres
-                    .filter(genre => genre !== null)
-                    .map(genre => (
-                      <option key={genre} value={genre || ""}>{genre}</option>
-                    ))
-                  }
+                  {uniqueGenres.map(genre => (
+                    <option key={genre} value={genre}>{genre}</option>
+                  ))}
                 </select>
               </div>
             )}

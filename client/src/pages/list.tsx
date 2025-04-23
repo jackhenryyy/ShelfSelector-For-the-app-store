@@ -109,11 +109,11 @@ export default function ListPage() {
     : [];
     
   const uniqueGenres = albumReviews
-    ? [...new Set(albumReviews.map(r => r.album.genre))]
+    ? [...new Set(albumReviews.map(r => r.album.genre).filter(Boolean))]
     : [];
     
   const uniqueYears = albumReviews
-    ? [...new Set(albumReviews.map(r => r.album.releaseYear))]
+    ? [...new Set(albumReviews.map(r => r.album.releaseYear).filter(Boolean))]
     : [];
 
   // Group the reviews by month/year if not searching
