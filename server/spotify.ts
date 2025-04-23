@@ -211,8 +211,23 @@ export async function getAlbumDetails(accessToken: string, albumId: string) {
   return await response.json();
 }
 
+// Get artist details from Spotify to fetch genres
+export async function getArtistDetails(accessToken: string, artistId: string) {
+  const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to get artist details: ${response.statusText}`);
+  }
+  
+  return await response.json();
+}
+
 // Process album data and save to storage
-export async function processAndSaveAlbum(albumData: any) {
+export async function processAndSaveAlbum(albumData: any, accessToken?: string) {
   // Check if album already exists in storage
   let album = await storage.getAlbumBySpotifyId(albumData.id);
   
@@ -233,6 +248,29 @@ export async function processAndSaveAlbum(albumData: any) {
       imageUrl = albumData.images[0].url;
     }
     
+    // Try to get genre information
+    let genre: string | undefined;
+    
+    // First check if album has genres
+    if (albumData.genres && albumData.genres.length > 0) {
+      genre = albumData.genres[0];
+    } 
+    // If no genre on album and we have access token, try to get genre from primary artist
+    else if (accessToken && albumData.artists && albumData.artists.length > 0) {
+      try {
+        const artistId = albumData.artists[0].id;
+        const artistData = await getArtistDetails(accessToken, artistId);
+        
+        if (artistData.genres && artistData.genres.length > 0) {
+          // Use the first genre (most relevant)
+          genre = artistData.genres[0];
+        }
+      } catch (error) {
+        console.log("Failed to fetch artist genres:", error);
+        // Continue without genre information
+      }
+    }
+    
     // Create album object
     const newAlbum: InsertAlbum = {
       spotifyId: albumData.id,
@@ -240,7 +278,7 @@ export async function processAndSaveAlbum(albumData: any) {
       artist: albumData.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
       imageUrl,
       releaseYear,
-      genre: albumData.genres && albumData.genres.length > 0 ? albumData.genres[0] : undefined
+      genre
     };
     
     album = await storage.createAlbum(newAlbum);

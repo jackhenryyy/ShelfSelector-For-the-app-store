@@ -111,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!album) {
         const accessToken = await getClientCredentialsToken();
         const albumData = await getAlbumDetails(accessToken, spotifyId);
-        album = await processAndSaveAlbum(albumData);
+        album = await processAndSaveAlbum(albumData, accessToken);
       }
       
       res.json(album);
@@ -142,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const albums = [];
       for (const item of data.albums.items) {
-        const album = await processAndSaveAlbum(item);
+        const album = await processAndSaveAlbum(item, accessToken);
         albums.push(album);
       }
       
