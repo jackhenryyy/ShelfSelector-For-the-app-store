@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { openInSpotify } from "@/lib/spotify";
-import { MenuIcon, CalendarIcon } from "lucide-react";
+import { MenuIcon, CalendarIcon, DownloadIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { exportAlbumsToCSV } from "@/lib/csv-export";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -144,17 +145,32 @@ export default function ListPage() {
       subtitle=""
     >
       <div className="p-4 pt-0">
-        {/* Filter and Sort Controls */}
-        <AlbumFilterSort
-          onSortChange={setSortOption}
-          onFilterChange={setFilterOptions}
-          selectedSort={sortOption}
-          showFilterOptions={true}
-          totalCount={filteredReviews.length}
-          uniqueArtists={uniqueArtists}
-          uniqueGenres={uniqueGenres}
-          uniqueYears={uniqueYears}
-        />
+        <div className="mb-1 font-mono text-xs text-black/60">
+          {filteredReviews.length} albums
+        </div>
+        <div className="flex justify-between items-center mb-4">
+          {/* Filter and Sort Controls */}
+          <AlbumFilterSort
+            onSortChange={setSortOption}
+            onFilterChange={setFilterOptions}
+            selectedSort={sortOption}
+            showFilterOptions={true}
+            totalCount={filteredReviews.length}
+            uniqueArtists={uniqueArtists}
+            uniqueGenres={uniqueGenres}
+            uniqueYears={uniqueYears}
+          />
+          
+          {/* Export Button */}
+          <button 
+            onClick={() => exportAlbumsToCSV(filteredReviews, 'the-shelf-export.csv', true)}
+            className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+            title="Export to CSV"
+          >
+            <DownloadIcon className="h-4 w-4" />
+            export csv
+          </button>
+        </div>
         
         <div className="space-y-6">
           {isSearching ? (

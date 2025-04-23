@@ -6,7 +6,8 @@ import { AlbumGrid } from "@/components/ui/album-grid";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, Plus } from "lucide-react";
+import { SearchIcon, Plus, DownloadIcon } from "lucide-react";
+import { exportAlbumsToCSV } from "@/lib/csv-export";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums, useSpotifyAuth } from "@/hooks/use-spotify";
 import { useToast } from "@/hooks/use-toast";
@@ -243,6 +244,15 @@ export default function NoSkipsPage() {
               onClick={handleShare}
             >
               share
+            </button>
+            
+            <button 
+              onClick={() => exportAlbumsToCSV(noSkipsAlbums || [], 'no-skips-export.csv', false, true)}
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+              title="Export to CSV"
+            >
+              <DownloadIcon className="h-4 w-4" />
+              export csv
             </button>
           </div>
           
