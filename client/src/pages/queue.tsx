@@ -7,7 +7,8 @@ import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { openInSpotify } from "@/lib/spotify";
-import { SearchIcon, UploadIcon } from "lucide-react";
+import { SearchIcon, UploadIcon, DownloadIcon } from "lucide-react";
+import { exportAlbumsToCSV } from "@/lib/csv-export";
 import { parseCSVToAlbums } from "@/lib/csv-export";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewDialog } from "@/components/ui/review-dialog";
@@ -270,6 +271,25 @@ export default function QueuePage() {
     }
   };
 
+  // Function to handle CSV export
+  const handleExportCSV = () => {
+    if (!filteredQueueAlbums || filteredQueueAlbums.length === 0) {
+      toast({
+        title: "Nothing to export",
+        description: "Your queue is empty",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    exportAlbumsToCSV(filteredQueueAlbums, "queue-albums.csv");
+    
+    toast({
+      title: "Export complete",
+      description: `${filteredQueueAlbums.length} albums exported to CSV`,
+    });
+  };
+  
   // Get unique artists, genres, and years for filters
   const uniqueArtists: string[] = [];
   const uniqueGenres: (string | null)[] = [];
@@ -332,6 +352,15 @@ export default function QueuePage() {
               onChange={handleCsvUpload}
               className="hidden"
             />
+            
+            <button
+              onClick={handleExportCSV}
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm cursor-pointer flex items-center gap-1"
+              title="Export to CSV"
+            >
+              <DownloadIcon className="h-4 w-4" />
+              export csv
+            </button>
           </div>
           
           {isFilterOpen && (
