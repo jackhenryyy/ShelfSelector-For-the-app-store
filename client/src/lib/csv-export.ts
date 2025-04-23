@@ -1,6 +1,104 @@
 /**
- * Utility functions for CSV export
+ * Utility functions for CSV export and import
  */
+
+/**
+ * Interface for album data when importing from CSV
+ */
+export interface CSVAlbumData {
+  artist: string;
+  album: string;
+  year?: number;
+  genre?: string;
+}
+
+/**
+ * Parses CSV data and returns an array of album objects
+ * 
+ * @param csvText The CSV text content to parse
+ * @returns Array of album objects with artist, album, year, and genre
+ */
+export function parseCSVToAlbums(csvText: string): CSVAlbumData[] {
+  const albums: CSVAlbumData[] = [];
+  
+  // Split by lines
+  const lines = csvText.split(/\r?\n/);
+  
+  // Get headers from first line
+  const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+  
+  // Check for required fields
+  const artistIndex = headers.indexOf('artist');
+  const albumIndex = headers.indexOf('album');
+  
+  if (artistIndex === -1 || albumIndex === -1) {
+    throw new Error('CSV must include "artist" and "album" columns');
+  }
+  
+  // Get indices for optional fields
+  const yearIndex = headers.indexOf('year');
+  const genreIndex = headers.indexOf('genre');
+  
+  // Process each line (skip header)
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue; // Skip empty lines
+    
+    // Parse the CSV line accounting for quoted values with commas
+    const values: string[] = [];
+    let currentValue = '';
+    let inQuotes = false;
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      
+      if (char === '"') {
+        // Toggle quote state or add escaped quote
+        if (j < line.length - 1 && line[j + 1] === '"') {
+          currentValue += '"';
+          j++; // Skip the next quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // End of field
+        values.push(currentValue);
+        currentValue = '';
+      } else {
+        // Add character to current value
+        currentValue += char;
+      }
+    }
+    
+    // Add the last value
+    values.push(currentValue);
+    
+    // Create album object
+    const album: CSVAlbumData = {
+      artist: values[artistIndex]?.replace(/^"|"$/g, '') || '',
+      album: values[albumIndex]?.replace(/^"|"$/g, '') || ''
+    };
+    
+    // Add optional fields if present
+    if (yearIndex !== -1 && values[yearIndex]) {
+      const year = parseInt(values[yearIndex]);
+      if (!isNaN(year)) {
+        album.year = year;
+      }
+    }
+    
+    if (genreIndex !== -1 && values[genreIndex]) {
+      album.genre = values[genreIndex]?.replace(/^"|"$/g, '') || '';
+    }
+    
+    // Only add albums with both artist and album name
+    if (album.artist && album.album) {
+      albums.push(album);
+    }
+  }
+  
+  return albums;
+}
 
 /**
  * Exports album data to a CSV file and triggers a download

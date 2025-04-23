@@ -7,7 +7,8 @@ import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { openInSpotify } from "@/lib/spotify";
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, UploadIcon } from "lucide-react";
+import { parseCSVToAlbums } from "@/lib/csv-export";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewDialog } from "@/components/ui/review-dialog";
 import { 
