@@ -306,6 +306,8 @@ function formatGenre(genre: string): string {
 }
 
 export async function processAndSaveAlbum(albumData: any, accessToken?: string) {
+  console.log(`Processing album: ${albumData.name} by ${albumData.artists?.map((a: any) => a.name).join(', ')}`);
+  
   // Check if album already exists in storage
   let album = await storage.getAlbumBySpotifyId(albumData.id);
   
@@ -313,9 +315,10 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
     // Extract release year from release_date if available
     let releaseYear: number | undefined;
     if (albumData.release_date) {
-      const releaseDate = new Date(albumData.release_date);
-      if (!isNaN(releaseDate.getTime())) {
-        releaseYear = releaseDate.getFullYear();
+      // Release date can be in formats YYYY, YYYY-MM, or YYYY-MM-DD
+      const yearMatch = albumData.release_date.match(/^(\d{4})/);
+      if (yearMatch) {
+        releaseYear = parseInt(yearMatch[1]);
       }
     }
     
@@ -329,19 +332,26 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
     // Try to get genre information
     let genre: string | undefined;
     
-    // First check if album has genres
+    // Get artist name for genre inference if Spotify API doesn't return genres
+    const artistName = albumData.artists?.[0]?.name || '';
+    
+    // First check if album has genres (rare in Spotify API)
     if (albumData.genres && albumData.genres.length > 0) {
-      // Format the genre nicely (capitalize first letter)
+      console.log(`Album has genres: ${albumData.genres.join(', ')}`);
+      // Format the genre nicely
       genre = formatGenre(albumData.genres[0]);
     } 
     // If no genre on album and we have access token, try to get genre from primary artist
     else if (accessToken && albumData.artists && albumData.artists.length > 0) {
+      const artistId = albumData.artists[0].id;
+      
+      console.log(`Fetching genre information for artist: ${artistName} (${artistId})`);
+      
       try {
-        const artistId = albumData.artists[0].id;
         const artistData = await getArtistDetails(accessToken, artistId);
         
+        // If artist has genres, process them
         if (artistData.genres && artistData.genres.length > 0) {
-          // Log the artist genres for debugging
           console.log(`Artist genres for ${artistData.name}:`, artistData.genres);
           
           // Process genre list to get a more specific/main genre
@@ -350,7 +360,9 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
           
           // Try to find a main genre first (simpler genres like "Pop", "Rock", "Hip-Hop" are preferred)
           const mainGenres = ["pop", "rock", "hip hop", "rap", "r&b", "jazz", "electronic", "classical", "country", "folk", "indie"];
-          const foundMainGenre = genreList.find((g: string) => mainGenres.some(main => g.includes(main)));
+          const foundMainGenre = genreList.find((g: string) => 
+            mainGenres.some(main => g.toLowerCase().includes(main.toLowerCase()))
+          );
           
           if (foundMainGenre) {
             // Format nicely
@@ -360,13 +372,43 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
             // Just use the first genre
             genre = formatGenre(genreList[0]);
             console.log(`Using first genre: ${genreList[0]} -> formatted as: ${genre}`);
-          } else {
-            console.log(`No genres found for artist: ${artistData.name}`);
           }
+        } else {
+          console.log(`No genres returned from Spotify for artist: ${artistData.name}`);
         }
       } catch (error) {
         console.log("Failed to fetch artist genres:", error);
         // Continue without genre information
+      }
+    }
+    
+    // For well-known artists with missing genres in Spotify API, assign a reasonable default
+    if (!genre && artistName) {
+      // Map of well-known artists to their primary genres
+      // This helps with artists like Taylor Swift who don't have genres in the Spotify API
+      const knownArtistGenres: Record<string, string> = {
+        'Taylor Swift': 'Pop',
+        'The Weeknd': 'R&B',
+        'Ariana Grande': 'Pop',
+        'Justin Bieber': 'Pop',
+        'Beyoncé': 'R&B',
+        'Adele': 'Pop',
+        'Billie Eilish': 'Pop',
+        'Dua Lipa': 'Pop',
+        'Ed Sheeran': 'Pop',
+        'Harry Styles': 'Pop',
+        'Kendrick Lamar': 'Hip-Hop',
+        'Lady Gaga': 'Pop',
+        'Post Malone': 'Hip-Hop',
+        'BTS': 'Pop',
+        'Bad Bunny': 'Latin',
+        'Bruno Mars': 'Pop'
+      };
+      
+      // Check if artist is in our known list
+      if (knownArtistGenres[artistName]) {
+        genre = knownArtistGenres[artistName];
+        console.log(`Using known genre for ${artistName}: ${genre}`);
       }
     }
     
@@ -382,6 +424,8 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
     
     console.log(`Creating new album "${newAlbum.name}" by ${newAlbum.artist} with genre: ${genre || 'None'}`);
     album = await storage.createAlbum(newAlbum);
+  } else {
+    console.log(`Album already exists in database: ${album.name}`);
   }
   
   return album;
