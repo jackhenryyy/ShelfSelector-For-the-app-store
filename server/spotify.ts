@@ -145,16 +145,26 @@ export async function handleSpotifyAuth(code: string) {
       tokenExpiry
     );
   } else {
-    // Create new user
+    // Create new user with auto-generated password since InsertUser requires it
     const newUser: InsertUser = {
-      spotifyId: profileData.id,
       username: profileData.display_name || profileData.id,
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      tokenExpiry
+      // For users created via Spotify, generate a secure random password
+      // They won't use this for login as they'll authenticate via Spotify
+      password: Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10),
+      // Optional email if available from Spotify
+      email: profileData.email
     };
     
+    // First create the user with the required fields
     user = await storage.createUser(newUser);
+    
+    // Then update the user with Spotify-specific fields
+    user = await storage.updateUserTokens(
+      user.id,
+      tokenData.access_token,
+      tokenData.refresh_token,
+      tokenExpiry
+    );
   }
   
   return user;
@@ -337,7 +347,7 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
           
           // Try to find a main genre first (simpler genres like "Pop", "Rock", "Hip-Hop" are preferred)
           const mainGenres = ["pop", "rock", "hip hop", "rap", "r&b", "jazz", "electronic", "classical", "country", "folk", "indie"];
-          const foundMainGenre = genreList.find(g => mainGenres.some(main => g.includes(main)));
+          const foundMainGenre = genreList.find((g: string) => mainGenres.some(main => g.includes(main)));
           
           if (foundMainGenre) {
             // Format nicely
