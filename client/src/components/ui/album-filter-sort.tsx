@@ -91,87 +91,93 @@ export function AlbumFilterSort({
       </div>
       
       {isFilterOpen && showFilterOptions && (
-        <div className="absolute right-0 top-full mt-2 p-4 border border-black bg-white/95 shadow-lg z-50 w-80 md:w-[32rem]">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-mono text-sm">filter albums</h3>
-            <button 
-              onClick={() => setIsFilterOpen(false)}
-              className="px-2 py-1 border border-black font-mono text-xs"
-            >
-              close
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {uniqueArtists.length > 0 && (
-              <div>
-                <label className="block font-mono text-xs mb-1">artist</label>
-                <select 
-                  value={filterOptions.artist || ""}
-                  onChange={(e) => handleFilterChange("artist", e.target.value)}
-                  className="w-full px-2 py-1 border border-black font-mono text-xs"
-                >
-                  <option value="">all artists</option>
-                  {uniqueArtists.map(artist => (
-                    <option key={artist} value={artist}>{artist}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+        <>
+          <div 
+            className="fixed inset-0 bg-black/20 z-40" 
+            onClick={() => setIsFilterOpen(false)}
+          />
+          <div className="fixed left-1/2 transform -translate-x-1/2 top-1/4 mt-2 p-4 border border-black bg-white shadow-lg z-50 w-80 md:w-[32rem] max-w-[calc(100vw-2rem)]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-mono text-sm">filter albums</h3>
+              <button 
+                onClick={() => setIsFilterOpen(false)}
+                className="px-2 py-1 border border-black font-mono text-xs"
+              >
+                close
+              </button>
+            </div>
             
-            {uniqueGenres.length > 0 && (
-              <div>
-                <label className="block font-mono text-xs mb-1">genre</label>
-                <select 
-                  value={filterOptions.genre || ""}
-                  onChange={(e) => handleFilterChange("genre", e.target.value || undefined)}
-                  className="w-full px-2 py-1 border border-black font-mono text-xs"
-                >
-                  <option value="">all genres</option>
-                  {uniqueGenres.map(genre => (
-                    <option key={genre} value={genre}>{genre}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {uniqueArtists.length > 0 && (
+                <div>
+                  <label className="block font-mono text-xs mb-1">artist</label>
+                  <select 
+                    value={filterOptions.artist || ""}
+                    onChange={(e) => handleFilterChange("artist", e.target.value)}
+                    className="w-full px-2 py-1 border border-black font-mono text-xs"
+                  >
+                    <option value="">all artists</option>
+                    {uniqueArtists.map(artist => (
+                      <option key={artist} value={artist}>{artist}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {uniqueGenres.length > 0 && (
+                <div>
+                  <label className="block font-mono text-xs mb-1">genre</label>
+                  <select 
+                    value={filterOptions.genre || ""}
+                    onChange={(e) => handleFilterChange("genre", e.target.value || undefined)}
+                    className="w-full px-2 py-1 border border-black font-mono text-xs"
+                  >
+                    <option value="">all genres</option>
+                    {uniqueGenres.map(genre => (
+                      <option key={genre} value={genre}>{genre}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {uniqueYears.length > 0 && (
+                <div>
+                  <label className="block font-mono text-xs mb-1">year</label>
+                  <select 
+                    value={filterOptions.year || ""}
+                    onChange={(e) => handleFilterChange("year", e.target.value ? parseInt(e.target.value) : undefined)}
+                    className="w-full px-2 py-1 border border-black font-mono text-xs"
+                  >
+                    <option value="">all years</option>
+                    {uniqueYears
+                      .sort((a, b) => b - a)
+                      .map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+              )}
+            </div>
             
-            {uniqueYears.length > 0 && (
-              <div>
-                <label className="block font-mono text-xs mb-1">year</label>
-                <select 
-                  value={filterOptions.year || ""}
-                  onChange={(e) => handleFilterChange("year", e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-2 py-1 border border-black font-mono text-xs"
-                >
-                  <option value="">all years</option>
-                  {uniqueYears
-                    .sort((a, b) => b - a)
-                    .map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))
-                  }
-                </select>
-              </div>
-            )}
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-xs font-mono">
+                showing {totalCount} {totalCount === 1 ? 'album' : 'albums'}
+                {Object.keys(filterOptions).length > 0 ? ' (filtered)' : ''}
+              </span>
+              <button 
+                onClick={() => {
+                  setFilterOptions({});
+                  onFilterChange?.({});
+                }}
+                className="px-3 py-1 border border-black font-mono text-xs bg-black text-white"
+                disabled={Object.keys(filterOptions).length === 0}
+              >
+                clear filters
+              </button>
+            </div>
           </div>
-          
-          <div className="mt-4 flex items-center justify-between">
-            <span className="text-xs font-mono">
-              showing {totalCount} {totalCount === 1 ? 'album' : 'albums'}
-              {Object.keys(filterOptions).length > 0 ? ' (filtered)' : ''}
-            </span>
-            <button 
-              onClick={() => {
-                setFilterOptions({});
-                onFilterChange?.({});
-              }}
-              className="px-3 py-1 border border-black font-mono text-xs bg-black text-white"
-              disabled={Object.keys(filterOptions).length === 0}
-            >
-              clear filters
-            </button>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
