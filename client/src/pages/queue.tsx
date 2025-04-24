@@ -448,6 +448,9 @@ export default function QueuePage() {
               />
               <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
               <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
+              {queueAlbum.album.genre && (
+                <div className="text-xs text-gray-400 truncate">Genre: {queueAlbum.album.genre}</div>
+              )}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <div className="flex flex-col">
                   <button 
