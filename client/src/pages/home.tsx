@@ -29,21 +29,11 @@ export default function HomePage() {
   useEffect(() => {
     let sourceData = shuffleSource ? noSkipsAlbums || [] : queueAlbums || [];
     
-    // Apply filtering
+    // Apply filtering - only filter by genre on home page
     if (Object.keys(filterOptions).length > 0) {
       sourceData = sourceData.filter(item => {
-        // Filter by artist
-        if (filterOptions.artist && item.album.artist !== filterOptions.artist) {
-          return false;
-        }
-        
-        // Filter by genre
+        // Filter by genre only
         if (filterOptions.genre && item.album.genre !== filterOptions.genre) {
-          return false;
-        }
-        
-        // Filter by year
-        if (filterOptions.year !== undefined && item.album.releaseYear !== filterOptions.year) {
           return false;
         }
         
@@ -128,9 +118,7 @@ export default function HomePage() {
                 selectedSort={sortOption as any}
                 showFilterOptions={true}
                 totalCount={filteredSource.length}
-                uniqueArtists={Array.from(new Set(filteredSource.map(item => item.album.artist)))}
                 uniqueGenres={Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')))}
-                uniqueYears={Array.from(new Set(filteredSource.filter(item => item.album.releaseYear).map(item => item.album.releaseYear || 0)))}
               />
               
               <button 

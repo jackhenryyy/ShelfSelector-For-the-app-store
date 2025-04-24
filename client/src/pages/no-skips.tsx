@@ -6,8 +6,8 @@ import { AlbumGrid } from "@/components/ui/album-grid";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, Plus, DownloadIcon } from "lucide-react";
-import { exportAlbumsToCSV } from "@/lib/csv-export";
+import { SearchIcon, Plus, DownloadIcon, UploadIcon } from "lucide-react";
+import { exportAlbumsToCSV, parseCSVToAlbums } from "@/lib/csv-export";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums, useSpotifyAuth } from "@/hooks/use-spotify";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +37,7 @@ export default function NoSkipsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [topFourDialogOpen, setTopFourDialogOpen] = useState(false);
+  const [isCsvUploading, setIsCsvUploading] = useState(false);
   
   // Function to handle sorting and filtering
   const handleSortChange = (sort: SortOption) => {
@@ -218,6 +219,75 @@ export default function NoSkipsPage() {
     setShowSearch(false);
     setSearchQuery("");
   };
+  
+  // Function to handle CSV upload
+  const handleCsvUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setIsCsvUploading(true);
+    
+    try {
+      // Read the file
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
+      
+      // Parse CSV using our utility function
+      const albumsToAdd = parseCSVToAlbums(text);
+      
+      // Search and add albums
+      let addedCount = 0;
+      let failedCount = 0;
+      
+      toast({
+        title: "Processing CSV",
+        description: `Found ${albumsToAdd.length} albums to import...`,
+      });
+      
+      for (const albumData of albumsToAdd) {
+        try {
+          // Search for the album
+          const searchQuery = `${albumData.artist} ${albumData.album}`;
+          const searchResults = await searchAlbums(searchQuery);
+          
+          if (searchResults && searchResults.length > 0) {
+            // Add the first matching album to no skips
+            await addToNoSkips({ 
+              albumId: searchResults[0].id, 
+              isTopFour: false 
+            });
+            addedCount++;
+          } else {
+            failedCount++;
+          }
+        } catch (err) {
+          console.error(`Error adding album ${albumData.album} by ${albumData.artist}:`, err);
+          failedCount++;
+        }
+      }
+      
+      toast({
+        title: "CSV Import Complete",
+        description: `Successfully added ${addedCount} albums to your No Skips collection. ${failedCount} albums failed.`,
+        variant: failedCount > 0 ? "default" : "default"
+      });
+      
+    } catch (error) {
+      console.error("CSV upload error:", error);
+      toast({
+        title: "CSV Import Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCsvUploading(false);
+      if (event.target) event.target.value = '';
+    }
+  };
 
   return (
     <Layout
@@ -245,6 +315,22 @@ export default function NoSkipsPage() {
             >
               share
             </button>
+            
+            <label 
+              htmlFor="csv-upload-no-skips"
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm cursor-pointer flex items-center gap-1"
+              title="Import from CSV"
+            >
+              <UploadIcon className="h-4 w-4" />
+              import csv
+            </label>
+            <input 
+              id="csv-upload-no-skips"
+              type="file"
+              accept=".csv"
+              onChange={handleCsvUpload}
+              className="hidden"
+            />
             
             <button 
               onClick={() => exportAlbumsToCSV(noSkipsAlbums || [], 'no-skips-export.csv', false, true)}
