@@ -85,7 +85,7 @@ export function AlbumFilterSort({
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={`whitespace-nowrap px-4 py-1 border border-black ${isFilterOpen ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
           >
-            filter{isFilterOpen ? 'ing' : ''}
+            {uniqueArtists.length === 0 && uniqueYears.length === 0 ? 'genre' : 'filter'}{isFilterOpen ? 'ing' : ''}
           </button>
         )}
       </div>
