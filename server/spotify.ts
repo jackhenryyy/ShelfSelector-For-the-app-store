@@ -341,6 +341,9 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
         const artistData = await getArtistDetails(accessToken, artistId);
         
         if (artistData.genres && artistData.genres.length > 0) {
+          // Log the artist genres for debugging
+          console.log(`Artist genres for ${artistData.name}:`, artistData.genres);
+          
           // Process genre list to get a more specific/main genre
           // Spotify often returns genres like "pop rap" or "art rock" - we want to standardize
           let genreList = artistData.genres;
@@ -352,9 +355,13 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
           if (foundMainGenre) {
             // Format nicely
             genre = formatGenre(foundMainGenre);
+            console.log(`Found main genre: ${foundMainGenre} -> formatted as: ${genre}`);
           } else if (genreList.length > 0) {
             // Just use the first genre
             genre = formatGenre(genreList[0]);
+            console.log(`Using first genre: ${genreList[0]} -> formatted as: ${genre}`);
+          } else {
+            console.log(`No genres found for artist: ${artistData.name}`);
           }
         }
       } catch (error) {
@@ -373,6 +380,7 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
       genre
     };
     
+    console.log(`Creating new album "${newAlbum.name}" by ${newAlbum.artist} with genre: ${genre || 'None'}`);
     album = await storage.createAlbum(newAlbum);
   }
   
