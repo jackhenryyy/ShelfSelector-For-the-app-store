@@ -112,14 +112,22 @@ export default function HomePage() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <AlbumFilterSort
-                onSortChange={(sort) => setSortOption(sort)}
-                onFilterChange={(filter) => setFilterOptions(filter)}
-                selectedSort={sortOption as any}
-                showFilterOptions={true}
-                totalCount={filteredSource.length}
-                uniqueGenres={Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')))}
-              />
+              <button 
+                className={`whitespace-nowrap px-4 py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
+                onClick={() => {
+                  const genreList = Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')));
+                  if (genreList.length > 0) {
+                    if (Object.keys(filterOptions).length > 0) {
+                      setFilterOptions({});
+                    } else {
+                      const randomGenre = genreList[Math.floor(Math.random() * genreList.length)];
+                      setFilterOptions({ genre: randomGenre });
+                    }
+                  }
+                }}
+              >
+                genre: {filterOptions.genre || 'all'}
+              </button>
               
               <button 
                 className="px-4 py-1 border border-black bg-white text-black font-mono text-sm"
