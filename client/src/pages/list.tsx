@@ -214,14 +214,19 @@ export default function ListPage() {
                       {/* Album Details */}
                       <div className="flex-grow">
                         <h3 className="font-mono text-sm">{review.album.name}</h3>
-                        <div className="flex items-center mt-0.5">
-                          <p className="font-mono text-xs text-black/60">{review.album.artist}</p>
-                          <div className="flex items-center gap-2 ml-4">
-                            <StarRating rating={review.rating} size="medium" readonly />
-                            {review.review && (
-                              <p className="font-mono text-xs line-clamp-1">{review.review}</p>
-                            )}
+                        <div className="flex flex-col">
+                          <div className="flex items-center mt-0.5">
+                            <p className="font-mono text-xs text-black/60">{review.album.artist}</p>
+                            <div className="flex items-center gap-2 ml-4">
+                              <StarRating rating={review.rating} size="medium" readonly />
+                              {review.review && (
+                                <p className="font-mono text-xs line-clamp-1">{review.review}</p>
+                              )}
+                            </div>
                           </div>
+                          {review.album.genre && (
+                            <p className="font-mono text-xs text-black/40 mt-0.5">Genre: {review.album.genre}</p>
+                          )}
                         </div>
                       </div>
                       
