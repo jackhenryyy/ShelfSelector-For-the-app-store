@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Album } from "@shared/schema";
 import { format } from "date-fns";
 
@@ -45,6 +45,21 @@ export function AlbumFilterSort({
 }: AlbumFilterSortProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close filter when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onSortChange(e.target.value as SortOption);
@@ -63,21 +78,29 @@ export function AlbumFilterSort({
   };
 
   return (
-    <div>
+    <div className="relative" ref={filterRef}>
       <div>
         {showFilterOptions && (
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
+            className={`whitespace-nowrap px-4 py-1 border border-black ${isFilterOpen ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
           >
-            filter
+            filter{isFilterOpen ? 'ing' : ''}
           </button>
         )}
       </div>
       
       {isFilterOpen && showFilterOptions && (
-        <div className="mt-3 p-3 border border-black bg-white/90">
-          <h3 className="font-mono text-sm mb-2">filter albums</h3>
+        <div className="absolute right-0 top-full mt-2 p-4 border border-black bg-white/95 shadow-lg z-50 w-80 md:w-[32rem]">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-mono text-sm">filter albums</h3>
+            <button 
+              onClick={() => setIsFilterOpen(false)}
+              className="px-2 py-1 border border-black font-mono text-xs"
+            >
+              close
+            </button>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {uniqueArtists.length > 0 && (
@@ -132,15 +155,22 @@ export function AlbumFilterSort({
             )}
           </div>
           
-          <button 
-            onClick={() => {
-              setFilterOptions({});
-              onFilterChange?.({});
-            }}
-            className="mt-3 px-3 py-1 border border-black font-mono text-xs bg-black text-white"
-          >
-            clear filters
-          </button>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-xs font-mono">
+              showing {totalCount} {totalCount === 1 ? 'album' : 'albums'}
+              {Object.keys(filterOptions).length > 0 ? ' (filtered)' : ''}
+            </span>
+            <button 
+              onClick={() => {
+                setFilterOptions({});
+                onFilterChange?.({});
+              }}
+              className="px-3 py-1 border border-black font-mono text-xs bg-black text-white"
+              disabled={Object.keys(filterOptions).length === 0}
+            >
+              clear filters
+            </button>
+          </div>
         </div>
       )}
     </div>
