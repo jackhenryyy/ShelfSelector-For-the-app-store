@@ -26,6 +26,7 @@ export interface IStorage {
   getAlbum(id: number): Promise<Album | undefined>;
   getAlbumBySpotifyId(spotifyId: string): Promise<Album | undefined>;
   createAlbum(album: InsertAlbum): Promise<Album>;
+  updateAlbum(id: number, genre: string | null): Promise<Album | undefined>;
   searchAlbums(query: string): Promise<Album[]>;
 
   // Queue operations
@@ -138,6 +139,19 @@ export class MemStorage implements IStorage {
     const album: Album = { ...insertAlbum, id };
     this.albums.set(id, album);
     return album;
+  }
+
+  async updateAlbum(id: number, genre: string | null): Promise<Album | undefined> {
+    const album = this.albums.get(id);
+    if (!album) return undefined;
+    
+    const updatedAlbum: Album = {
+      ...album,
+      genre
+    };
+    
+    this.albums.set(id, updatedAlbum);
+    return updatedAlbum;
   }
 
   async searchAlbums(query: string): Promise<Album[]> {
@@ -397,6 +411,15 @@ export class DatabaseStorage implements IStorage {
   async createAlbum(album: InsertAlbum): Promise<Album> {
     const [newAlbum] = await db.insert(albums).values(album).returning();
     return newAlbum;
+  }
+
+  async updateAlbum(id: number, genre: string | null): Promise<Album | undefined> {
+    const [updatedAlbum] = await db
+      .update(albums)
+      .set({ genre })
+      .where(eq(albums.id, id))
+      .returning();
+    return updatedAlbum;
   }
 
   async searchAlbums(query: string): Promise<Album[]> {
