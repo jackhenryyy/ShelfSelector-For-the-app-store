@@ -20,8 +20,6 @@ export type FilterOption = {
   artist?: string;
   year?: number;
   genre?: string;
-  rating?: number;
-  energyLevel?: 'high' | 'medium' | 'low';
 }
 
 interface AlbumFilterSortProps {
@@ -132,36 +130,6 @@ export function AlbumFilterSort({
                 </select>
               </div>
             )}
-            
-            <div>
-              <label className="block font-mono text-xs mb-1">rating</label>
-              <select 
-                value={filterOptions.rating || ""}
-                onChange={(e) => handleFilterChange("rating", e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full px-2 py-1 border border-black font-mono text-xs"
-              >
-                <option value="">all ratings</option>
-                <option value="5">★★★★★</option>
-                <option value="4">★★★★☆ or higher</option>
-                <option value="3">★★★☆☆ or higher</option>
-                <option value="2">★★☆☆☆ or higher</option>
-                <option value="1">★☆☆☆☆ or higher</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block font-mono text-xs mb-1">energy level</label>
-              <select 
-                value={filterOptions.energyLevel || ""}
-                onChange={(e) => handleFilterChange("energyLevel", e.target.value || undefined)}
-                className="w-full px-2 py-1 border border-black font-mono text-xs"
-              >
-                <option value="">all energy levels</option>
-                <option value="high">high energy</option>
-                <option value="medium">medium energy</option>
-                <option value="low">low energy</option>
-              </select>
-            </div>
           </div>
           
           <button 
@@ -255,16 +223,6 @@ export function filterAlbums<T extends { album: Album; rating?: number }>(
     
     // Filter by year if specified
     if (filter.year !== undefined && item.album.releaseYear !== filter.year) {
-      return false;
-    }
-    
-    // Filter by minimum rating if specified
-    if (filter.rating !== undefined && (item.rating === undefined || item.rating < filter.rating)) {
-      return false;
-    }
-    
-    // Filter by energy level if specified
-    if (filter.energyLevel !== undefined && item.album.energyLevel !== filter.energyLevel) {
       return false;
     }
     
