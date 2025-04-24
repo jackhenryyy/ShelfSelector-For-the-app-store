@@ -87,7 +87,6 @@ export default function QueuePage() {
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   
   // Update filtered queue albums when sorting or filtering changes
@@ -328,14 +327,18 @@ export default function QueuePage() {
           {filteredQueueAlbums.length} albums
         </div>
         <div className="flex justify-between items-center mb-4">
-          {/* Filter Controls and Import CSV */}
+          {/* Filter Controls and Import/Export CSV */}
           <div className="flex gap-2">
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
-            >
-              filter
-            </button>
+            <AlbumFilterSort
+              onSortChange={setSortOption}
+              onFilterChange={setFilterOptions}
+              selectedSort={sortOption}
+              showFilterOptions={true}
+              totalCount={filteredQueueAlbums.length}
+              uniqueArtists={uniqueArtists}
+              uniqueGenres={uniqueGenres}
+              uniqueYears={uniqueYears}
+            />
             
             <label 
               htmlFor="csv-upload"
@@ -362,21 +365,6 @@ export default function QueuePage() {
               export csv
             </button>
           </div>
-          
-          {isFilterOpen && (
-            <div className="absolute z-10 mt-2 p-3 border border-black bg-white/90" style={{ top: '135px', left: '20px' }}>
-              <AlbumFilterSort
-                onSortChange={setSortOption}
-                onFilterChange={setFilterOptions}
-                selectedSort={sortOption}
-                showFilterOptions={true}
-                totalCount={filteredQueueAlbums.length}
-                uniqueArtists={uniqueArtists}
-                uniqueGenres={uniqueGenres}
-                uniqueYears={uniqueYears}
-              />
-            </div>
-          )}
           
           {/* Add Album Button */}
           <Dialog>
