@@ -243,6 +243,58 @@ export async function getArtistDetails(accessToken: string, artistId: string) {
 }
 
 // Process album data and save to storage
+// Helper function to format genre names consistently
+function formatGenre(genre: string): string {
+  if (!genre) return genre;
+  
+  // Special cases
+  if (genre.toLowerCase().includes('hip hop') || genre.toLowerCase().includes('rap')) {
+    return 'Hip-Hop';
+  }
+  if (genre.toLowerCase().includes('r&b') || genre.toLowerCase().includes('soul')) {
+    return 'R&B';
+  }
+  if (genre.toLowerCase().includes('electronic') || genre.toLowerCase().includes('techno') || 
+      genre.toLowerCase().includes('house') || genre.toLowerCase().includes('edm')) {
+    return 'Electronic';
+  }
+  if (genre.toLowerCase().includes('alternative') || genre.toLowerCase().includes('alt')) {
+    return 'Alternative';
+  }
+  if (genre.toLowerCase().includes('indie')) {
+    return 'Indie';
+  }
+  if (genre.toLowerCase().includes('rock')) {
+    return 'Rock';
+  }
+  if (genre.toLowerCase().includes('pop')) {
+    return 'Pop';
+  }
+  if (genre.toLowerCase().includes('jazz')) {
+    return 'Jazz';
+  }
+  if (genre.toLowerCase().includes('classical')) {
+    return 'Classical';
+  }
+  if (genre.toLowerCase().includes('country')) {
+    return 'Country';
+  }
+  if (genre.toLowerCase().includes('folk')) {
+    return 'Folk';
+  }
+  if (genre.toLowerCase().includes('metal')) {
+    return 'Metal';
+  }
+  if (genre.toLowerCase().includes('ambient')) {
+    return 'Ambient';
+  }
+  
+  // Default formatting: capitalize first letter of each word
+  return genre.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export async function processAndSaveAlbum(albumData: any, accessToken?: string) {
   // Check if album already exists in storage
   let album = await storage.getAlbumBySpotifyId(albumData.id);
@@ -269,7 +321,8 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
     
     // First check if album has genres
     if (albumData.genres && albumData.genres.length > 0) {
-      genre = albumData.genres[0];
+      // Format the genre nicely (capitalize first letter)
+      genre = formatGenre(albumData.genres[0]);
     } 
     // If no genre on album and we have access token, try to get genre from primary artist
     else if (accessToken && albumData.artists && albumData.artists.length > 0) {
@@ -278,8 +331,21 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
         const artistData = await getArtistDetails(accessToken, artistId);
         
         if (artistData.genres && artistData.genres.length > 0) {
-          // Use the first genre (most relevant)
-          genre = artistData.genres[0];
+          // Process genre list to get a more specific/main genre
+          // Spotify often returns genres like "pop rap" or "art rock" - we want to standardize
+          let genreList = artistData.genres;
+          
+          // Try to find a main genre first (simpler genres like "Pop", "Rock", "Hip-Hop" are preferred)
+          const mainGenres = ["pop", "rock", "hip hop", "rap", "r&b", "jazz", "electronic", "classical", "country", "folk", "indie"];
+          const foundMainGenre = genreList.find(g => mainGenres.some(main => g.includes(main)));
+          
+          if (foundMainGenre) {
+            // Format nicely
+            genre = formatGenre(foundMainGenre);
+          } else if (genreList.length > 0) {
+            // Just use the first genre
+            genre = formatGenre(genreList[0]);
+          }
         }
       } catch (error) {
         console.log("Failed to fetch artist genres:", error);

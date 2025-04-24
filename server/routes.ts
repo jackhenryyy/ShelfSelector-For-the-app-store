@@ -84,7 +84,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const albums = [];
       for (const item of results.albums.items) {
-        const album = await processAndSaveAlbum(item);
+        // Pass the access token to ensure genre information can be fetched from artist
+        const album = await processAndSaveAlbum(item, accessToken);
         albums.push(album);
       }
       
