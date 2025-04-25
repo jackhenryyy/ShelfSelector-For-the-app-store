@@ -37,6 +37,8 @@ interface AlbumFilterSortProps {
   uniqueArtists?: string[];
   uniqueGenres?: string[];
   uniqueYears?: number[];
+  // Option to only show limited sort options (for simplified pages)
+  simplifiedSort?: boolean;
 }
 
 export function AlbumFilterSort({
@@ -344,42 +346,70 @@ export function filterAlbums<T extends { album: Album; rating?: number }>(
   });
 }
 
-// Helper for grouping albums by listened date (month and year) for reviews
-export function groupAlbumsByMonth<T extends { listenedAt?: string | null, addedAt?: string, reviewedAt?: string }>(
-  albums: T[]
+// Helper for grouping albums by date for the list view
+export function groupAlbumsByDate<T extends { 
+  listenedAt?: string | null, 
+  addedAt?: string, 
+  reviewedAt?: string,
+  album: { 
+    releaseYear?: number | null,
+    releaseDate?: string | null
+  }
+}>(
+  albums: T[],
+  sortOption: SortOption
 ): Record<string, T[]> {
   const grouped: Record<string, T[]> = {};
   
+  // Determine if we're grouping by release date or listened date
+  const isReleaseDate = sortOption === 'release-newest' || sortOption === 'release-oldest';
+  
   albums.forEach(album => {
     try {
-      // Try to use dates in order of preference: listenedAt, reviewedAt, addedAt
-      const dateStr = album.listenedAt || album.reviewedAt || album.addedAt || '';
-      const date = new Date(dateStr);
+      let groupKey = '';
       
-      // Check if date is valid before formatting
-      if (dateStr && !isNaN(date.getTime())) {
-        const monthYear = format(date, "MMMM yyyy").toLowerCase(); // e.g., "april 2025"
-        
-        if (!grouped[monthYear]) {
-          grouped[monthYear] = [];
+      if (isReleaseDate) {
+        // Group by release date/year
+        if (album.album.releaseDate) {
+          // If we have a full release date, use the year
+          const date = new Date(album.album.releaseDate);
+          if (!isNaN(date.getTime())) {
+            groupKey = date.getFullYear().toString();
+          }
+        } else if (album.album.releaseYear) {
+          // Otherwise use the release year if available
+          groupKey = album.album.releaseYear.toString();
+        } else {
+          groupKey = 'unknown year';
         }
-        
-        grouped[monthYear].push(album);
       } else {
-        // For invalid dates, place in "recently added" group instead of "unknown date"
-        if (!grouped["recently added"]) {
-          grouped["recently added"] = [];
-        }
+        // Group by listened/added date (month and year)
+        const dateStr = album.listenedAt || album.reviewedAt || album.addedAt || '';
+        const date = new Date(dateStr);
         
-        grouped["recently added"].push(album);
-      }
-    } catch (error) {
-      // In case of date parsing errors, place in "recently added" group
-      if (!grouped["recently added"]) {
-        grouped["recently added"] = [];
+        // Check if date is valid before formatting
+        if (dateStr && !isNaN(date.getTime())) {
+          groupKey = format(date, "MMMM yyyy").toLowerCase(); // e.g., "april 2025"
+        } else {
+          groupKey = "recently added";
+        }
       }
       
-      grouped["recently added"].push(album);
+      // Add to the appropriate group
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = [];
+      }
+      
+      grouped[groupKey].push(album);
+    } catch (error) {
+      // In case of parsing errors, add to fallback group
+      const fallbackGroup = isReleaseDate ? "unknown year" : "recently added";
+      
+      if (!grouped[fallbackGroup]) {
+        grouped[fallbackGroup] = [];
+      }
+      
+      grouped[fallbackGroup].push(album);
     }
   });
   

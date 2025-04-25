@@ -20,7 +20,7 @@ import {
   FilterOption, 
   sortAlbums, 
   filterAlbums, 
-  groupAlbumsByMonth 
+  groupAlbumsByDate 
 } from "@/components/ui/album-filter-sort";
 
 export default function ListPage() {
@@ -33,6 +33,7 @@ export default function ListPage() {
   const [editRating, setEditRating] = useState(0);
   const [editReview, setEditReview] = useState("");
   const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
+  // Only allow two sort options: listened date or release date, both defaulting to newest first
   const [sortOption, setSortOption] = useState<SortOption>("listened-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
@@ -117,9 +118,9 @@ export default function ListPage() {
     ? [...new Set(albumReviews.map(r => r.album.releaseYear).filter(Boolean))]
     : [];
 
-  // Group the reviews by month/year if not searching
+  // Group the reviews by date (month/year or release year) based on sort option
   const groupedReviews = !searchQuery
-    ? groupAlbumsByMonth(filteredReviews)
+    ? groupAlbumsByDate(filteredReviews, sortOption)
     : { "search results": filteredReviews };
     
   // Helper function to get day from date string
@@ -183,18 +184,22 @@ export default function ListPage() {
           ) : (
             sortedMonthYearKeys.map(monthYear => (
               <div key={monthYear}>
-                {/* Month-Year Header */}
+                {/* Header changes based on sort type */}
                 <div className="bg-gray-200 py-2 px-4 mb-4 font-mono text-sm">
                   {monthYear}
                 </div>
                 
-                {/* Reviews for this month */}
+                {/* Reviews for this group */}
                 <div className="space-y-4">
                   {groupedReviews[monthYear].map((review, index) => (
                     <div key={review.id} className="flex gap-3">
-                      {/* Day Number in Box */}
+                      {/* Box content changes based on sort type */}
                       <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
-                        <div className="font-mono text-sm">{review.listenedAt ? getDay(review.listenedAt) : "--"}</div>
+                        <div className="font-mono text-sm">
+                          {sortOption === 'release-newest' || sortOption === 'release-oldest' 
+                            ? (review.album.releaseYear ? review.album.releaseYear.toString().slice(-2) : "--") 
+                            : (review.listenedAt ? getDay(review.listenedAt) : "--")}
+                        </div>
                       </div>
                       
                       {/* Album Art */}
