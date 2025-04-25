@@ -13,6 +13,7 @@ import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums, useSpotifyAuth } from "@/hooks/use-spotify";
 import { useToast } from "@/hooks/use-toast";
 import { TopFourDialog } from "@/components/ui/top-four-dialog";
+import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -39,6 +40,7 @@ export default function NoSkipsPage() {
   const [showSearch, setShowSearch] = useState(false);
   const [topFourDialogOpen, setTopFourDialogOpen] = useState(false);
   const [isCsvUploading, setIsCsvUploading] = useState(false);
+  const [gridScale, setGridScale] = useState<number>(3);
   
   // Function to handle sorting and filtering
   const handleSortChange = (sort: SortOption) => {
@@ -341,6 +343,15 @@ export default function NoSkipsPage() {
               <DownloadIcon className="h-4 w-4" />
               export csv
             </button>
+            
+            <div className="px-2 border-l border-black ml-2">
+              <GridScaleSlider 
+                value={gridScale} 
+                onChange={setGridScale}
+                min={1}
+                max={12}
+              />
+            </div>
           </div>
           
           <Dialog>
@@ -446,7 +457,7 @@ export default function NoSkipsPage() {
         </div>
         
         <h2 className="text-sm font-medium mb-2 text-black">albums</h2>
-        <AlbumGrid>
+        <AlbumGrid columns={gridScale}>
           {sortedNoSkipsAlbums.map((album) => (
             <div key={album.id} className="mb-2">
               <a 

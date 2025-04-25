@@ -1,6 +1,6 @@
-import { Slider } from "@/components/ui/slider";
-import { useState } from "react";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 import { SlidersHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface GridScaleSliderProps {
   value: number;
@@ -28,14 +28,21 @@ export function GridScaleSlider({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {showIcon && <SlidersHorizontal className="h-4 w-4 opacity-70" />}
-      <Slider
+      <SliderPrimitive.Root
         value={[value]}
         min={min}
         max={max}
         step={step}
         onValueChange={handleValueChange}
-        className="w-24"
-      />
+        className={cn(
+          "relative flex w-24 touch-none select-none items-center"
+        )}
+      >
+        <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden border border-black bg-white">
+          <SliderPrimitive.Range className="absolute h-full bg-black" />
+        </SliderPrimitive.Track>
+        <SliderPrimitive.Thumb className="block h-4 w-4 rounded-none border border-black bg-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-black disabled:pointer-events-none disabled:opacity-50" />
+      </SliderPrimitive.Root>
     </div>
   );
 }
