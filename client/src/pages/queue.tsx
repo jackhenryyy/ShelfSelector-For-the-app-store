@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { ReviewDialog } from "@/components/ui/review-dialog";
 import { EditableGenre } from "@/components/ui/editable-genre";
+import { GenreEditorDialog } from "@/components/ui/genre-editor-dialog";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -86,6 +87,7 @@ export default function QueuePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState<{id: number, x: number, y: number} | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [genreEditorOpen, setGenreEditorOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
@@ -143,15 +145,9 @@ export default function QueuePage() {
     const album = queueAlbums?.find(qa => qa.albumId === albumId)?.album;
     if (!album) return;
     
-    // Prompt user for new genre
-    const currentGenre = album.genre || "";
-    const newGenre = prompt("Enter genre for this album:", currentGenre);
-    
-    // Update if not canceled and different
-    if (newGenre !== null && newGenre !== currentGenre) {
-      updateGenre(album.id, newGenre || null);
-    }
-    
+    // Open the genre editor dialog
+    setSelectedAlbum(album);
+    setGenreEditorOpen(true);
     handleCloseContextMenu();
   };
   
@@ -560,6 +556,18 @@ export default function QueuePage() {
           open={reviewDialogOpen}
           onOpenChange={setReviewDialogOpen}
           onSubmit={handleSubmitReview}
+        />
+      )}
+      
+      {/* Genre Editor Dialog */}
+      {selectedAlbum && (
+        <GenreEditorDialog
+          albumId={selectedAlbum.id}
+          currentGenre={selectedAlbum.genre}
+          open={genreEditorOpen}
+          onOpenChange={setGenreEditorOpen}
+          albumName={selectedAlbum.name}
+          artistName={selectedAlbum.artist}
         />
       )}
     </Layout>
