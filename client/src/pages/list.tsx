@@ -13,6 +13,7 @@ import { AlbumReview } from "@/hooks/use-albums";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { exportAlbumsToCSV } from "@/lib/csv-export";
+import { EditableGenre } from "@/components/ui/editable-genre";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -224,9 +225,7 @@ export default function ListPage() {
                               )}
                             </div>
                           </div>
-                          {review.album.genre && (
-                            <p className="font-mono text-xs text-black/40 mt-0.5">Genre: {review.album.genre}</p>
-                          )}
+                          <EditableGenre albumId={review.album.id} genre={review.album.genre} className="mt-0.5" />
                         </div>
                       </div>
                       
@@ -260,9 +259,10 @@ export default function ListPage() {
                 alt={activeReview.album.name}
                 size="small"
               />
-              <div>
+              <div className="flex flex-col gap-1">
                 <h3 className="font-mono">{activeReview.album.name}</h3>
                 <p className="font-mono text-sm text-gray-500">{activeReview.album.artist}</p>
+                <EditableGenre albumId={activeReview.album.id} genre={activeReview.album.genre} />
               </div>
             </div>
           )}

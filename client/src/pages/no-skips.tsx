@@ -469,9 +469,7 @@ export default function NoSkipsPage() {
                 />
                 <div className="mt-1 text-xs truncate">{album.album.name}</div>
                 <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
-                {album.album.genre && (
-                  <div className="text-xs text-gray-400 truncate">Genre: {album.album.genre}</div>
-                )}
+                <EditableGenre albumId={album.album.id} genre={album.album.genre} />
               </a>
             </div>
           ))}
