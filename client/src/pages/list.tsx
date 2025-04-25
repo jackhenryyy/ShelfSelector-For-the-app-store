@@ -33,7 +33,7 @@ export default function ListPage() {
   const [editRating, setEditRating] = useState(0);
   const [editReview, setEditReview] = useState("");
   const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
-  const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
+  const [sortOption, setSortOption] = useState<SortOption>("listened-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
   // Update filtered reviews when albums or search changes
