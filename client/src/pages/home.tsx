@@ -94,7 +94,7 @@ export default function HomePage() {
         )}
         
         <div className="p-4 relative z-10">
-          <h1 className="text-4xl font-mono text-center mb-10">t h e  s h e l f</h1>
+          <h1 className="text-4xl font-mono text-center mb-10 tracking-widest">t h e &nbsp; s h e l f</h1>
           
           <div className="flex justify-between mb-4">
             <div className="flex">
@@ -149,20 +149,21 @@ export default function HomePage() {
             </div>
           </div>
           
-          <div className="flex justify-center mt-8">
+          <div className="flex justify-center mt-4">
             {currentAlbum ? (
               <div 
-                className="block w-80 shadow-lg cursor-pointer"
+                className="block mx-auto w-full max-w-[90vw] cursor-pointer"
                 onClick={handleOpenInSpotify}
               >
                 <AlbumArt 
                   src={currentAlbum.imageUrl} 
                   alt={currentAlbum.name}
                   size="large"
+                  className="shadow-lg"
                 />
               </div>
             ) : (
-              <div className="w-80 h-80 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
+              <div className="w-full max-w-[90vw] h-[90vw] bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
                 <p className="font-mono text-gray-500 mb-4">No albums available</p>
                 <p className="font-mono text-xs text-gray-500">
                   To get started, add some albums to "the queue" and "no skips" and then click the shuffle button!
@@ -172,9 +173,29 @@ export default function HomePage() {
           </div>
           
           {currentAlbum && (
-            <div className="text-center mt-6">
-              <h2 className="text-xl font-mono uppercase">{currentAlbum.name}</h2>
-              <p className="text-sm font-mono">{currentAlbum.artist}</p>
+            <div className="text-center mt-6 px-6">
+              <h2 className="text-2xl font-mono uppercase">{currentAlbum.name}</h2>
+              <p className="text-base font-mono uppercase mt-1">{currentAlbum.artist}</p>
+              
+              {/* Mobile sort bar */}
+              <div className="mt-12">
+                <select
+                  className="appearance-none cursor-pointer whitespace-nowrap px-4 py-1 border border-black bg-white text-black font-mono text-sm pr-8 w-[150px]"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                >
+                  <option value="date-added-newest">sort</option>
+                  <option value="date-added-newest">newest</option>
+                  <option value="date-added-oldest">oldest</option>
+                  <option value="title-asc">a-z</option>
+                  <option value="title-desc">z-a</option>
+                </select>
+                <div className="pointer-events-none absolute right-1/2 translate-x-[35px] flex items-center">
+                  <svg className="h-4 w-4 fill-current text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
             </div>
           )}
         </div>
