@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlbumArt } from "@/components/ui/album-art";
 import { Album } from "@shared/schema";
 import { StarRating } from "./star-rating";
+import { EditableGenre } from "./editable-genre";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
@@ -43,9 +44,10 @@ export function ReviewDialog({ album, open, onOpenChange, onSubmit }: ReviewDial
           <div className="w-24 flex-shrink-0">
             <AlbumArt src={album.imageUrl} alt={album.name} />
           </div>
-          <div>
+          <div className="flex flex-col gap-1">
             <h3 className="font-mono text-base">{album.name}</h3>
             <p className="font-mono text-sm text-black/60">{album.artist}</p>
+            <EditableGenre albumId={album.id} genre={album.genre} />
           </div>
         </div>
         

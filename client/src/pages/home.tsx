@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Album } from "@shared/schema";
 import { BlurredBackground } from "@/components/ui/blurred-background";
 import { AlbumFilterSort, FilterOption } from "@/components/ui/album-filter-sort";
+import { EditableGenre } from "@/components/ui/editable-genre";
 
 export default function HomePage() {
   const { user } = useAuth();
