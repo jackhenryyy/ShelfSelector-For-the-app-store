@@ -112,22 +112,32 @@ export default function HomePage() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <button 
-                className={`whitespace-nowrap px-4 py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
-                onClick={() => {
-                  const genreList = Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')));
-                  if (genreList.length > 0) {
-                    if (Object.keys(filterOptions).length > 0) {
+              <div className="relative">
+                <select
+                  className={`appearance-none cursor-pointer whitespace-nowrap px-4 py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm pr-8`}
+                  value={filterOptions.genre || ""}
+                  onChange={(e) => {
+                    if (e.target.value === "") {
                       setFilterOptions({});
                     } else {
-                      const randomGenre = genreList[Math.floor(Math.random() * genreList.length)];
-                      setFilterOptions({ genre: randomGenre });
+                      setFilterOptions({ genre: e.target.value });
                     }
+                  }}
+                >
+                  <option value="">genre: all</option>
+                  {Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')))
+                    .sort()
+                    .map(genre => (
+                      <option key={genre} value={genre}>genre: {genre}</option>
+                    ))
                   }
-                }}
-              >
-                genre: {filterOptions.genre || 'all'}
-              </button>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                  <svg className="h-4 w-4 fill-current text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
               
               <button 
                 className="px-4 py-1 border border-black bg-white text-black font-mono text-sm"
