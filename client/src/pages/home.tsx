@@ -93,10 +93,10 @@ export default function HomePage() {
           />
         )}
         
-        <div className="p-4 pt-6 relative z-10">
+        <div className="p-4 relative z-10">
           <h1 className="text-4xl font-mono text-center mb-10">t h e  s h e l f</h1>
           
-          <div className="flex justify-between mb-4 mx-4">
+          <div className="flex justify-between mb-4">
             <div className="flex">
               <button 
                 className={`px-4 py-1 border border-black ${!shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
@@ -112,40 +112,40 @@ export default function HomePage() {
               </button>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <select
-                  className={`appearance-none cursor-pointer whitespace-nowrap px-4 py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm pr-8`}
-                  value={filterOptions.genre || ""}
-                  onChange={(e) => {
-                    if (e.target.value === "") {
-                      setFilterOptions({});
-                    } else {
-                      setFilterOptions({ genre: e.target.value });
-                    }
-                  }}
-                >
-                  <option value="">genre: all</option>
-                  {Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')))
-                    .sort()
-                    .map(genre => (
-                      <option key={genre} value={genre}>genre: {genre}</option>
-                    ))
+            <button 
+              className="px-4 py-1 border border-black bg-white text-black font-mono text-sm"
+              onClick={handleShuffle}
+            >
+              shuffle
+            </button>
+          </div>
+          
+          <div className="mb-4 hidden">
+            <div className="relative">
+              <select
+                className={`appearance-none cursor-pointer whitespace-nowrap px-4 py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm pr-8 w-full`}
+                value={filterOptions.genre || ""}
+                onChange={(e) => {
+                  if (e.target.value === "") {
+                    setFilterOptions({});
+                  } else {
+                    setFilterOptions({ genre: e.target.value });
                   }
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                  <svg className="h-4 w-4 fill-current text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                  </svg>
-                </div>
-              </div>
-              
-              <button 
-                className="px-4 py-1 border border-black bg-white text-black font-mono text-sm"
-                onClick={handleShuffle}
+                }}
               >
-                shuffle
-              </button>
+                <option value="">genre: all</option>
+                {Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')))
+                  .sort()
+                  .map(genre => (
+                    <option key={genre} value={genre}>genre: {genre}</option>
+                  ))
+                }
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                <svg className="h-4 w-4 fill-current text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
+              </div>
             </div>
           </div>
           
@@ -175,9 +175,6 @@ export default function HomePage() {
             <div className="text-center mt-6">
               <h2 className="text-xl font-mono uppercase">{currentAlbum.name}</h2>
               <p className="text-sm font-mono">{currentAlbum.artist}</p>
-              <div className="mt-2">
-                <EditableGenre albumId={currentAlbum.id} genre={currentAlbum.genre} className="justify-center" />
-              </div>
             </div>
           )}
         </div>

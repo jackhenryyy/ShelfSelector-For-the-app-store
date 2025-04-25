@@ -13,7 +13,7 @@ export const AlbumArt = forwardRef<HTMLImageElement, AlbumArtProps>(
     const sizeClasses = {
       small: "w-12 h-12",
       medium: "w-full",
-      large: "w-80 h-80",
+      large: "w-full max-w-[80vw] h-auto", // Updated to be more responsive for mobile
     }[size];
 
     return (
