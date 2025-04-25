@@ -27,6 +27,7 @@ export interface SpotifyAlbum {
   artist: string;
   imageUrl: string;
   releaseYear?: number;
+  releaseDate?: string; // Full ISO date (YYYY-MM-DD)
   genre?: string;
 }
 
