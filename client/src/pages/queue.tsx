@@ -15,6 +15,7 @@ import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { ReviewDialog } from "@/components/ui/review-dialog";
 import { EditableGenre } from "@/components/ui/editable-genre";
 import { GenreEditorDialog } from "@/components/ui/genre-editor-dialog";
+import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -93,6 +94,7 @@ export default function QueuePage() {
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
   const [isCsvUploading, setIsCsvUploading] = useState(false);
+  const [gridScale, setGridScale] = useState<number>(3);
   
   // Update filtered queue albums when sorting or filtering changes
   useEffect(() => {
@@ -381,6 +383,15 @@ export default function QueuePage() {
               <DownloadIcon className="h-4 w-4" />
               export csv
             </button>
+            
+            <div className="px-2 border-l border-black ml-2">
+              <GridScaleSlider 
+                value={gridScale} 
+                onChange={setGridScale}
+                min={1}
+                max={12}
+              />
+            </div>
           </div>
           
           {/* Add Album Button */}
@@ -440,7 +451,7 @@ export default function QueuePage() {
           </Dialog>
         </div>
         
-        <AlbumGrid>
+        <AlbumGrid columns={gridScale}>
           {filteredQueueAlbums.map((queueAlbum) => (
             <div 
               key={queueAlbum.id}

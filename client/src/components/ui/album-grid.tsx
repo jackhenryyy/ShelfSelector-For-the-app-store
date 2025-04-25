@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 interface AlbumGridProps {
   children: ReactNode;
   className?: string;
-  columns?: 2 | 3 | 4;
+  columns?: number;
   gap?: "small" | "medium" | "large";
 }
 
@@ -13,11 +13,26 @@ export function AlbumGrid({
   columns = 3,
   gap = "medium",
 }: AlbumGridProps) {
-  const columnsClass = {
+  // Handle different column counts dynamically
+  let columnsClass = "";
+  
+  // Predefined column classes for common values
+  const columnMap: Record<number, string> = {
+    1: "grid-cols-1",
     2: "grid-cols-2",
     3: "grid-cols-3",
     4: "grid-cols-4",
-  }[columns];
+    5: "grid-cols-5",
+    6: "grid-cols-6",
+    7: "grid-cols-7",
+    8: "grid-cols-8",
+    9: "grid-cols-9",
+    10: "grid-cols-10",
+    12: "grid-cols-12",
+  };
+  
+  // Use predefined class if available, otherwise use responsive grid
+  columnsClass = columnMap[columns] || `grid-cols-1 sm:grid-cols-2 md:grid-cols-${Math.min(columns, 12)}`;
 
   const gapClass = {
     small: "gap-1",
