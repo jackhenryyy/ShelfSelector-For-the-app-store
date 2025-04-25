@@ -440,8 +440,12 @@ export default function NoSkipsPage() {
                         src={album.album.imageUrl}
                         alt={album.album.name}
                       />
-                      <div className="mt-1 text-xs truncate">{album.album.name}</div>
-                      <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
+                      {gridScale < 5 && (
+                        <>
+                          <div className="mt-1 text-xs truncate">{album.album.name}</div>
+                          <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
+                        </>
+                      )}
                     </a>
                   </div>
                 ))
@@ -478,9 +482,13 @@ export default function NoSkipsPage() {
                     ? "border-2 border-green-500" 
                     : ""}
                 />
-                <div className="mt-1 text-xs truncate">{album.album.name}</div>
-                <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
-                <EditableGenre albumId={album.album.id} genre={album.album.genre} />
+                {gridScale < 5 && (
+                  <>
+                    <div className="mt-1 text-xs truncate">{album.album.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
+                    <EditableGenre albumId={album.album.id} genre={album.album.genre} />
+                  </>
+                )}
               </a>
             </div>
           ))}

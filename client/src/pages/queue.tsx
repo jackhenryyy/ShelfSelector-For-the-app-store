@@ -462,9 +462,13 @@ export default function QueuePage() {
                 src={queueAlbum.album.imageUrl}
                 alt={queueAlbum.album.name}
               />
-              <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
-              <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
-              <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
+              {gridScale < 5 && (
+                <>
+                  <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
+                  <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
+                  <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
+                </>
+              )}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <div className="flex flex-col">
                   <button 
