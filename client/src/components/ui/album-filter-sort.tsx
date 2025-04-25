@@ -256,10 +256,24 @@ export function sortAlbums<T extends { album: Album; addedAt?: string; reviewedA
       return sortedAlbums.sort((a, b) => compareDates(a.reviewedAt, b.reviewedAt));
     
     case "release-newest":
-      return sortedAlbums.sort((a, b) => (b.album.releaseYear || 0) - (a.album.releaseYear || 0));
+      return sortedAlbums.sort((a, b) => {
+        // Use full release date if available, fall back to release year
+        if (a.album.releaseDate && b.album.releaseDate) {
+          return new Date(b.album.releaseDate).getTime() - new Date(a.album.releaseDate).getTime();
+        } else {
+          return (b.album.releaseYear || 0) - (a.album.releaseYear || 0);
+        }
+      });
     
     case "release-oldest":
-      return sortedAlbums.sort((a, b) => (a.album.releaseYear || 0) - (b.album.releaseYear || 0));
+      return sortedAlbums.sort((a, b) => {
+        // Use full release date if available, fall back to release year
+        if (a.album.releaseDate && b.album.releaseDate) {
+          return new Date(a.album.releaseDate).getTime() - new Date(b.album.releaseDate).getTime();
+        } else {
+          return (a.album.releaseYear || 0) - (b.album.releaseYear || 0);
+        }
+      });
     
     case "title-asc":
       return sortedAlbums.sort((a, b) => a.album.name.localeCompare(b.album.name));

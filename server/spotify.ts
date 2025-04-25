@@ -312,14 +312,21 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
   let album = await storage.getAlbumBySpotifyId(albumData.id);
   
   if (!album) {
-    // Extract release year from release_date if available
+    // Extract release year and full date from release_date if available
     let releaseYear: number | undefined;
+    let releaseDate: string | undefined;
+    
     if (albumData.release_date) {
+      // Store the full release date for precise sorting
+      releaseDate = albumData.release_date;
+      
       // Release date can be in formats YYYY, YYYY-MM, or YYYY-MM-DD
       const yearMatch = albumData.release_date.match(/^(\d{4})/);
       if (yearMatch) {
         releaseYear = parseInt(yearMatch[1]);
       }
+      
+      console.log(`Album release date: ${releaseDate}, extracted year: ${releaseYear}`);
     }
     
     // Extract image URL (preferably large size)
@@ -419,6 +426,7 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
       artist: albumData.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist',
       imageUrl,
       releaseYear,
+      releaseDate, // Include the full release date
       genre
     };
     
