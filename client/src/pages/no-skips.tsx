@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { SearchIcon, Plus, DownloadIcon, UploadIcon } from "lucide-react";
+import { EditableGenre } from "@/components/ui/editable-genre";
 import { exportAlbumsToCSV, parseCSVToAlbums } from "@/lib/csv-export";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums, useSpotifyAuth } from "@/hooks/use-spotify";

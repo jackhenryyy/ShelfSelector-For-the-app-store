@@ -211,6 +211,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update album genre
+  app.patch('/api/albums/:id/genre', requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { genre } = req.body;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid album ID' });
+      }
+      
+      if (genre === undefined) {
+        return res.status(400).json({ message: 'Genre is required' });
+      }
+      
+      const updatedAlbum = await storage.updateAlbum(id, genre);
+      
+      if (!updatedAlbum) {
+        return res.status(404).json({ message: 'Album not found' });
+      }
+      
+      res.json(updatedAlbum);
+    } catch (error) {
+      console.error('Album genre update error:', error);
+      res.status(500).json({ message: 'Failed to update album genre' });
+    }
+  });
+  
   // Queue routes
   app.get('/api/queue', requireAuth, async (req, res) => {
     try {

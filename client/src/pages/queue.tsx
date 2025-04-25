@@ -12,6 +12,7 @@ import { exportAlbumsToCSV } from "@/lib/csv-export";
 import { parseCSVToAlbums } from "@/lib/csv-export";
 import { useToast } from "@/hooks/use-toast";
 import { ReviewDialog } from "@/components/ui/review-dialog";
+import { EditableGenre } from "@/components/ui/editable-genre";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -436,9 +437,7 @@ export default function QueuePage() {
               />
               <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
               <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
-              {queueAlbum.album.genre && (
-                <div className="text-xs text-gray-400 truncate">Genre: {queueAlbum.album.genre}</div>
-              )}
+              <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <div className="flex flex-col">
                   <button 
