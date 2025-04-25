@@ -11,6 +11,7 @@ import { SearchIcon, UploadIcon, DownloadIcon } from "lucide-react";
 import { exportAlbumsToCSV } from "@/lib/csv-export";
 import { parseCSVToAlbums } from "@/lib/csv-export";
 import { useToast } from "@/hooks/use-toast";
+import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { ReviewDialog } from "@/components/ui/review-dialog";
 import { EditableGenre } from "@/components/ui/editable-genre";
 import { 
@@ -77,6 +78,7 @@ export default function QueuePage() {
   const { addToNoSkips } = useNoSkipsAlbums();
   const { createReview } = useAlbumReviews();
   const { searchAlbums } = useSpotifyAlbums();
+  const { updateGenre } = useAlbumGenre();
   const { toast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,6 +134,24 @@ export default function QueuePage() {
       title: "Added to No Skips",
       description: "Album has been added to your No Skips collection",
     });
+    handleCloseContextMenu();
+  };
+  
+  // Function to handle genre edit
+  const handleEditGenre = (albumId: number) => {
+    // Find the album
+    const album = queueAlbums?.find(qa => qa.albumId === albumId)?.album;
+    if (!album) return;
+    
+    // Prompt user for new genre
+    const currentGenre = album.genre || "";
+    const newGenre = prompt("Enter genre for this album:", currentGenre);
+    
+    // Update if not canceled and different
+    if (newGenre !== null && newGenre !== currentGenre) {
+      updateGenre(album.id, newGenre || null);
+    }
+    
     handleCloseContextMenu();
   };
   
@@ -459,6 +479,15 @@ export default function QueuePage() {
                     Review & Add to List
                   </button>
                   <button 
+                    className="text-white text-xs mb-1 hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditGenre(queueAlbum.albumId);
+                    }}
+                  >
+                    Edit Genre
+                  </button>
+                  <button 
                     className="text-white text-xs hover:underline text-red-300"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -502,6 +531,12 @@ export default function QueuePage() {
                   onClick={() => handleOpenReviewDialog(qa.albumId)}
                 >
                   Review & Add to List
+                </button>
+                <button 
+                  className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
+                  onClick={() => handleEditGenre(qa.albumId)}
+                >
+                  Edit Genre
                 </button>
                 <button 
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded text-red-500"
