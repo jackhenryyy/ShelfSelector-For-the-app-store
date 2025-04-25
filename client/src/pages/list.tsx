@@ -199,7 +199,7 @@ export default function ListPage() {
                         <div className="font-mono text-sm">
                           {sortOption === 'release-newest' || sortOption === 'release-oldest' 
                             ? (review.album.releaseYear ? review.album.releaseYear.toString().slice(-2) : "--") 
-                            : (review.listenedAt ? getDay(review.listenedAt) : "--")}
+                            : (review.listenedAt ? new Date(review.listenedAt).getDate() : "--")}
                         </div>
                       </div>
                       
