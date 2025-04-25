@@ -151,7 +151,7 @@ export default function HomePage() {
           <div className="flex justify-center mt-8">
             {currentAlbum ? (
               <div 
-                className="block w-64 shadow-lg cursor-pointer"
+                className="block w-80 shadow-lg cursor-pointer"
                 onClick={handleOpenInSpotify}
               >
                 <AlbumArt 
@@ -161,7 +161,7 @@ export default function HomePage() {
                 />
               </div>
             ) : (
-              <div className="w-64 h-64 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
+              <div className="w-80 h-80 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
                 <p className="font-mono text-gray-500 mb-4">No albums available</p>
                 <p className="font-mono text-xs text-gray-500">
                   To get started, add some albums to "the queue" and "no skips" and then click the shuffle button!
@@ -174,12 +174,7 @@ export default function HomePage() {
             <div className="text-center mt-6">
               <h2 className="text-xl font-mono uppercase">{currentAlbum.name}</h2>
               <p className="text-sm font-mono">{currentAlbum.artist}</p>
-              {currentAlbum.genre && (
-                <p className="text-xs font-mono text-gray-500 mt-1">Genre: {currentAlbum.genre}</p>
-              )}
-              {currentAlbum.releaseYear && (
-                <p className="text-xs font-mono text-gray-500 mt-1">Year: {currentAlbum.releaseYear}</p>
-              )}
+              {/* Genre and year information hidden as requested */}
             </div>
           )}
         </div>
