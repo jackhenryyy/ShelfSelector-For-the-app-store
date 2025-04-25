@@ -161,6 +161,7 @@ export default function ListPage() {
             uniqueArtists={uniqueArtists}
             uniqueGenres={uniqueGenres}
             uniqueYears={uniqueYears}
+            simplifiedSort={true}
           />
           
           {/* Export Button */}

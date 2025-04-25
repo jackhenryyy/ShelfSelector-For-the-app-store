@@ -49,7 +49,8 @@ export function AlbumFilterSort({
   totalCount,
   uniqueArtists = [],
   uniqueGenres = [],
-  uniqueYears = []
+  uniqueYears = [],
+  simplifiedSort = false
 }: AlbumFilterSortProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
@@ -112,7 +113,15 @@ export function AlbumFilterSort({
           onChange={handleSortChange}
           className="px-2 py-1 border border-black font-mono text-sm"
         >
-          {sortOptions.map(option => (
+          {(simplifiedSort 
+            // For list page, only show listened date and release date options
+            ? sortOptions.filter(option => 
+                option.value.startsWith('listened-') || 
+                option.value.startsWith('release-')
+              )
+            // Otherwise show all options
+            : sortOptions
+          ).map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
