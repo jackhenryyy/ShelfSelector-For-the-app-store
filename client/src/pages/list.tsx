@@ -198,7 +198,9 @@ export default function ListPage() {
                       <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
                         <div className="font-mono text-sm">
                           {sortOption === 'release-newest' || sortOption === 'release-oldest' 
-                            ? (review.album.releaseYear ? review.album.releaseYear.toString().slice(-2) : "--") 
+                            ? (review.album.releaseDate 
+                                ? new Date(review.album.releaseDate).getDate() 
+                                : (review.album.releaseYear ? review.album.releaseYear.toString().slice(-2) : "--")) 
                             : (review.listenedAt ? new Date(review.listenedAt).getDate() : "--")}
                         </div>
                       </div>
