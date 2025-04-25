@@ -175,7 +175,9 @@ export default function HomePage() {
             <div className="text-center mt-6">
               <h2 className="text-xl font-mono uppercase">{currentAlbum.name}</h2>
               <p className="text-sm font-mono">{currentAlbum.artist}</p>
-              {/* Genre and year information hidden as requested */}
+              <div className="mt-2">
+                <EditableGenre albumId={currentAlbum.id} genre={currentAlbum.genre} className="justify-center" />
+              </div>
             </div>
           )}
         </div>
