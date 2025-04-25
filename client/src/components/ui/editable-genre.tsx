@@ -45,13 +45,17 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   
   if (isEditing) {
     return (
-      <div className={`flex items-center space-x-1 ${className}`}>
+      <div 
+        className={`flex items-center space-x-1 ${className}`} 
+        onClick={(e) => e.stopPropagation()} // Stop propagation at container level
+      >
         <input
           ref={inputRef}
           type="text"
           value={newGenre}
           onChange={(e) => setNewGenre(e.target.value)}
           onKeyDown={handleInputKeyDown}
+          onClick={(e) => e.stopPropagation()} // Also stop at input level
           className="px-1 py-0 text-xs border border-black font-mono w-28 focus:outline-none"
           placeholder="Enter genre..."
           disabled={isUpdating}
@@ -62,14 +66,20 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
           ) : (
             <>
               <button 
-                onClick={handleSaveEdit} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSaveEdit();
+                }} 
                 className="text-green-600 hover:text-green-800"
                 disabled={isUpdating}
               >
                 <Check className="h-3 w-3" />
               </button>
               <button 
-                onClick={handleCancelEdit} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCancelEdit();
+                }} 
                 className="text-red-600 hover:text-red-800"
                 disabled={isUpdating}
               >
@@ -85,7 +95,10 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   return (
     <div 
       className={`group cursor-pointer ${className}`}
-      onClick={handleStartEdit}
+      onClick={(e) => {
+        e.stopPropagation(); // Stop event from reaching parent elements
+        handleStartEdit();
+      }}
     >
       <div className="flex items-center space-x-1">
         <span className="text-xs text-gray-400 truncate">
