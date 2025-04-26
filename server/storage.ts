@@ -26,7 +26,7 @@ export interface IStorage {
   getAlbum(id: number): Promise<Album | undefined>;
   getAlbumBySpotifyId(spotifyId: string): Promise<Album | undefined>;
   createAlbum(album: InsertAlbum): Promise<Album>;
-  updateAlbum(id: number, genre: string | null): Promise<Album | undefined>;
+  updateAlbum(id: number, genre: string | null, releaseDate: string | null): Promise<Album | undefined>;
   searchAlbums(query: string): Promise<Album[]>;
 
   // Queue operations
@@ -141,13 +141,14 @@ export class MemStorage implements IStorage {
     return album;
   }
 
-  async updateAlbum(id: number, genre: string | null): Promise<Album | undefined> {
+  async updateAlbum(id: number, genre: string | null, releaseDate: string | null = null): Promise<Album | undefined> {
     const album = this.albums.get(id);
     if (!album) return undefined;
     
     const updatedAlbum: Album = {
       ...album,
-      genre
+      genre,
+      ...(releaseDate !== null && { releaseDate })
     };
     
     this.albums.set(id, updatedAlbum);
@@ -413,10 +414,23 @@ export class DatabaseStorage implements IStorage {
     return newAlbum;
   }
 
-  async updateAlbum(id: number, genre: string | null): Promise<Album | undefined> {
+  async updateAlbum(id: number, genre: string | null, releaseDate: string | null = null): Promise<Album | undefined> {
+    const updateData: Partial<Album> = { genre };
+    if (releaseDate !== null) {
+      updateData.releaseDate = releaseDate;
+      
+      // If we're updating the release date, also update the release year
+      if (releaseDate) {
+        const yearMatch = releaseDate.match(/^(\d{4})/);
+        if (yearMatch) {
+          updateData.releaseYear = parseInt(yearMatch[1]);
+        }
+      }
+    }
+    
     const [updatedAlbum] = await db
       .update(albums)
-      .set({ genre })
+      .set(updateData)
       .where(eq(albums.id, id))
       .returning();
     return updatedAlbum;

@@ -435,62 +435,75 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
   } else {
     console.log(`Album already exists in database: ${album.name}`);
     
-    // Check and update genre if it's missing - this helps with CSV imports for No Skips
-    if ((!album.genre || album.genre === "None" || album.genre === "null") && accessToken) {
-      console.log(`Album ${album.name} is missing genre. Attempting to update...`);
+    // Check if we need to update any missing information
+    const needsGenreUpdate = !album.genre || album.genre === "None" || album.genre === "null";
+    const needsReleaseDateUpdate = !album.releaseDate && albumData.release_date;
+    
+    if ((needsGenreUpdate || needsReleaseDateUpdate) && accessToken) {
+      console.log(`Album ${album.name} is missing information. Attempting to update...`);
       
       try {
-        // Get artist name
+        // Get any missing release date information from the albumData
+        let releaseDate = album.releaseDate;
+        if (needsReleaseDateUpdate && albumData.release_date) {
+          releaseDate = albumData.release_date;
+          console.log(`Adding release date for ${album.name}: ${releaseDate}`);
+        }
+        
+        // Get artist name for looking up genre
         const artistName = album.artist;
+        let genre = album.genre;
         
-        // Try to get genre from Spotify API using the artist name
-        const searchResult = await searchSpotifyAlbums(accessToken, `artist:${artistName}`, 1);
-        
-        if (searchResult.albums.items.length > 0) {
-          const artistId = searchResult.albums.items[0].artists[0].id;
+        if (needsGenreUpdate) {
+          console.log(`Album ${album.name} is missing genre. Attempting to update...`);
           
-          console.log(`Found artist ID ${artistId} for ${artistName}`);
+          // Try to get genre from Spotify API using the artist name
+          const searchResult = await searchSpotifyAlbums(accessToken, `artist:${artistName}`, 1);
           
-          const artistData = await getArtistDetails(accessToken, artistId);
-          
-          let genre: string | undefined;
-          
-          // If artist has genres, process them
-          if (artistData.genres && artistData.genres.length > 0) {
-            console.log(`Artist genres for ${artistData.name}:`, artistData.genres);
+          if (searchResult.albums.items.length > 0) {
+            const artistId = searchResult.albums.items[0].artists[0].id;
             
-            // Process genre list to get a more specific/main genre
-            let genreList = artistData.genres;
+            console.log(`Found artist ID ${artistId} for ${artistName}`);
             
-            // Try to find a main genre first
-            const mainGenres = ["pop", "rock", "hip hop", "rap", "r&b", "jazz", "electronic", "classical", "country", "folk", "indie"];
-            const foundMainGenre = genreList.find((g: string) => 
-              mainGenres.some(main => g.toLowerCase().includes(main.toLowerCase()))
-            );
+            const artistData = await getArtistDetails(accessToken, artistId);
             
-            if (foundMainGenre) {
-              // Format nicely
-              genre = formatGenre(foundMainGenre);
-              console.log(`Found main genre: ${foundMainGenre} -> formatted as: ${genre}`);
-            } else if (genreList.length > 0) {
-              // Just use the first genre
-              genre = formatGenre(genreList[0]);
-              console.log(`Using first genre: ${genreList[0]} -> formatted as: ${genre}`);
-            }
-            
-            // Update the album with the new genre
-            if (genre) {
-              console.log(`Updating album ${album.name} with genre: ${genre}`);
-              // Update in database
-              const updatedAlbum = await storage.updateAlbum(album.id, genre);
-              if (updatedAlbum) {
-                album = updatedAlbum;
+            // If artist has genres, process them
+            if (artistData.genres && artistData.genres.length > 0) {
+              console.log(`Artist genres for ${artistData.name}:`, artistData.genres);
+              
+              // Process genre list to get a more specific/main genre
+              let genreList = artistData.genres;
+              
+              // Try to find a main genre first
+              const mainGenres = ["pop", "rock", "hip hop", "rap", "r&b", "jazz", "electronic", "classical", "country", "folk", "indie"];
+              const foundMainGenre = genreList.find((g: string) => 
+                mainGenres.some(main => g.toLowerCase().includes(main.toLowerCase()))
+              );
+              
+              if (foundMainGenre) {
+                // Format nicely
+                genre = formatGenre(foundMainGenre);
+                console.log(`Found main genre: ${foundMainGenre} -> formatted as: ${genre}`);
+              } else if (genreList.length > 0) {
+                // Just use the first genre
+                genre = formatGenre(genreList[0]);
+                console.log(`Using first genre: ${genreList[0]} -> formatted as: ${genre}`);
               }
             }
           }
         }
+        
+        // Update the album with any new information we found
+        if ((needsGenreUpdate && genre) || (needsReleaseDateUpdate && releaseDate)) {
+          console.log(`Updating album ${album.name} with new information`);
+          // Update in database
+          const updatedAlbum = await storage.updateAlbum(album.id, genre, releaseDate);
+          if (updatedAlbum) {
+            album = updatedAlbum;
+          }
+        }
       } catch (error) {
-        console.log("Failed to update album genre:", error);
+        console.log("Failed to update album information:", error);
       }
     }
   }
