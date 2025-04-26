@@ -11,6 +11,7 @@ import NoSkipsPage from "@/pages/no-skips";
 import ListPage from "@/pages/list";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import SharedNoSkipsPage from "@/pages/shared-no-skips";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <ProtectedRoute path="/no-skips" component={NoSkipsPage} />
       <ProtectedRoute path="/list" component={ListPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/shared/:userId" component={SharedNoSkipsPage} />
       <Route component={NotFound} />
     </Switch>
   );

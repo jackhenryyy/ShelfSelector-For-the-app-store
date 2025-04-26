@@ -299,6 +299,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Public endpoint to get a user's no-skips collection for sharing
+  app.get('/api/shared/no-skips/:userId', async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+      }
+      
+      // Check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Get the user's no-skips albums and top four
+      const noSkipsAlbums = await storage.getNoSkipsAlbums(userId);
+      const topFourAlbums = await storage.getTopFourAlbums(userId);
+      
+      // Return both collections along with the username (but not email or other private info)
+      res.json({
+        username: user.username,
+        noSkipsAlbums,
+        topFourAlbums
+      });
+    } catch (error) {
+      console.error('Get shared no skips error:', error);
+      res.status(500).json({ message: 'Failed to fetch shared no skips albums' });
+    }
+  });
+  
   app.get('/api/no-skips/top-four', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
