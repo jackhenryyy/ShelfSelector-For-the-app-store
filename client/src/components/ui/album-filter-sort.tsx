@@ -383,6 +383,7 @@ export function groupAlbumsByDate<T extends {
           // If we have a full release date, use the month and year
           const date = new Date(album.album.releaseDate);
           if (!isNaN(date.getTime())) {
+            // Include month and year in the grouping header
             groupKey = format(date, "MMMM yyyy").toLowerCase();
           }
         } else if (album.album.releaseYear) {

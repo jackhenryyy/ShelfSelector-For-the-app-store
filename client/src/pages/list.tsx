@@ -195,14 +195,33 @@ export default function ListPage() {
                   {groupedReviews[monthYear].map((review, index) => (
                     <div key={review.id} className="flex gap-3">
                       {/* Box content changes based on sort type */}
-                      <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
-                        <div className="font-mono text-sm">
-                          {sortOption === 'release-newest' || sortOption === 'release-oldest' 
-                            ? (review.album.releaseDate 
-                                ? new Date(review.album.releaseDate).getDate() 
-                                : (review.album.releaseYear ? review.album.releaseYear.toString().slice(-2) : "--")) 
-                            : (review.listenedAt ? new Date(review.listenedAt).getDate() : "--")}
-                        </div>
+                      <div className="w-10 h-10 min-w-[40px] flex flex-col items-center justify-center border border-black aspect-square">
+                        {/* Split the box to show month & day */}
+                        {sortOption === 'release-newest' || sortOption === 'release-oldest' 
+                          ? (review.album.releaseDate 
+                              ? (
+                                <>
+                                  <div className="font-mono text-[9px] text-black/70 leading-none -mt-0.5">
+                                    {format(new Date(review.album.releaseDate), "MMM")}
+                                  </div>
+                                  <div className="font-mono text-xs">
+                                    {new Date(review.album.releaseDate).getDate()}
+                                  </div>
+                                </>
+                              )
+                              : (review.album.releaseYear ? review.album.releaseYear.toString().slice(-2) : "--")) 
+                          : (review.listenedAt 
+                              ? (
+                                <>
+                                  <div className="font-mono text-[9px] text-black/70 leading-none -mt-0.5">
+                                    {format(new Date(review.listenedAt), "MMM")}
+                                  </div>
+                                  <div className="font-mono text-xs">
+                                    {new Date(review.listenedAt).getDate()}
+                                  </div>
+                                </>
+                              )
+                              : "--")}
                       </div>
                       
                       {/* Album Art */}
