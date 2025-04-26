@@ -533,6 +533,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Batch refresh album release dates
+  app.post('/api/refresh-all-release-dates', requireAuth, async (req, res) => {
+    try {
+      // Get user access token
+      const user = req.user!;
+      if (!user.accessToken) {
+        return res.status(400).json({ message: "No Spotify access token available" });
+      }
+      
+      // Get all albums
+      const allAlbums = await storage.searchAlbums("");
+      const totalAlbums = allAlbums.length;
+      
+      // Process in batches to avoid rate limiting
+      const batchSize = 10;
+      const results = {
+        total: totalAlbums,
+        updated: 0,
+        failed: 0,
+        skipped: 0,
+        processing: true
+      };
+      
+      // Start processing in background
+      res.json({
+        message: `Starting batch update of ${totalAlbums} albums. This will run in the background.`,
+        results
+      });
+      
+      // Process albums in batches
+      for (let i = 0; i < allAlbums.length; i += batchSize) {
+        const batch = allAlbums.slice(i, i + batchSize);
+        
+        // Process each album in the batch
+        for (const album of batch) {
+          try {
+            // Check if album needs updating (missing full release date)
+            if (!album.releaseDate && album.releaseYear) {
+              // Get album details from Spotify
+              const spotifyAlbum = await getAlbumDetails(user.accessToken, album.spotifyId);
+              
+              // Process the album to update missing information
+              await processAndSaveAlbum(spotifyAlbum, user.accessToken);
+              
+              results.updated++;
+              console.log(`Updated album ${album.id}: ${album.name} by ${album.artist}`);
+            } else {
+              results.skipped++;
+            }
+          } catch (error) {
+            console.error(`Error updating album ${album.id}:`, error);
+            results.failed++;
+          }
+          
+          // Short delay to avoid hitting rate limits
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      results.processing = false;
+      console.log(`Album batch update complete. Updated: ${results.updated}, Failed: ${results.failed}, Skipped: ${results.skipped}`);
+    } catch (error) {
+      console.error('Error in batch update:', error);
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   

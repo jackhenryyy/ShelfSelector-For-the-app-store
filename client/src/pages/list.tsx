@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/album-filter-sort";
 
 export default function ListPage() {
-  const { albumReviews, searchReviews, updateReview } = useAlbumReviews();
+  const { albumReviews, searchReviews, updateReview, refetch } = useAlbumReviews();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReviews, setFilteredReviews] = useState<AlbumReview[]>([]);
@@ -252,7 +252,14 @@ export default function ListPage() {
                               )}
                             </div>
                           </div>
-                          <EditableGenre albumId={review.album.id} genre={review.album.genre} className="mt-0.5" />
+                          <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                            <EditableGenre albumId={review.album.id} genre={review.album.genre} className="mt-0.5" />
+                            {review.album.releaseDate && (
+                              <p className="font-mono text-xs text-black/60 mt-0.5">
+                                Released: {format(new Date(review.album.releaseDate), "MMMM d, yyyy")}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
@@ -289,7 +296,33 @@ export default function ListPage() {
               <div className="flex flex-col gap-1">
                 <h3 className="font-mono">{activeReview.album.name}</h3>
                 <p className="font-mono text-sm text-gray-500">{activeReview.album.artist}</p>
-                <EditableGenre albumId={activeReview.album.id} genre={activeReview.album.genre} />
+                <div className="flex flex-col gap-1">
+                  <EditableGenre albumId={activeReview.album.id} genre={activeReview.album.genre} />
+                  {activeReview.album.releaseDate && (
+                    <p className="font-mono text-xs text-gray-500">
+                      Released: {format(new Date(activeReview.album.releaseDate), "MMMM d, yyyy")}
+                    </p>
+                  )}
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/api/refresh-album/${activeReview.album.id}`, {
+                          method: 'POST'
+                        });
+                        if (response.ok) {
+                          // Refetch album reviews to get updated data
+                          refetch();
+                          alert('Album data refreshed successfully');
+                        }
+                      } catch (error) {
+                        console.error('Error refreshing album:', error);
+                      }
+                    }}
+                    className="mt-1 px-2 py-0.5 border border-gray-400 text-xs font-mono self-start"
+                  >
+                    update release date
+                  </button>
+                </div>
               </div>
             </div>
           )}
