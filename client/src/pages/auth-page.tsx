@@ -73,9 +73,9 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Rotating album background */}
+      {/* Random album background (changes on page refresh) */}
       <div className="absolute inset-0 z-0">
-        <RotatingBackground images={albumCovers} interval={7000} intensity="medium" />
+        <RotatingBackground images={albumCovers} intensity="medium" />
       </div>
       
       {/* Content overlay with slight transparency */}

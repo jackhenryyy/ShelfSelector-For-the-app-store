@@ -3,76 +3,41 @@ import { BlurredBackground } from "./blurred-background";
 
 interface RotatingBackgroundProps {
   images: string[];
-  interval?: number; // rotation interval in milliseconds
   intensity?: "light" | "medium" | "heavy";
 }
 
+/**
+ * Component that displays a random album background from the provided images.
+ * Instead of rotating automatically, it shows a random image that only changes on page refresh.
+ */
 export function RotatingBackground({
   images,
-  interval = 7000, // default to 7 seconds
   intensity = "medium",
 }: RotatingBackgroundProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [fadeOut, setFadeOut] = useState(false);
+  // We only need to track the current image, no rotation needed
   const [currentImage, setCurrentImage] = useState("");
-  const [nextImage, setNextImage] = useState("");
-
+  
   useEffect(() => {
     if (!images || images.length === 0) return;
 
-    // Start with a random image for visual interest
+    // Select a random image from the array on component mount
     const randomIndex = Math.floor(Math.random() * images.length);
     setCurrentImage(images[randomIndex]);
-    setCurrentIndex(randomIndex);
     
     // Debug logs
-    console.log("Rotating background initialized with images:", images);
+    console.log("Background initialized with random image from collection:", images.length, "images");
     
-    // Set up the interval to rotate through the images
-    const timer = setInterval(() => {
-      // Trigger fade out effect
-      setFadeOut(true);
-      
-      // Calculate the next index
-      const nextIndex = (currentIndex + 1) % images.length;
-      
-      // Store the next image
-      setNextImage(images[nextIndex]);
-      
-      // Update the current index after transition delay
-      setTimeout(() => {
-        setCurrentImage(images[nextIndex]);
-        setCurrentIndex(nextIndex);
-        setFadeOut(false);
-      }, 750); // transition time
-      
-    }, interval);
-    
-    // Clean up the interval on component unmount
-    return () => clearInterval(timer);
-  }, [images, interval, currentIndex]);
+    // No cleanup needed as we're not setting up any intervals
+  }, [images]); // Only depend on images array, not on any state that would cause re-renders
 
   if (!images || images.length === 0) return null;
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Current image */}
-      <div 
-        className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
-        style={{ zIndex: fadeOut ? 1 : 2 }}
-      >
+      {/* Static background with the randomly selected image */}
+      <div className="absolute inset-0">
         <BlurredBackground imageUrl={currentImage} intensity={intensity} />
       </div>
-      
-      {/* Next image (pre-loaded) */}
-      {nextImage && (
-        <div 
-          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${fadeOut ? 'opacity-100' : 'opacity-0'}`}
-          style={{ zIndex: fadeOut ? 2 : 1 }}
-        >
-          <BlurredBackground imageUrl={nextImage} intensity={intensity} />
-        </div>
-      )}
     </div>
   );
 }
