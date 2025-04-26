@@ -10,7 +10,8 @@ import { SearchIcon, Plus, DownloadIcon, UploadIcon } from "lucide-react";
 import { EditableGenre } from "@/components/ui/editable-genre";
 import { exportAlbumsToCSV, parseCSVToAlbums } from "@/lib/csv-export";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
-import { useSpotifyAlbums, useSpotifyAuth } from "@/hooks/use-spotify";
+import { useSpotifyAlbums } from "@/hooks/use-spotify";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { TopFourDialog } from "@/components/ui/top-four-dialog";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
@@ -23,13 +24,14 @@ import {
 
 export default function NoSkipsPage() {
   // Hooks with contexts first
-  const { user } = useSpotifyAuth();
+  const { user } = useAuth(); // Use the proper authentication hook
   const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips } = useNoSkipsAlbums();
   const { searchAlbums, searchResults, isSearching } = useSpotifyAlbums();
   const { toast } = useToast();
   
   // User ID derived from user
   const userId = user?.id;
+  console.log("User from useAuth:", user);
   
   // All useState hooks together
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
