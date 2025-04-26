@@ -1,20 +1,24 @@
-// This file contains placeholder paths for album covers
-// We'll use these for the rotating background on the landing page
-// In production, these should be replaced with actual album covers
+// This file contains paths for album covers used in the rotating background
+// We use local album covers to ensure reliable loading without external dependencies
 
-// For now, we'll use placeholder URLs that point to sample album art
-// You can replace these with your own album covers in client/src/assets/album-covers/
+// Import album cover images
+import taatAlbum from "@assets/TAAT.jpg"; // The Autobiography of a Thug (Basquiat)
+import tlopAlbum from "@assets/TLOP.png"; // The Life of Pablo
+import arobtthAlbum from "@assets/AROBTTH.jpg"; // A Rush of Blood to the Head
+import goodFaithAlbum from "@assets/Good_Faith.jpg"; // Good Faith
+import cmiyglAlbum from "@assets/CMIYGL.jpg"; // Call Me If You Get Lost
+import vAlbum from "@assets/V.jpg"; // V
+import silverLiningsAlbum from "@assets/silver_linings.jpg"; // Silver Linings
+import inColourAlbum from "@assets/In_Colour.png"; // In Colour
+
+// Export array of album cover paths for use in the rotating background
 export const albumCovers = [
-  "https://i.scdn.co/image/ab67616d0000b273c93ff0d9913ca14ba3c54f12", // Sample album 1
-  "https://i.scdn.co/image/ab67616d0000b273c634cd65ba525a56904e94bd", // Sample album 2
-  "https://i.scdn.co/image/ab67616d0000b273a108e07c661f9fc54de9c43a", // Sample album 3
-  "https://i.scdn.co/image/ab67616d0000b2732fee51d077222b593baf3744", // Sample album 4
-  "https://i.scdn.co/image/ab67616d0000b2736feb6d9ed7891f40e9a524dd", // Sample album 5
+  taatAlbum,
+  tlopAlbum, 
+  arobtthAlbum,
+  goodFaithAlbum,
+  cmiyglAlbum,
+  vAlbum,
+  silverLiningsAlbum,
+  inColourAlbum
 ];
-
-// When the user provides actual album covers, we can update this list to use them
-// For example:
-// export const albumCovers = [
-//   import.meta.url(new URL("../assets/album-covers/album1.jpg", import.meta.url)),
-//   import.meta.url(new URL("../assets/album-covers/album2.jpg", import.meta.url)),
-// ];
