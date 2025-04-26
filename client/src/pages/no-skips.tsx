@@ -119,21 +119,35 @@ export default function NoSkipsPage() {
   
   // Function to share No Skips page
   const handleShare = () => {
-    if (!userId) return;
+    console.log("Share button clicked, userId:", userId);
+    
+    if (!userId) {
+      console.error("Cannot share: userId is undefined");
+      toast({
+        title: "Sharing error",
+        description: "Unable to generate a share link. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const shareableLink = generateShareableLink(userId);
+    console.log("Generated shareable link:", shareableLink);
     
     // Try to use the Web Share API if available
     if (navigator.share) {
+      console.log("Using Web Share API");
       navigator.share({
         title: 'My No Skips Collection',
         text: 'Check out my No Skips album collection',
         url: shareableLink,
-      }).catch(() => {
+      }).catch((error) => {
+        console.error("Web Share API error:", error);
         // Fallback to clipboard if sharing fails
         copyToClipboard(shareableLink);
       });
     } else {
+      console.log("Web Share API not available, using clipboard fallback");
       // Fallback for browsers that don't support the Web Share API
       copyToClipboard(shareableLink);
     }
@@ -146,7 +160,19 @@ export default function NoSkipsPage() {
         title: "Link copied to clipboard",
         description: "Share this link with friends to show them your No Skips collection",
       });
-    }).catch(() => {
+      
+      // Also log for debugging
+      console.log("SHARE URL copied to clipboard:", text);
+      
+      // Create a clickable test link in the console
+      console.log(
+        "To test the share link directly, click here:", 
+        `%c${text}`, 
+        "color: blue; text-decoration: underline; cursor: pointer"
+      );
+    }).catch((err) => {
+      console.error("Clipboard write error:", err);
+      
       // Manual fallback for browsers without clipboard API
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -162,6 +188,7 @@ export default function NoSkipsPage() {
           description: "Share this link with friends to show them your No Skips collection",
         });
       } catch (err) {
+        console.error("execCommand copy error:", err);
         toast({
           title: "Couldn't copy automatically",
           description: `Your shareable link is: ${text}`,

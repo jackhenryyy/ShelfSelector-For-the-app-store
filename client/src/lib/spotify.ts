@@ -22,7 +22,15 @@ export function openInSpotify(spotifyId: string) {
  * Generates a shareable link for a user's No Skips page
  */
 export function generateShareableLink(userId: number) {
-  // Get the current domain
-  const domain = window.location.origin;
-  return `${domain}/shared/${userId}`;
+  try {
+    // Get the current domain
+    const domain = window.location.origin;
+    const shareUrl = `${domain}/shared/${userId}`;
+    console.log("Generated share URL:", shareUrl, "for userId:", userId);
+    return shareUrl;
+  } catch (error) {
+    console.error("Error generating shareable link:", error);
+    // Fallback to relative URL in case of error
+    return `/shared/${userId}`;
+  }
 }
