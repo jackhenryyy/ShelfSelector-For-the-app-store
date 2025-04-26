@@ -485,6 +485,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Route to get album details for debugging
+  app.get('/api/debug-album/:id', requireAuth, async (req, res) => {
+    try {
+      const albumId = parseInt(req.params.id);
+      if (isNaN(albumId)) {
+        return res.status(400).json({ message: 'Invalid album ID' });
+      }
+      
+      const album = await storage.getAlbum(albumId);
+      if (!album) return res.status(404).json({ message: "Album not found" });
+      
+      return res.json({ album });
+    } catch (error) {
+      console.error('Error in debug album route:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Route to refresh album data from Spotify
+  app.post('/api/refresh-album/:id', requireAuth, async (req, res) => {
+    try {
+      const albumId = parseInt(req.params.id);
+      const album = await storage.getAlbum(albumId);
+      if (!album) return res.status(404).json({ message: "Album not found" });
+      
+      // Get user access token
+      const user = req.user!;
+      if (!user.accessToken) {
+        return res.status(400).json({ message: "No Spotify access token available" });
+      }
+      
+      // Get album details from Spotify
+      const spotifyAlbum = await getAlbumDetails(user.accessToken, album.spotifyId);
+      
+      // Process the album to update missing information
+      const updatedAlbum = await processAndSaveAlbum(spotifyAlbum, user.accessToken);
+      
+      return res.json({ 
+        success: true, 
+        album: updatedAlbum,
+        message: "Album data refreshed from Spotify"
+      });
+    } catch (error) {
+      console.error('Error refreshing album data:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
   
