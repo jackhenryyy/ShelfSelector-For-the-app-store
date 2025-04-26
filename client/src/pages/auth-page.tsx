@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { RotatingBackground } from "@/components/ui/rotating-background";
+import { albumCovers } from "@/lib/album-covers";
 
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -70,8 +72,14 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Rotating album background */}
+      <div className="absolute inset-0 z-0">
+        <RotatingBackground images={albumCovers} interval={7000} intensity="medium" />
+      </div>
+      
+      {/* Content overlay with slight transparency */}
+      <div className="relative z-10 w-full max-w-md px-4 py-8 bg-white/95 rounded shadow-lg">
         <h1 className="text-center text-3xl tracking-widest mb-16 font-mono">
           t h e&nbsp;&nbsp;s h e l f
         </h1>
