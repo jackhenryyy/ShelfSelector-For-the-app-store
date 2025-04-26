@@ -18,7 +18,8 @@ import { GenreEditorDialog } from "@/components/ui/genre-editor-dialog";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { 
   AlbumFilterSort, 
-  SortOption
+  SortOption, 
+  FilterOption
 } from "@/components/ui/album-filter-sort";
 
 // Helper function for sorting adapted to our specific needs
@@ -48,7 +49,31 @@ function sortQueueAlbums(albums: any[], sortOption: SortOption) {
   });
 }
 
-// Removed filtering functionality
+// Helper function for filtering adapted to our specific needs
+function filterQueueAlbums(albums: any[], filter: FilterOption) {
+  if (!albums) return [];
+  if (!filter || Object.keys(filter).length === 0) return albums;
+  
+  return albums.filter(item => {
+    // Filter by artist
+    if (filter.artist && item.album.artist !== filter.artist) {
+      return false;
+    }
+    
+    // Filter by year
+    if (filter.year !== undefined && filter.year !== null && 
+        item.album.releaseYear !== filter.year) {
+      return false;
+    }
+    
+    // Filter by genre
+    if (filter.genre && item.album.genre !== filter.genre) {
+      return false;
+    }
+    
+    return true;
+  });
+}
 
 export default function QueuePage() {
   const { queueAlbums, addToQueue, removeFromQueue } = useQueueAlbums();
@@ -66,19 +91,22 @@ export default function QueuePage() {
   const [genreEditorOpen, setGenreEditorOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
-  const [sortedQueueAlbums, setSortedQueueAlbums] = useState<any[]>([]);
+  const [filterOptions, setFilterOptions] = useState<FilterOption>({});
+  const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   const [gridScale, setGridScale] = useState<number>(3);
   
-  // Update sorted queue albums when sorting changes
+  // Update filtered queue albums when sorting or filtering changes
   useEffect(() => {
     if (!queueAlbums) return;
     
-    // Apply sorting only
-    const processed = sortQueueAlbums(queueAlbums, sortOption);
+    // Apply sorting and filtering
+    let processed = [...queueAlbums];
+    processed = sortQueueAlbums(processed, sortOption);
+    processed = filterQueueAlbums(processed, filterOptions);
     
-    setSortedQueueAlbums(processed);
-  }, [queueAlbums, sortOption]);
+    setFilteredQueueAlbums(processed);
+  }, [queueAlbums, sortOption, filterOptions]);
   
   // Function to handle album click
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
@@ -263,7 +291,7 @@ export default function QueuePage() {
 
   // Function to handle CSV export
   const handleExportCSV = () => {
-    if (!sortedQueueAlbums || sortedQueueAlbums.length === 0) {
+    if (!filteredQueueAlbums || filteredQueueAlbums.length === 0) {
       toast({
         title: "Nothing to export",
         description: "Your queue is empty",
@@ -272,13 +300,41 @@ export default function QueuePage() {
       return;
     }
     
-    exportAlbumsToCSV(sortedQueueAlbums, "queue-albums.csv");
+    exportAlbumsToCSV(filteredQueueAlbums, "queue-albums.csv");
     
     toast({
       title: "Export complete",
-      description: `${sortedQueueAlbums.length} albums exported to CSV`,
+      description: `${filteredQueueAlbums.length} albums exported to CSV`,
     });
   };
+  
+  // Get unique artists, genres, and years for filters
+  const uniqueArtists: string[] = [];
+  const uniqueGenres: string[] = [];
+  const uniqueYears: number[] = [];
+  
+  if (queueAlbums) {
+    // Build unique artists list
+    const artistsSet = new Set<string>();
+    queueAlbums.forEach(a => {
+      if (a.album.artist) artistsSet.add(a.album.artist);
+    });
+    uniqueArtists.push(...Array.from(artistsSet));
+    
+    // Build unique genres list
+    const genresSet = new Set<string>();
+    queueAlbums.forEach(a => {
+      if (a.album.genre) genresSet.add(a.album.genre);
+    });
+    uniqueGenres.push(...Array.from(genresSet));
+    
+    // Build unique years list
+    const yearsSet = new Set<number>();
+    queueAlbums.forEach(a => {
+      if (a.album.releaseYear) yearsSet.add(a.album.releaseYear);
+    });
+    uniqueYears.push(...Array.from(yearsSet));
+  }
 
   return (
     <Layout
@@ -287,14 +343,20 @@ export default function QueuePage() {
     >
       <div className="p-4 pt-0">
         <div className="mb-1 font-mono text-xs text-black/60">
-          {sortedQueueAlbums.length} albums
+          {filteredQueueAlbums.length} albums
         </div>
         <div className="flex justify-between items-center mb-4">
           {/* Filter Controls and Import/Export CSV */}
           <div className="flex gap-2">
             <AlbumFilterSort
               onSortChange={setSortOption}
+              onFilterChange={setFilterOptions}
               selectedSort={sortOption}
+              showFilterOptions={true}
+              totalCount={filteredQueueAlbums.length}
+              uniqueArtists={uniqueArtists}
+              uniqueGenres={uniqueGenres}
+              uniqueYears={uniqueYears}
             />
             
             <label 
@@ -390,7 +452,7 @@ export default function QueuePage() {
         </div>
         
         <AlbumGrid columns={gridScale}>
-          {sortedQueueAlbums.map((queueAlbum) => (
+          {filteredQueueAlbums.map((queueAlbum) => (
             <div 
               key={queueAlbum.id}
               className="relative group mb-2"

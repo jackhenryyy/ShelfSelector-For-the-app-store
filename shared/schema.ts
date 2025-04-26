@@ -32,7 +32,6 @@ export const albums = pgTable("albums", {
   artist: text("artist").notNull(),
   imageUrl: text("image_url").notNull(),
   releaseYear: integer("release_year"),
-  releaseDate: text("release_date"), // Full ISO date (YYYY-MM-DD)
   genre: text("genre"),
   energyLevel: text("energy_level"), // 'high', 'medium', or 'low'
 });

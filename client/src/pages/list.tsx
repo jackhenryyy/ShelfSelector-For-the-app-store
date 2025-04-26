@@ -17,7 +17,9 @@ import { EditableGenre } from "@/components/ui/editable-genre";
 import { 
   AlbumFilterSort, 
   SortOption, 
+  FilterOption, 
   sortAlbums, 
+  filterAlbums, 
   groupAlbumsByMonth 
 } from "@/components/ui/album-filter-sort";
 
@@ -31,7 +33,8 @@ export default function ListPage() {
   const [editRating, setEditRating] = useState(0);
   const [editReview, setEditReview] = useState("");
   const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
-  const [sortOption, setSortOption] = useState<SortOption>("listened-newest");
+  const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
+  const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
   // Update filtered reviews when albums or search changes
   useEffect(() => {
@@ -40,14 +43,17 @@ export default function ListPage() {
     if (!searchQuery.trim()) {
       let sortedReviews = [...albumReviews];
       
-      // Apply sorting only - no filtering
+      // Apply sorting
       sortedReviews = sortAlbums(sortedReviews, sortOption);
+      
+      // Apply filtering
+      sortedReviews = filterAlbums(sortedReviews, filterOptions);
       
       setFilteredReviews(sortedReviews);
     } else {
       handleSearch();
     }
-  }, [albumReviews, searchQuery, sortOption]);
+  }, [albumReviews, searchQuery, sortOption, filterOptions]);
   
   // Function to handle search
   const handleSearch = async () => {
@@ -98,7 +104,18 @@ export default function ListPage() {
     setActiveReview(null);
   };
 
-  // No more filtering, so these aren't needed
+  // Get unique artists, genres, and years for filters
+  const uniqueArtists = albumReviews 
+    ? [...new Set(albumReviews.map(r => r.album.artist))]
+    : [];
+    
+  const uniqueGenres = albumReviews
+    ? [...new Set(albumReviews.map(r => r.album.genre).filter(Boolean))]
+    : [];
+    
+  const uniqueYears = albumReviews
+    ? [...new Set(albumReviews.map(r => r.album.releaseYear).filter(Boolean))]
+    : [];
 
   // Group the reviews by month/year if not searching
   const groupedReviews = !searchQuery
@@ -133,10 +150,16 @@ export default function ListPage() {
           {filteredReviews.length} albums
         </div>
         <div className="flex justify-between items-center mb-4">
-          {/* Sort Controls - simplified */}
+          {/* Filter and Sort Controls */}
           <AlbumFilterSort
             onSortChange={setSortOption}
+            onFilterChange={setFilterOptions}
             selectedSort={sortOption}
+            showFilterOptions={true}
+            totalCount={filteredReviews.length}
+            uniqueArtists={uniqueArtists}
+            uniqueGenres={uniqueGenres}
+            uniqueYears={uniqueYears}
           />
           
           {/* Export Button */}
