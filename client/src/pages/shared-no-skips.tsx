@@ -82,8 +82,8 @@ export default function SharedNoSkipsPage() {
     : [];
   
   return (
-    <Layout>
-      <div className="max-w-6xl mx-auto px-4 py-6">
+    <Layout title={data ? `${data.username}'s No Skips Collection` : "Shared Collection"}>
+      <div className="p-4 pt-0">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <Link href="/no-skips">
@@ -92,17 +92,16 @@ export default function SharedNoSkipsPage() {
                 Back to your collection
               </a>
             </Link>
-            <h1 className="text-xl font-medium ml-4">
-              {isLoading ? "Loading..." : data ? `${data.username}'s No Skips Albums` : "Shared Collection"}
-            </h1>
           </div>
           <div className="flex items-center gap-4">
-            <GridScaleSlider 
-              value={gridScale} 
-              onChange={setGridScale}
-              min={1}
-              max={12}
-            />
+            <div className="px-2">
+              <GridScaleSlider 
+                value={gridScale} 
+                onChange={setGridScale}
+                min={1}
+                max={12}
+              />
+            </div>
           </div>
         </div>
         
