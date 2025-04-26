@@ -17,9 +17,7 @@ import { EditableGenre } from "@/components/ui/editable-genre";
 import { 
   AlbumFilterSort, 
   SortOption, 
-  FilterOption, 
   sortAlbums, 
-  filterAlbums, 
   groupAlbumsByMonth 
 } from "@/components/ui/album-filter-sort";
 
@@ -34,7 +32,6 @@ export default function ListPage() {
   const [editReview, setEditReview] = useState("");
   const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
   const [sortOption, setSortOption] = useState<SortOption>("listened-newest");
-  const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
   // Update filtered reviews when albums or search changes
   useEffect(() => {
@@ -43,17 +40,14 @@ export default function ListPage() {
     if (!searchQuery.trim()) {
       let sortedReviews = [...albumReviews];
       
-      // Apply sorting
+      // Apply sorting only - no filtering
       sortedReviews = sortAlbums(sortedReviews, sortOption);
-      
-      // Apply filtering
-      sortedReviews = filterAlbums(sortedReviews, filterOptions);
       
       setFilteredReviews(sortedReviews);
     } else {
       handleSearch();
     }
-  }, [albumReviews, searchQuery, sortOption, filterOptions]);
+  }, [albumReviews, searchQuery, sortOption]);
   
   // Function to handle search
   const handleSearch = async () => {
@@ -104,18 +98,7 @@ export default function ListPage() {
     setActiveReview(null);
   };
 
-  // Get unique artists, genres, and years for filters
-  const uniqueArtists = albumReviews 
-    ? [...new Set(albumReviews.map(r => r.album.artist))]
-    : [];
-    
-  const uniqueGenres = albumReviews
-    ? [...new Set(albumReviews.map(r => r.album.genre).filter(Boolean))]
-    : [];
-    
-  const uniqueYears = albumReviews
-    ? [...new Set(albumReviews.map(r => r.album.releaseYear).filter(Boolean))]
-    : [];
+  // No more filtering, so these aren't needed
 
   // Group the reviews by month/year if not searching
   const groupedReviews = !searchQuery
@@ -150,16 +133,10 @@ export default function ListPage() {
           {filteredReviews.length} albums
         </div>
         <div className="flex justify-between items-center mb-4">
-          {/* Filter and Sort Controls */}
+          {/* Sort Controls - simplified */}
           <AlbumFilterSort
             onSortChange={setSortOption}
-            onFilterChange={setFilterOptions}
             selectedSort={sortOption}
-            showFilterOptions={true}
-            totalCount={filteredReviews.length}
-            uniqueArtists={uniqueArtists}
-            uniqueGenres={uniqueGenres}
-            uniqueYears={uniqueYears}
           />
           
           {/* Export Button */}
