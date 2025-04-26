@@ -153,7 +153,7 @@ export function useAlbumReviews() {
   const queryClient = useQueryClient();
 
   // Get all album reviews
-  const { data: albumReviews, isLoading, refetch } = useQuery<AlbumReview[]>({
+  const { data: albumReviews, isLoading } = useQuery<AlbumReview[]>({
     queryKey: ['/api/reviews'],
   });
 
@@ -204,7 +204,6 @@ export function useAlbumReviews() {
   return {
     albumReviews,
     isLoading,
-    refetch,
     getAlbumReview,
     searchReviews,
     createReview: (data: { albumId: number; rating: number; review?: string; listenedAt?: Date }) => 

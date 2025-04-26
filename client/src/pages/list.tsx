@@ -20,11 +20,11 @@ import {
   FilterOption, 
   sortAlbums, 
   filterAlbums, 
-  groupAlbumsByDate 
+  groupAlbumsByMonth 
 } from "@/components/ui/album-filter-sort";
 
 export default function ListPage() {
-  const { albumReviews, searchReviews, updateReview, refetch } = useAlbumReviews();
+  const { albumReviews, searchReviews, updateReview } = useAlbumReviews();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReviews, setFilteredReviews] = useState<AlbumReview[]>([]);
@@ -33,7 +33,6 @@ export default function ListPage() {
   const [editRating, setEditRating] = useState(0);
   const [editReview, setEditReview] = useState("");
   const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
-  // Only allow two sort options: listened date or release date, both defaulting to newest first
   const [sortOption, setSortOption] = useState<SortOption>("listened-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
@@ -118,9 +117,9 @@ export default function ListPage() {
     ? [...new Set(albumReviews.map(r => r.album.releaseYear).filter(Boolean))]
     : [];
 
-  // Group the reviews by date (month/year or release year) based on sort option
+  // Group the reviews by month/year if not searching
   const groupedReviews = !searchQuery
-    ? groupAlbumsByDate(filteredReviews, sortOption)
+    ? groupAlbumsByMonth(filteredReviews)
     : { "search results": filteredReviews };
     
   // Helper function to get day from date string
@@ -161,7 +160,6 @@ export default function ListPage() {
             uniqueArtists={uniqueArtists}
             uniqueGenres={uniqueGenres}
             uniqueYears={uniqueYears}
-            simplifiedSort={true}
           />
           
           {/* Export Button */}
@@ -185,43 +183,18 @@ export default function ListPage() {
           ) : (
             sortedMonthYearKeys.map(monthYear => (
               <div key={monthYear}>
-                {/* Header changes based on sort type */}
+                {/* Month-Year Header */}
                 <div className="bg-gray-200 py-2 px-4 mb-4 font-mono text-sm">
                   {monthYear}
                 </div>
                 
-                {/* Reviews for this group */}
+                {/* Reviews for this month */}
                 <div className="space-y-4">
                   {groupedReviews[monthYear].map((review, index) => (
                     <div key={review.id} className="flex gap-3">
-                      {/* Box content changes based on sort type */}
-                      <div className="w-10 h-10 min-w-[40px] flex flex-col items-center justify-center border border-black aspect-square">
-                        {/* Split the box to show month & day */}
-                        {sortOption === 'release-newest' || sortOption === 'release-oldest' 
-                          ? (review.album.releaseDate 
-                              ? (
-                                <>
-                                  <div className="font-mono text-[9px] text-black/70 leading-none -mt-0.5">
-                                    {format(new Date(review.album.releaseDate), "MMM")}
-                                  </div>
-                                  <div className="font-mono text-xs">
-                                    {new Date(review.album.releaseDate).getDate()}
-                                  </div>
-                                </>
-                              )
-                              : (review.album.releaseYear ? review.album.releaseYear.toString().slice(-2) : "--")) 
-                          : (review.listenedAt 
-                              ? (
-                                <>
-                                  <div className="font-mono text-[9px] text-black/70 leading-none -mt-0.5">
-                                    {format(new Date(review.listenedAt), "MMM")}
-                                  </div>
-                                  <div className="font-mono text-xs">
-                                    {new Date(review.listenedAt).getDate()}
-                                  </div>
-                                </>
-                              )
-                              : "--")}
+                      {/* Day Number in Box */}
+                      <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
+                        <div className="font-mono text-sm">{review.listenedAt ? getDay(review.listenedAt) : "--"}</div>
                       </div>
                       
                       {/* Album Art */}
@@ -252,14 +225,7 @@ export default function ListPage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-                            <EditableGenre albumId={review.album.id} genre={review.album.genre} className="mt-0.5" />
-                            {review.album.releaseDate && (
-                              <p className="font-mono text-xs text-black/60 mt-0.5">
-                                Released: {format(new Date(review.album.releaseDate), "MMMM d, yyyy")}
-                              </p>
-                            )}
-                          </div>
+                          <EditableGenre albumId={review.album.id} genre={review.album.genre} className="mt-0.5" />
                         </div>
                       </div>
                       
@@ -296,33 +262,7 @@ export default function ListPage() {
               <div className="flex flex-col gap-1">
                 <h3 className="font-mono">{activeReview.album.name}</h3>
                 <p className="font-mono text-sm text-gray-500">{activeReview.album.artist}</p>
-                <div className="flex flex-col gap-1">
-                  <EditableGenre albumId={activeReview.album.id} genre={activeReview.album.genre} />
-                  {activeReview.album.releaseDate && (
-                    <p className="font-mono text-xs text-gray-500">
-                      Released: {format(new Date(activeReview.album.releaseDate), "MMMM d, yyyy")}
-                    </p>
-                  )}
-                  <button 
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(`/api/refresh-album/${activeReview.album.id}`, {
-                          method: 'POST'
-                        });
-                        if (response.ok) {
-                          // Refetch album reviews to get updated data
-                          refetch();
-                          alert('Album data refreshed successfully');
-                        }
-                      } catch (error) {
-                        console.error('Error refreshing album:', error);
-                      }
-                    }}
-                    className="mt-1 px-2 py-0.5 border border-gray-400 text-xs font-mono self-start"
-                  >
-                    update release date
-                  </button>
-                </div>
+                <EditableGenre albumId={activeReview.album.id} genre={activeReview.album.genre} />
               </div>
             </div>
           )}

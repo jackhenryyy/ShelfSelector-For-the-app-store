@@ -37,8 +37,6 @@ interface AlbumFilterSortProps {
   uniqueArtists?: string[];
   uniqueGenres?: string[];
   uniqueYears?: number[];
-  // Option to only show limited sort options (for simplified pages)
-  simplifiedSort?: boolean;
 }
 
 export function AlbumFilterSort({
@@ -49,8 +47,7 @@ export function AlbumFilterSort({
   totalCount,
   uniqueArtists = [],
   uniqueGenres = [],
-  uniqueYears = [],
-  simplifiedSort = false
+  uniqueYears = []
 }: AlbumFilterSortProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
@@ -113,15 +110,7 @@ export function AlbumFilterSort({
           onChange={handleSortChange}
           className="px-2 py-1 border border-black font-mono text-sm"
         >
-          {(simplifiedSort 
-            // For list page, only show listened date and release date options
-            ? sortOptions.filter(option => 
-                option.value.startsWith('listened-') || 
-                option.value.startsWith('release-')
-              )
-            // Otherwise show all options
-            : sortOptions
-          ).map(option => (
+          {sortOptions.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -355,71 +344,42 @@ export function filterAlbums<T extends { album: Album; rating?: number }>(
   });
 }
 
-// Helper for grouping albums by date for the list view
-export function groupAlbumsByDate<T extends { 
-  listenedAt?: string | null, 
-  addedAt?: string, 
-  reviewedAt?: string,
-  album: { 
-    releaseYear?: number | null,
-    releaseDate?: string | null
-  }
-}>(
-  albums: T[],
-  sortOption: SortOption
+// Helper for grouping albums by listened date (month and year) for reviews
+export function groupAlbumsByMonth<T extends { listenedAt?: string | null, addedAt?: string, reviewedAt?: string }>(
+  albums: T[]
 ): Record<string, T[]> {
   const grouped: Record<string, T[]> = {};
   
-  // Determine if we're grouping by release date or listened date
-  const isReleaseDate = sortOption === 'release-newest' || sortOption === 'release-oldest';
-  
   albums.forEach(album => {
     try {
-      let groupKey = '';
+      // Try to use dates in order of preference: listenedAt, reviewedAt, addedAt
+      const dateStr = album.listenedAt || album.reviewedAt || album.addedAt || '';
+      const date = new Date(dateStr);
       
-      if (isReleaseDate) {
-        // Group by release date/year
-        if (album.album.releaseDate) {
-          // If we have a full release date, use the month and year
-          const date = new Date(album.album.releaseDate);
-          if (!isNaN(date.getTime())) {
-            // Include month and year in the grouping header
-            groupKey = format(date, "MMMM yyyy").toLowerCase();
-          }
-        } else if (album.album.releaseYear) {
-          // Otherwise use the release year if available
-          groupKey = album.album.releaseYear.toString();
-        } else {
-          groupKey = 'unknown release date';
-        }
-      } else {
-        // Group by listened/added date (month and year)
-        const dateStr = album.listenedAt || album.reviewedAt || album.addedAt || '';
-        const date = new Date(dateStr);
+      // Check if date is valid before formatting
+      if (dateStr && !isNaN(date.getTime())) {
+        const monthYear = format(date, "MMMM yyyy").toLowerCase(); // e.g., "april 2025"
         
-        // Check if date is valid before formatting
-        if (dateStr && !isNaN(date.getTime())) {
-          groupKey = format(date, "MMMM yyyy").toLowerCase(); // e.g., "april 2025"
-        } else {
-          groupKey = "recently added";
+        if (!grouped[monthYear]) {
+          grouped[monthYear] = [];
         }
+        
+        grouped[monthYear].push(album);
+      } else {
+        // For invalid dates, place in "recently added" group instead of "unknown date"
+        if (!grouped["recently added"]) {
+          grouped["recently added"] = [];
+        }
+        
+        grouped["recently added"].push(album);
       }
-      
-      // Add to the appropriate group
-      if (!grouped[groupKey]) {
-        grouped[groupKey] = [];
-      }
-      
-      grouped[groupKey].push(album);
     } catch (error) {
-      // In case of parsing errors, add to fallback group
-      const fallbackGroup = isReleaseDate ? "unknown release date" : "recently added";
-      
-      if (!grouped[fallbackGroup]) {
-        grouped[fallbackGroup] = [];
+      // In case of date parsing errors, place in "recently added" group
+      if (!grouped["recently added"]) {
+        grouped["recently added"] = [];
       }
       
-      grouped[fallbackGroup].push(album);
+      grouped["recently added"].push(album);
     }
   });
   
