@@ -206,6 +206,19 @@ export default function AuthPage() {
             </button>
           </form>
         )}
+        
+        {/* Info blurb */}
+        <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+          <h3 className="font-mono text-sm font-semibold mb-2">about the shelf</h3>
+          <p className="text-xs text-gray-600 px-4 font-mono leading-relaxed">
+            the shelf is a minimalist app designed to help you decide what music to listen to.
+            organize your albums, build your listening queue, and track your no-skips collection.
+            connect with spotify to browse and save your favorite albums.
+          </p>
+          <p className="text-xs text-gray-500 mt-3 italic font-mono">
+            © 2025 the shelf
+          </p>
+        </div>
       </div>
     </div>
   );
