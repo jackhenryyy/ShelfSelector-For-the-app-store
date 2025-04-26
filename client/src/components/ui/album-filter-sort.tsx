@@ -380,16 +380,16 @@ export function groupAlbumsByDate<T extends {
       if (isReleaseDate) {
         // Group by release date/year
         if (album.album.releaseDate) {
-          // If we have a full release date, use the year
+          // If we have a full release date, use the month and year
           const date = new Date(album.album.releaseDate);
           if (!isNaN(date.getTime())) {
-            groupKey = date.getFullYear().toString();
+            groupKey = format(date, "MMMM yyyy").toLowerCase();
           }
         } else if (album.album.releaseYear) {
           // Otherwise use the release year if available
           groupKey = album.album.releaseYear.toString();
         } else {
-          groupKey = 'unknown year';
+          groupKey = 'unknown release date';
         }
       } else {
         // Group by listened/added date (month and year)
@@ -412,7 +412,7 @@ export function groupAlbumsByDate<T extends {
       grouped[groupKey].push(album);
     } catch (error) {
       // In case of parsing errors, add to fallback group
-      const fallbackGroup = isReleaseDate ? "unknown year" : "recently added";
+      const fallbackGroup = isReleaseDate ? "unknown release date" : "recently added";
       
       if (!grouped[fallbackGroup]) {
         grouped[fallbackGroup] = [];
