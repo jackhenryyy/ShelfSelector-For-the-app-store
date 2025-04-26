@@ -11,7 +11,12 @@ export function BlurredBackground({
   className = "",
   intensity = "medium",
 }: BlurredBackgroundProps) {
-  if (!imageUrl) return null;
+  if (!imageUrl) {
+    console.log("BlurredBackground: No image URL provided");
+    return null;
+  }
+  
+  console.log("BlurredBackground rendering with imageUrl:", imageUrl);
 
   const blurIntensity = {
     light: 5,

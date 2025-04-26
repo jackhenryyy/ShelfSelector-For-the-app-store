@@ -20,6 +20,9 @@ export function RotatingBackground({
   useEffect(() => {
     if (!images || images.length === 0) return;
 
+    // Debug logs
+    console.log("Rotating background initialized with images:", images);
+    
     // Initialize with the first image
     setCurrentImage(images[0]);
     
