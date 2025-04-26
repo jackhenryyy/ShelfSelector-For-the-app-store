@@ -123,12 +123,53 @@ export default function NoSkipsPage() {
     
     const shareableLink = generateShareableLink(userId);
     
-    // Copy link to clipboard
-    navigator.clipboard.writeText(shareableLink).then(() => {
+    // Try to use the Web Share API if available
+    if (navigator.share) {
+      navigator.share({
+        title: 'My No Skips Collection',
+        text: 'Check out my No Skips album collection',
+        url: shareableLink,
+      }).catch(() => {
+        // Fallback to clipboard if sharing fails
+        copyToClipboard(shareableLink);
+      });
+    } else {
+      // Fallback for browsers that don't support the Web Share API
+      copyToClipboard(shareableLink);
+    }
+  };
+  
+  // Helper function to copy to clipboard with feedback
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
       toast({
         title: "Link copied to clipboard",
         description: "Share this link with friends to show them your No Skips collection",
       });
+    }).catch(() => {
+      // Manual fallback for browsers without clipboard API
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      
+      try {
+        document.execCommand('copy');
+        toast({
+          title: "Link copied to clipboard",
+          description: "Share this link with friends to show them your No Skips collection",
+        });
+      } catch (err) {
+        toast({
+          title: "Couldn't copy automatically",
+          description: `Your shareable link is: ${text}`,
+          variant: "destructive",
+        });
+      }
+      
+      document.body.removeChild(textarea);
     });
   };
   
@@ -313,10 +354,18 @@ export default function NoSkipsPage() {
             />
             
             <button 
-              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
               onClick={handleShare}
+              title="Share your collection with others"
             >
-              share
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              share collection
             </button>
             
             <label 
