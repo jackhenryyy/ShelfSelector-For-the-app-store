@@ -384,12 +384,13 @@ export default function QueuePage() {
               export csv
             </button>
             
-            <div className="px-2 border-l border-black ml-2">
-              <GridScaleSlider 
-                value={gridScale} 
+            <div className="px-2 border-l border-black ml-2 flex items-center">
+              <GridSizeAdjuster 
+                gridSize={gridScale} 
                 onChange={setGridScale}
-                min={1}
-                max={12}
+                min={2}
+                max={6}
+                className="ml-1"
               />
             </div>
           </div>
