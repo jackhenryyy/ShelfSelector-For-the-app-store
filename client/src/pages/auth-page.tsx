@@ -200,7 +200,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="w-full p-2 border border-black font-mono bg-[#a6ff96] hover:bg-[#95e588] transition-colors"
+              className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base bg-[#a6ff96] hover:bg-[#95e588] transition-colors"
             >
               {registerMutation.isPending ? "creating account..." : "register"}
             </button>
