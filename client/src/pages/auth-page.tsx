@@ -72,28 +72,28 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden p-4 sm:p-0">
       {/* Random album background (changes on page refresh) */}
       <div className="absolute inset-0 z-0">
         <RotatingBackground images={albumCovers} intensity="medium" />
       </div>
       
       {/* Content overlay with slight transparency */}
-      <div className="relative z-10 w-full max-w-md px-4 py-8 bg-white/95 rounded shadow-lg">
-        <h1 className="text-center text-3xl tracking-widest mb-16 font-mono">
+      <div className="relative z-10 w-full max-w-md px-4 py-6 sm:py-8 bg-white/95 rounded shadow-lg">
+        <h1 className="text-center text-2xl sm:text-3xl tracking-widest mb-8 sm:mb-12 font-mono">
           t h e&nbsp;&nbsp;s h e l f
         </h1>
 
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4 sm:mb-6">
           <div className="inline-flex border border-black">
             <button
-              className={`px-4 py-1 ${isLogin ? 'bg-[#a6ff96]' : 'bg-white'}`}
+              className={`px-3 sm:px-4 py-1 text-sm sm:text-base ${isLogin ? 'bg-[#a6ff96]' : 'bg-white'}`}
               onClick={() => setIsLogin(true)}
             >
               login
             </button>
             <button
-              className={`px-4 py-1 ${!isLogin ? 'bg-[#a6ff96]' : 'bg-white'}`}
+              className={`px-3 sm:px-4 py-1 text-sm sm:text-base ${!isLogin ? 'bg-[#a6ff96]' : 'bg-white'}`}
               onClick={() => setIsLogin(false)}
             >
               register
@@ -104,15 +104,15 @@ export default function AuthPage() {
         {isLogin ? (
           <form
             onSubmit={loginForm.handleSubmit(onLoginSubmit)}
-            className="space-y-4 border border-black p-6"
+            className="space-y-3 sm:space-y-4 border border-black p-4 sm:p-6"
           >
             <div className="space-y-1">
-              <label className="text-sm font-mono">
+              <label className="text-xs sm:text-sm font-mono">
                 username
               </label>
               <input
                 {...loginForm.register("username")}
-                className="w-full p-2 border border-black font-mono"
+                className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base"
               />
               {loginForm.formState.errors.username && (
                 <p className="text-xs text-red-500">
@@ -122,13 +122,13 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-mono">
+              <label className="text-xs sm:text-sm font-mono">
                 password
               </label>
               <input
                 {...loginForm.register("password")}
                 type="password"
-                className="w-full p-2 border border-black font-mono"
+                className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base"
               />
               {loginForm.formState.errors.password && (
                 <p className="text-xs text-red-500">
@@ -140,7 +140,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="w-full p-2 border border-black font-mono bg-[#a6ff96] hover:bg-[#95e588] transition-colors"
+              className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base bg-[#a6ff96] hover:bg-[#95e588] transition-colors"
             >
               {loginMutation.isPending ? "logging in..." : "login"}
             </button>
@@ -148,15 +148,15 @@ export default function AuthPage() {
         ) : (
           <form
             onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
-            className="space-y-4 border border-black p-6"
+            className="space-y-3 sm:space-y-4 border border-black p-4 sm:p-6"
           >
             <div className="space-y-1">
-              <label className="text-sm font-mono">
+              <label className="text-xs sm:text-sm font-mono">
                 username
               </label>
               <input
                 {...registerForm.register("username")}
-                className="w-full p-2 border border-black font-mono"
+                className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base"
               />
               {registerForm.formState.errors.username && (
                 <p className="text-xs text-red-500">
@@ -166,13 +166,13 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-mono">
+              <label className="text-xs sm:text-sm font-mono">
                 email
               </label>
               <input
                 {...registerForm.register("email")}
                 type="email"
-                className="w-full p-2 border border-black font-mono"
+                className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base"
               />
               {registerForm.formState.errors.email && (
                 <p className="text-xs text-red-500">
@@ -182,13 +182,13 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-mono">
+              <label className="text-xs sm:text-sm font-mono">
                 password
               </label>
               <input
                 {...registerForm.register("password")}
                 type="password"
-                className="w-full p-2 border border-black font-mono"
+                className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base"
               />
               {registerForm.formState.errors.password && (
                 <p className="text-xs text-red-500">
@@ -208,14 +208,14 @@ export default function AuthPage() {
         )}
         
         {/* Info blurb */}
-        <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-          <p className="text-xs text-gray-600 px-4 font-mono leading-relaxed">
+        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200 text-center">
+          <p className="text-xs sm:text-sm text-gray-600 px-2 sm:px-4 font-mono leading-relaxed">
             <span className="font-semibold">eliminate album decision paralysis.</span>
             <br />
             the shelf is designed to help you decide what music to listen to.
             organize your albums, build your listening queue, and track your no-skips collection.
           </p>
-          <p className="text-xs text-gray-500 mt-3 italic font-mono">
+          <p className="text-xs text-gray-500 mt-2 sm:mt-3 italic font-mono">
             © 2025 the shelf
           </p>
         </div>
