@@ -24,13 +24,13 @@ export function NavBar() {
   const [location] = useLocation();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex justify-between items-center px-2 sm:px-6 py-2 sm:py-3 bg-white border-t border-black/20">
+    <div className="fixed bottom-0 left-0 right-0 flex justify-between items-center px-1 sm:px-6 py-1 sm:py-2 bg-white border-t border-black/20">
       {navItems.map((item) => {
         const isActive = location === item.path;
         
         return (
           <Link key={item.path} href={item.path}>
-            <span className={`font-mono text-xs sm:text-sm md:text-base ${isActive ? 'text-black' : 'text-black/50'}`}>
+            <span className={`font-mono text-[10px] sm:text-xs md:text-sm ${isActive ? 'text-black' : 'text-black/50'}`}>
               {item.label}
             </span>
           </Link>

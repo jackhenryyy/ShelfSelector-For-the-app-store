@@ -15,7 +15,7 @@ import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { ReviewDialog } from "@/components/ui/review-dialog";
 import { EditableGenre } from "@/components/ui/editable-genre";
 import { GenreEditorDialog } from "@/components/ui/genre-editor-dialog";
-import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
+import { GridSizeAdjuster } from "@/components/ui/grid-size-adjuster";
 import { 
   AlbumFilterSort, 
   SortOption, 
