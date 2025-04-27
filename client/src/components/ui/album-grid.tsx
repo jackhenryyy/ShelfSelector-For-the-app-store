@@ -31,9 +31,8 @@ export function AlbumGrid({
     12: "grid-cols-12",
   };
   
-  // Make grid size responsive based on screen size
-  // Mobile: fewer columns, larger screens: more columns
-  columnsClass = `grid-cols-${Math.max(1, Math.min(2, columns))} sm:grid-cols-${Math.max(2, Math.min(3, columns))} md:grid-cols-${Math.min(columns, 12)}`;
+  // Use predefined class if available, otherwise use responsive grid
+  columnsClass = columnMap[columns] || `grid-cols-1 sm:grid-cols-2 md:grid-cols-${Math.min(columns, 12)}`;
 
   const gapClass = {
     small: "gap-1",

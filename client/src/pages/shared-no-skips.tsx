@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/ui/layout";
 import { AlbumGrid } from "@/components/ui/album-grid";
 import { AlbumArt } from "@/components/ui/album-art";
-import { GridSizeAdjuster } from "@/components/ui/grid-size-adjuster";
+import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { ArrowLeft } from "lucide-react";
 import { openInSpotify } from "@/lib/spotify";
 
@@ -94,13 +94,12 @@ export default function SharedNoSkipsPage() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            <div className="px-2 flex items-center">
-              <GridSizeAdjuster 
-                gridSize={gridScale} 
+            <div className="px-2">
+              <GridScaleSlider 
+                value={gridScale} 
                 onChange={setGridScale}
-                min={2}
-                max={6}
-                className="ml-1"
+                min={1}
+                max={12}
               />
             </div>
           </div>

@@ -14,7 +14,7 @@ import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { TopFourDialog } from "@/components/ui/top-four-dialog";
-import { GridSizeAdjuster } from "@/components/ui/grid-size-adjuster";
+import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -435,13 +435,12 @@ export default function NoSkipsPage() {
               export csv
             </button>
             
-            <div className="px-2 border-l border-black ml-2 flex items-center">
-              <GridSizeAdjuster 
-                gridSize={gridScale} 
+            <div className="px-2 border-l border-black ml-2">
+              <GridScaleSlider 
+                value={gridScale} 
                 onChange={setGridScale}
-                min={2}
-                max={6}
-                className="ml-1"
+                min={1}
+                max={12}
               />
             </div>
           </div>
