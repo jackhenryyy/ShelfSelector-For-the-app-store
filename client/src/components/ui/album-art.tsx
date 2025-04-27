@@ -11,9 +11,9 @@ export interface AlbumArtProps {
 export const AlbumArt = forwardRef<HTMLImageElement, AlbumArtProps>(
   ({ src, alt, className = "", size = "medium", onClick }, ref) => {
     const sizeClasses = {
-      small: "w-12 h-12",
+      small: "w-10 h-10 sm:w-12 sm:h-12",
       medium: "w-full",
-      large: "w-80 h-80",
+      large: "w-full h-full object-cover",
     }[size];
 
     return (

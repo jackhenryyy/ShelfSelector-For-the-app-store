@@ -83,7 +83,7 @@ export function AlbumFilterSort({
         {showFilterOptions && (
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`whitespace-nowrap px-4 py-1 border border-black ${isFilterOpen ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
+            className={`whitespace-nowrap px-2 sm:px-4 py-1 border border-black ${isFilterOpen ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs sm:text-sm`}
           >
             {uniqueArtists.length === 0 && uniqueYears.length === 0 ? 'genre' : 'filter'}{isFilterOpen ? 'ing' : ''}
           </button>

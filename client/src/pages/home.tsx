@@ -94,18 +94,18 @@ export default function HomePage() {
         )}
         
         <div className="p-4 pt-6 relative z-10">
-          <h1 className="text-4xl font-mono text-center mb-10">t h e  s h e l f</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono text-center mb-4 sm:mb-6 md:mb-10">t h e  s h e l f</h1>
           
-          <div className="flex justify-between mb-4 mx-4">
+          <div className="flex flex-col sm:flex-row justify-between mb-4 mx-1 sm:mx-4 gap-2 sm:gap-0">
             <div className="flex">
               <button 
-                className={`px-4 py-1 border border-black ${!shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
+                className={`px-2 sm:px-4 py-1 border border-black ${!shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs sm:text-sm`}
                 onClick={() => setShuffleSource(false)}
               >
                 the queue
               </button>
               <button 
-                className={`px-4 py-1 border border-black border-l-0 ${shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm`}
+                className={`px-2 sm:px-4 py-1 border border-black border-l-0 ${shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs sm:text-sm`}
                 onClick={() => setShuffleSource(true)}
               >
                 no skips
@@ -113,9 +113,9 @@ export default function HomePage() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <select
-                  className={`appearance-none cursor-pointer whitespace-nowrap px-4 py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm pr-8`}
+                  className={`appearance-none cursor-pointer whitespace-nowrap px-2 sm:px-4 py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs sm:text-sm pr-6 sm:pr-8`}
                   value={filterOptions.genre || ""}
                   onChange={(e) => {
                     if (e.target.value === "") {
@@ -133,15 +133,15 @@ export default function HomePage() {
                     ))
                   }
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                  <svg className="h-4 w-4 fill-current text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 sm:px-2">
+                  <svg className="h-3 w-3 sm:h-4 sm:w-4 fill-current text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                     <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                   </svg>
                 </div>
               </div>
               
               <button 
-                className="px-4 py-1 border border-black bg-white text-black font-mono text-sm"
+                className="px-2 sm:px-4 py-1 border border-black bg-white text-black font-mono text-xs sm:text-sm"
                 onClick={handleShuffle}
               >
                 shuffle
@@ -149,10 +149,10 @@ export default function HomePage() {
             </div>
           </div>
           
-          <div className="flex justify-center mt-8">
+          <div className="flex justify-center mt-4 sm:mt-6 md:mt-8">
             {currentAlbum ? (
               <div 
-                className="block w-80 shadow-lg cursor-pointer"
+                className="block w-60 sm:w-72 md:w-80 shadow-lg cursor-pointer"
                 onClick={handleOpenInSpotify}
               >
                 <AlbumArt 
@@ -162,8 +162,8 @@ export default function HomePage() {
                 />
               </div>
             ) : (
-              <div className="w-80 h-80 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
-                <p className="font-mono text-gray-500 mb-4">No albums available</p>
+              <div className="w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
+                <p className="font-mono text-sm sm:text-base text-gray-500 mb-2 sm:mb-4">No albums available</p>
                 <p className="font-mono text-xs text-gray-500">
                   To get started, add some albums to "the queue" and "no skips" and then click the shuffle button!
                 </p>
@@ -172,10 +172,10 @@ export default function HomePage() {
           </div>
           
           {currentAlbum && (
-            <div className="text-center mt-6">
-              <h2 className="text-xl font-mono uppercase">{currentAlbum.name}</h2>
-              <p className="text-sm font-mono">{currentAlbum.artist}</p>
-              <div className="mt-2">
+            <div className="text-center mt-3 sm:mt-4 md:mt-6">
+              <h2 className="text-lg sm:text-xl font-mono uppercase">{currentAlbum.name}</h2>
+              <p className="text-xs sm:text-sm font-mono">{currentAlbum.artist}</p>
+              <div className="mt-1 sm:mt-2">
                 <EditableGenre albumId={currentAlbum.id} genre={currentAlbum.genre} className="justify-center" />
               </div>
             </div>
