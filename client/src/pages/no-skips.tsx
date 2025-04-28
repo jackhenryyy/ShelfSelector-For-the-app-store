@@ -725,7 +725,7 @@ export default function NoSkipsPage() {
               }}>
                 {/* Remove (X) button in top right corner */}
                 <button 
-                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-5 h-5 flex items-center justify-center text-white hover:bg-white hover:text-black text-xs"
+                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
