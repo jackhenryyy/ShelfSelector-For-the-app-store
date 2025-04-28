@@ -337,6 +337,9 @@ export default function QueuePage() {
     uniqueYears.push(...Array.from(yearsSet));
   }
 
+  // State for dialog open/close
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  
   // Function to handle search input change
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -352,13 +355,13 @@ export default function QueuePage() {
   
   // Album search dialog component
   const AlbumSearchDialog = () => (
-    <Dialog>
+    <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
       <DialogTrigger asChild>
         <button className={`whitespace-nowrap border border-black bg-white font-mono ${isMobile ? 'text-xs px-2 py-1' : 'text-sm px-4 py-1'}`}>
           + add album
         </button>
       </DialogTrigger>
-      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogTitle className="font-mono">Add an album</DialogTitle>
         
         <div className="flex items-center gap-2 mt-4">
@@ -396,7 +399,10 @@ export default function QueuePage() {
                   </div>
                   <button 
                     className="w-full mt-2 px-2 py-1 border border-black bg-white font-mono text-xs"
-                    onClick={() => handleAddToQueue(album.id)}
+                    onClick={() => {
+                      handleAddToQueue(album.id);
+                      // Don't close the dialog automatically
+                    }}
                   >
                     Add to Queue
                   </button>
