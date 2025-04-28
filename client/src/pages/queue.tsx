@@ -601,7 +601,7 @@ export default function QueuePage() {
             onClick={handleCloseContextMenu}
           />
           <div 
-            className="fixed z-50 bg-white shadow-lg rounded p-2 min-w-32"
+            className="fixed z-40 bg-white shadow-lg rounded p-2 min-w-32"
             style={{
               top: showContextMenu.y,
               left: showContextMenu.x,

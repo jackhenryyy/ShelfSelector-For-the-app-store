@@ -24,7 +24,7 @@ export function NavBar() {
   const [location] = useLocation();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex justify-between items-center px-1 bg-white border-t border-black/20">
+    <div className="fixed bottom-0 left-0 right-0 flex justify-between items-center px-1 bg-white border-t border-black/20 z-50">
       {navItems.map((item) => {
         const isActive = location === item.path;
         
