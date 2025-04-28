@@ -100,11 +100,11 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
         handleStartEdit();
       }}
     >
-      <div className="flex items-center space-x-1">
-        <span className="text-xs text-gray-400 truncate">
+      <div className="flex items-center space-x-1 bg-white/30 px-3 py-2 sm:py-1 rounded">
+        <span className="text-sm sm:text-xs text-gray-600 sm:text-gray-400 truncate">
           {genre ? `Genre: ${genre}` : "Add genre..."}
         </span>
-        <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <Pencil className="h-4 w-4 sm:h-3 sm:w-3 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-gray-600" />
       </div>
     </div>
   );
