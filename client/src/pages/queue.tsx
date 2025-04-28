@@ -524,10 +524,45 @@ export default function QueuePage() {
               className="relative group mb-2"
             >
               <div onClick={(e) => handleAlbumClick(queueAlbum.albumId, e)}>
-                <AlbumArt
-                  src={queueAlbum.album.imageUrl}
-                  alt={queueAlbum.album.name}
-                />
+                <div className="relative">
+                  <AlbumArt
+                    src={queueAlbum.album.imageUrl}
+                    alt={queueAlbum.album.name}
+                  />
+                  <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                    <button 
+                      className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFromQueue(queueAlbum.albumId);
+                      }}
+                      title="Remove from Queue"
+                    >
+                      ✕
+                    </button>
+                    
+                    <div className="flex flex-col">
+                      <button 
+                        className="text-white text-xs mb-1 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayOnSpotify(queueAlbum.album.spotifyId);
+                        }}
+                      >
+                        Play
+                      </button>
+                      <button 
+                        className="text-white text-xs hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenReviewDialog(queueAlbum.albumId);
+                        }}
+                      >
+                        Review
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 {gridScale < 5 && (
                   <>
                     <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
@@ -538,40 +573,6 @@ export default function QueuePage() {
               {gridScale < 5 && (
                 <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
               )}
-              <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                {/* Remove (X) button in top right corner */}
-                <button 
-                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFromQueue(queueAlbum.albumId);
-                  }}
-                  title="Remove from Queue"
-                >
-                  ✕
-                </button>
-                
-                <div className="flex flex-col">
-                  <button 
-                    className="text-white text-xs mb-1 hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayOnSpotify(queueAlbum.album.spotifyId);
-                    }}
-                  >
-                    Play
-                  </button>
-                  <button 
-                    className="text-white text-xs hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenReviewDialog(queueAlbum.albumId);
-                    }}
-                  >
-                    Review
-                  </button>
-                </div>
-              </div>
             </div>
           ))}
         </AlbumGrid>
