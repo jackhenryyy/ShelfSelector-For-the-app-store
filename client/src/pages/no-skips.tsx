@@ -645,32 +645,32 @@ export default function NoSkipsPage() {
           </div>
         )}
         
-        <div className={`flex justify-between items-center ${isMobile ? 'mt-3' : 'mt-4'}`}>
+        <div className={`flex items-center gap-2 ${isMobile ? 'mt-3' : 'mt-4'}`}>
           <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>top 4</h2>
-          <div className="flex items-center gap-2">
-            {isMobile && (
-              <button 
-                onClick={handleShare}
-                className="text-xs text-gray-500 hover:text-black flex items-center gap-1"
-                title="Share your collection with others"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                  <circle cx="18" cy="5" r="3"></circle>
-                  <circle cx="6" cy="12" r="3"></circle>
-                  <circle cx="18" cy="19" r="3"></circle>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                </svg>
-                share
-              </button>
-            )}
-            <button 
-              className="text-xs text-gray-500 hover:text-black"
-              onClick={() => setTopFourDialogOpen(true)}
-            >
-              edit
-            </button>
-          </div>
+          
+          <button 
+            onClick={handleShare}
+            className="text-xs text-gray-500 hover:text-black flex items-center gap-1 mb-2"
+            title="Share your collection with others"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            share
+          </button>
+          
+          <div className="flex-grow"></div>
+          
+          <button 
+            className="text-xs text-gray-500 hover:text-black mb-2"
+            onClick={() => setTopFourDialogOpen(true)}
+          >
+            edit
+          </button>
         </div>
         
         <div className={`bg-black/5 ${isMobile ? 'p-2' : 'p-3'} mb-4 rounded`}>
