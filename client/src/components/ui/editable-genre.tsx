@@ -46,7 +46,7 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   if (isEditing) {
     return (
       <div 
-        className={`flex items-center space-x-1 ${className}`} 
+        className={`flex items-center space-x-1 relative z-20 ${className}`} 
         onClick={(e) => e.stopPropagation()} // Stop propagation at container level
       >
         <input
@@ -94,7 +94,7 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   
   return (
     <div 
-      className={`group cursor-pointer mt-1 ${className}`}
+      className={`group cursor-pointer mt-1 relative z-20 ${className}`}
       onClick={(e) => {
         e.stopPropagation(); // Stop event from reaching parent elements
         e.preventDefault();
