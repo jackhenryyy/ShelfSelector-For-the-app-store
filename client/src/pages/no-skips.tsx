@@ -645,18 +645,36 @@ export default function NoSkipsPage() {
           </div>
         )}
         
-        <div className="flex justify-between items-center mt-4">
-          <h2 className="text-sm font-medium mb-2 text-black">top 4</h2>
-          <button 
-            className="text-xs text-gray-500 hover:text-black"
-            onClick={() => setTopFourDialogOpen(true)}
-          >
-            edit
-          </button>
+        <div className={`flex justify-between items-center ${isMobile ? 'mt-3' : 'mt-4'}`}>
+          <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>top 4</h2>
+          <div className="flex items-center gap-2">
+            {isMobile && (
+              <button 
+                onClick={handleShare}
+                className="text-xs text-gray-500 hover:text-black flex items-center gap-1"
+                title="Share your collection with others"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                share
+              </button>
+            )}
+            <button 
+              className="text-xs text-gray-500 hover:text-black"
+              onClick={() => setTopFourDialogOpen(true)}
+            >
+              edit
+            </button>
+          </div>
         </div>
         
-        <div className="bg-black/5 p-3 mb-6 rounded">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className={`bg-black/5 ${isMobile ? 'p-2' : 'p-3'} mb-4 rounded`}>
+          <div className="grid grid-cols-4 gap-2">
             {topFourAlbums && topFourAlbums.length > 0 ? (
               topFourAlbums
                 .sort((a, b) => (a.topFourPosition || 0) - (b.topFourPosition || 0))
@@ -672,8 +690,9 @@ export default function NoSkipsPage() {
                       <AlbumArt
                         src={album.album.imageUrl}
                         alt={album.album.name}
+                        size={isMobile ? "smaller" : undefined}
                       />
-                      {gridScale < 5 && (
+                      {!isMobile && gridScale < 5 && (
                         <>
                           <div className="mt-1 text-xs truncate">{album.album.name}</div>
                           <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
@@ -686,14 +705,14 @@ export default function NoSkipsPage() {
               // Empty slots for top four
               Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="bg-gray-100 rounded aspect-square flex items-center justify-center text-gray-400">
-                  Empty
+                  {isMobile ? '' : 'Empty'}
                 </div>
               ))
             )}
           </div>
         </div>
         
-        <h2 className="text-sm font-medium mb-2 text-black">albums</h2>
+        <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>albums</h2>
         <AlbumGrid columns={gridScale}>
           {sortedNoSkipsAlbums.map((album) => (
             <div key={album.id} className="mb-2">
