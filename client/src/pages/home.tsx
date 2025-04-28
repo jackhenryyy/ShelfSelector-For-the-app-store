@@ -93,8 +93,8 @@ export default function HomePage() {
           />
         )}
         
-        <div className="p-4 pt-6 relative z-10">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-mono text-center mb-4">t h e  s h e l f</h1>
+        <div className="p-3 relative z-10">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-mono text-center mb-3">t h e  s h e l f</h1>
           
           <div className="flex justify-between mb-4 mx-1 sm:mx-4 gap-2">
             <div className="flex">
@@ -125,7 +125,7 @@ export default function HomePage() {
           <div className="flex justify-center mt-4">
             {currentAlbum ? (
               <div 
-                className="block w-48 sm:w-60 md:w-64 shadow-lg cursor-pointer"
+                className="block w-40 sm:w-56 md:w-64 shadow-md cursor-pointer"
                 onClick={handleOpenInSpotify}
               >
                 <AlbumArt 
@@ -135,7 +135,7 @@ export default function HomePage() {
                 />
               </div>
             ) : (
-              <div className="w-48 h-48 sm:w-60 sm:h-60 md:w-64 md:h-64 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
+              <div className="w-40 h-40 sm:w-56 sm:h-56 md:w-64 md:h-64 bg-gray-100 flex flex-col items-center justify-center p-2 text-center">
                 <p className="font-mono text-xs text-gray-500 mb-2">No albums available</p>
                 <p className="font-mono text-xs text-gray-500">
                   Add albums to get started!
@@ -145,10 +145,10 @@ export default function HomePage() {
           </div>
           
           {currentAlbum && (
-            <div className="text-center mt-3">
-              <h2 className="text-base font-mono uppercase">{currentAlbum.name}</h2>
+            <div className="text-center mt-2">
+              <h2 className="text-sm sm:text-base font-mono uppercase">{currentAlbum.name}</h2>
               <p className="text-xs font-mono">{currentAlbum.artist}</p>
-              <div className="mt-1">
+              <div className="mt-0.5">
                 <EditableGenre albumId={currentAlbum.id} genre={currentAlbum.genre} className="justify-center" />
               </div>
             </div>

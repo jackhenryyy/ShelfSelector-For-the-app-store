@@ -56,8 +56,8 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
           onChange={(e) => setNewGenre(e.target.value)}
           onKeyDown={handleInputKeyDown}
           onClick={(e) => e.stopPropagation()} // Also stop at input level
-          className="px-1 py-0 text-xs border border-black font-mono w-28 focus:outline-none"
-          placeholder="Enter genre..."
+          className="px-1 py-0 text-xs border border-black font-mono w-24 focus:outline-none"
+          placeholder="enter genre..."
           disabled={isUpdating}
         />
         <div className="flex space-x-1">

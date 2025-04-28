@@ -48,7 +48,7 @@ export function Layout({
         </div>
       )}
       
-      <div className={`pb-16 ${className}`}>
+      <div className={`pb-12 ${className}`}>
         {children}
       </div>
       
