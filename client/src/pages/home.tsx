@@ -94,55 +94,27 @@ export default function HomePage() {
         )}
         
         <div className="p-4 pt-6 relative z-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-mono text-center mb-4 sm:mb-6 md:mb-10">t h e  s h e l f</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-mono text-center mb-4">t h e  s h e l f</h1>
           
-          <div className="flex flex-col sm:flex-row justify-between mb-4 mx-1 sm:mx-4 gap-3 sm:gap-0">
-            {/* Only on mobile: tappable buttons with increased size */}
-            <div className="flex w-full sm:w-auto">
+          <div className="flex justify-between mb-4 mx-1 sm:mx-4 gap-2">
+            <div className="flex">
               <button 
-                className={`flex-1 px-4 sm:px-4 py-3 sm:py-1 border border-black ${!shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm sm:text-sm`}
+                className={`px-2 py-1 border border-black ${!shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs`}
                 onClick={() => setShuffleSource(false)}
               >
                 the queue
               </button>
               <button 
-                className={`flex-1 px-4 sm:px-4 py-3 sm:py-1 border border-black border-l-0 ${shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm sm:text-sm`}
+                className={`px-2 py-1 border border-black border-l-0 ${shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs`}
                 onClick={() => setShuffleSource(true)}
               >
                 no skips
               </button>
             </div>
             
-            <div className="flex items-center space-x-3 sm:space-x-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-none">
-                <select
-                  className={`appearance-none cursor-pointer whitespace-nowrap px-4 sm:px-4 py-3 sm:py-1 border border-black ${Object.keys(filterOptions).length > 0 ? 'bg-green-300' : 'bg-white'} text-black font-mono text-sm sm:text-sm pr-8 sm:pr-8 w-full`}
-                  value={filterOptions.genre || ""}
-                  onChange={(e) => {
-                    if (e.target.value === "") {
-                      setFilterOptions({});
-                    } else {
-                      setFilterOptions({ genre: e.target.value });
-                    }
-                  }}
-                >
-                  <option value="">genre: all</option>
-                  {Array.from(new Set(filteredSource.filter(item => item.album.genre).map(item => item.album.genre || '')))
-                    .sort()
-                    .map(genre => (
-                      <option key={genre} value={genre}>genre: {genre}</option>
-                    ))
-                  }
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 sm:px-2">
-                  <svg className="h-4 w-4 sm:h-4 sm:w-4 fill-current text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                  </svg>
-                </div>
-              </div>
-              
+            <div>
               <button 
-                className="px-4 sm:px-4 py-3 sm:py-1 border border-black bg-white text-black font-mono text-sm sm:text-sm flex-1 sm:flex-none"
+                className="px-2 py-1 border border-black bg-white text-black font-mono text-xs"
                 onClick={handleShuffle}
               >
                 shuffle
@@ -150,10 +122,10 @@ export default function HomePage() {
             </div>
           </div>
           
-          <div className="flex justify-center mt-4 sm:mt-6 md:mt-8">
+          <div className="flex justify-center mt-4">
             {currentAlbum ? (
               <div 
-                className="block w-60 sm:w-72 md:w-80 shadow-lg cursor-pointer"
+                className="block w-48 sm:w-60 md:w-64 shadow-lg cursor-pointer"
                 onClick={handleOpenInSpotify}
               >
                 <AlbumArt 
@@ -163,20 +135,20 @@ export default function HomePage() {
                 />
               </div>
             ) : (
-              <div className="w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
-                <p className="font-mono text-sm sm:text-base text-gray-500 mb-2 sm:mb-4">No albums available</p>
+              <div className="w-48 h-48 sm:w-60 sm:h-60 md:w-64 md:h-64 bg-gray-100 flex flex-col items-center justify-center p-4 text-center">
+                <p className="font-mono text-xs text-gray-500 mb-2">No albums available</p>
                 <p className="font-mono text-xs text-gray-500">
-                  To get started, add some albums to "the queue" and "no skips" and then click the shuffle button!
+                  Add albums to get started!
                 </p>
               </div>
             )}
           </div>
           
           {currentAlbum && (
-            <div className="text-center mt-3 sm:mt-4 md:mt-6">
-              <h2 className="text-lg sm:text-xl font-mono uppercase">{currentAlbum.name}</h2>
-              <p className="text-xs sm:text-sm font-mono">{currentAlbum.artist}</p>
-              <div className="mt-1 sm:mt-2">
+            <div className="text-center mt-3">
+              <h2 className="text-base font-mono uppercase">{currentAlbum.name}</h2>
+              <p className="text-xs font-mono">{currentAlbum.artist}</p>
+              <div className="mt-1">
                 <EditableGenre albumId={currentAlbum.id} genre={currentAlbum.genre} className="justify-center" />
               </div>
             </div>
