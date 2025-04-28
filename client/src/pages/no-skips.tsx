@@ -88,7 +88,7 @@ export default function NoSkipsPage() {
     ? filterAlbums(
         [...noSkipsAlbums].filter(album => !album.isTopFour),
         filterOptions
-      )
+      ) as any
     : [];
     
   // Sort after filtering
@@ -367,143 +367,283 @@ export default function NoSkipsPage() {
   return (
     <Layout
       title="no skips"
-      subtitle={`${noSkipsAlbums?.length || 0} albums`}
+      subtitle=""
     >
-      <div className="p-4 pt-0">
-        <div className="flex justify-between items-center mb-4">
-          {/* Filter Controls and Share Button */}
-          <div className="flex gap-2">
-            <AlbumFilterSort
-              onSortChange={handleSortChange}
-              onFilterChange={handleFilterChange}
-              selectedSort={sortOption}
-              showFilterOptions={true}
-              totalCount={filteredNoSkipsAlbums.length}
-              uniqueArtists={uniqueArtists}
-              uniqueGenres={uniqueGenres}
-              uniqueYears={uniqueYears}
-            />
-            
-            <div className="flex flex-col">
-              <button 
-                className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
-                onClick={handleShare}
-                title="Share your collection with others"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <circle cx="18" cy="5" r="3"></circle>
-                  <circle cx="6" cy="12" r="3"></circle>
-                  <circle cx="18" cy="19" r="3"></circle>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                </svg>
-                share collection
-              </button>
-              
-              {userId && (
-                <a 
-                  href={`/shared/${userId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-center mt-1 hover:underline"
-                >
-                  test shared view
-                </a>
-              )}
+      <div className="p-3 pt-0">
+        {/* Album count & mobile controls */}
+        <div className="flex flex-col mb-3">
+          <div className="flex items-center justify-between">
+            <div className="font-mono text-xs text-black/60">
+              {filteredNoSkipsAlbums.length} albums
             </div>
-            
-            <label 
-              htmlFor="csv-upload-no-skips"
-              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm cursor-pointer flex items-center gap-1"
-              title="Import from CSV"
-            >
-              <UploadIcon className="h-4 w-4" />
-              import csv
-            </label>
-            <input 
-              id="csv-upload-no-skips"
-              type="file"
-              accept=".csv"
-              onChange={handleCsvUpload}
-              className="hidden"
-            />
-            
-            <button 
-              onClick={() => exportAlbumsToCSV(noSkipsAlbums || [], 'no-skips-export.csv', false, true)}
-              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
-              title="Export to CSV"
-            >
-              <DownloadIcon className="h-4 w-4" />
-              export csv
-            </button>
-            
-            <div className="px-2 border-l border-black ml-2">
-              <GridScaleSlider 
-                value={gridScale} 
-                onChange={setGridScale}
-                min={1}
-                max={12}
-              />
-            </div>
+          
+            {/* Mobile controls */}
+            {isMobile && (
+              <div className="flex items-center gap-2">
+                <AlbumFilterSort
+                  onSortChange={handleSortChange}
+                  onFilterChange={handleFilterChange}
+                  selectedSort={sortOption}
+                  showFilterOptions={true}
+                  totalCount={filteredNoSkipsAlbums.length}
+                  uniqueArtists={uniqueArtists}
+                  uniqueGenres={uniqueGenres}
+                  uniqueYears={uniqueYears}
+                />
+                
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs">
+                      + add
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+                    <DialogTitle className="font-mono">Add an album</DialogTitle>
+                    
+                    <div className="flex items-center gap-2 mt-4">
+                      <input
+                        placeholder="Search albums..."
+                        value={searchQuery}
+                        onChange={handleSearchInputChange}
+                        onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+                        className="w-full p-2 border border-black font-mono text-sm"
+                      />
+                      <button 
+                        className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+                        onClick={handleSearchSubmit}
+                        disabled={isSearching}
+                      >
+                        <SearchIcon className="h-4 w-4 mr-1" />
+                        {isSearching ? "..." : "Search"}
+                      </button>
+                    </div>
+                    
+                    {searchResults && searchResults.length > 0 && (
+                      <div className="mt-4 max-h-80 overflow-y-auto">
+                        <div className="grid grid-cols-1 gap-3">
+                          {searchResults.map((album) => (
+                            <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                              <div className="flex items-center gap-2">
+                                <AlbumArt
+                                  src={album.imageUrl}
+                                  alt={album.name}
+                                  size="small"
+                                />
+                                <div>
+                                  <div className="font-mono text-sm">{album.name}</div>
+                                  <div className="font-mono text-xs text-gray-500">{album.artist}</div>
+                                </div>
+                              </div>
+                              <button 
+                                className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
+                                onClick={() => handleAddToNoSkips(album.id)}
+                              >
+                                Add
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
           </div>
           
-          <Dialog>
-            <DialogTrigger asChild>
-              <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
-                + add album
-              </button>
-            </DialogTrigger>
-            <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
-              <DialogTitle className="font-mono">Add an album</DialogTitle>
-              
-              <div className="flex items-center gap-2 mt-4">
-                <input
-                  placeholder="Search albums..."
-                  value={searchQuery}
-                  onChange={handleSearchInputChange}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
-                  className="w-full p-2 border border-black font-mono text-sm"
-                />
+          {/* Mobile import/export/grid controls */}
+          {isMobile && (
+            <div className="flex items-center gap-2 mt-2 overflow-x-auto">
+              <div className="flex items-center gap-1">
                 <button 
-                  className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
-                  onClick={handleSearchSubmit}
-                  disabled={isSearching}
+                  onClick={handleShare}
+                  className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs flex items-center gap-1"
+                  title="Share your collection with others"
                 >
-                  <SearchIcon className="h-4 w-4 mr-1" />
-                  {isSearching ? "..." : "Search"}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                  share
                 </button>
               </div>
               
-              {searchResults && searchResults.length > 0 && (
-                <div className="mt-4 max-h-80 overflow-y-auto">
-                  <div className="grid grid-cols-1 gap-3">
-                    {searchResults.map((album) => (
-                      <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
-                        <div className="flex items-center gap-2">
-                          <AlbumArt
-                            src={album.imageUrl}
-                            alt={album.name}
-                            size="small"
-                          />
-                          <div>
-                            <div className="font-mono text-sm">{album.name}</div>
-                            <div className="font-mono text-xs text-gray-500">{album.artist}</div>
-                          </div>
-                        </div>
-                        <button 
-                          className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
-                          onClick={() => handleAddToNoSkips(album.id)}
-                        >
-                          Add
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+              <label 
+                htmlFor="csv-upload-no-skips"
+                className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs cursor-pointer flex items-center gap-1"
+                title="Import from CSV"
+              >
+                <UploadIcon className="h-3 w-3" />
+                import
+              </label>
+              <input 
+                id="csv-upload-no-skips"
+                type="file"
+                accept=".csv"
+                onChange={handleCsvUpload}
+                className="hidden"
+              />
+              
+              <button 
+                onClick={() => exportAlbumsToCSV(noSkipsAlbums || [], 'no-skips-export.csv', false, true)}
+                className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs flex items-center gap-1"
+                title="Export to CSV"
+              >
+                <DownloadIcon className="h-3 w-3" />
+                export
+              </button>
+              
+              <div className="px-2 ml-1">
+                <GridScaleSlider 
+                  value={gridScale} 
+                  onChange={setGridScale}
+                  min={1}
+                  max={12}
+                />
+              </div>
+            </div>
+          )}
         </div>
+        
+        {/* Desktop controls */}
+        {!isMobile && (
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex gap-2">
+              <AlbumFilterSort
+                onSortChange={handleSortChange}
+                onFilterChange={handleFilterChange}
+                selectedSort={sortOption}
+                showFilterOptions={true}
+                totalCount={filteredNoSkipsAlbums.length}
+                uniqueArtists={uniqueArtists}
+                uniqueGenres={uniqueGenres}
+                uniqueYears={uniqueYears}
+              />
+              
+              <div className="flex flex-col">
+                <button 
+                  className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+                  onClick={handleShare}
+                  title="Share your collection with others"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                  share collection
+                </button>
+                
+                {userId && (
+                  <a 
+                    href={`/shared/${userId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-center mt-1 hover:underline"
+                  >
+                    test shared view
+                  </a>
+                )}
+              </div>
+              
+              <label 
+                htmlFor="csv-upload-no-skips"
+                className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm cursor-pointer flex items-center gap-1"
+                title="Import from CSV"
+              >
+                <UploadIcon className="h-4 w-4" />
+                import csv
+              </label>
+              <input 
+                id="csv-upload-no-skips"
+                type="file"
+                accept=".csv"
+                onChange={handleCsvUpload}
+                className="hidden"
+              />
+              
+              <button 
+                onClick={() => exportAlbumsToCSV(noSkipsAlbums || [], 'no-skips-export.csv', false, true)}
+                className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+                title="Export to CSV"
+              >
+                <DownloadIcon className="h-4 w-4" />
+                export csv
+              </button>
+              
+              <div className="px-2 border-l border-black ml-2">
+                <GridScaleSlider 
+                  value={gridScale} 
+                  onChange={setGridScale}
+                  min={1}
+                  max={12}
+                />
+              </div>
+            </div>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
+                  + add album
+                </button>
+              </DialogTrigger>
+              <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+                <DialogTitle className="font-mono">Add an album</DialogTitle>
+                
+                <div className="flex items-center gap-2 mt-4">
+                  <input
+                    placeholder="Search albums..."
+                    value={searchQuery}
+                    onChange={handleSearchInputChange}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+                    className="w-full p-2 border border-black font-mono text-sm"
+                  />
+                  <button 
+                    className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+                    onClick={handleSearchSubmit}
+                    disabled={isSearching}
+                  >
+                    <SearchIcon className="h-4 w-4 mr-1" />
+                    {isSearching ? "..." : "Search"}
+                  </button>
+                </div>
+                
+                {searchResults && searchResults.length > 0 && (
+                  <div className="mt-4 max-h-80 overflow-y-auto">
+                    <div className="grid grid-cols-1 gap-3">
+                      {searchResults.map((album) => (
+                        <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                          <div className="flex items-center gap-2">
+                            <AlbumArt
+                              src={album.imageUrl}
+                              alt={album.name}
+                              size="small"
+                            />
+                            <div>
+                              <div className="font-mono text-sm">{album.name}</div>
+                              <div className="font-mono text-xs text-gray-500">{album.artist}</div>
+                            </div>
+                          </div>
+                          <button 
+                            className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
+                            onClick={() => handleAddToNoSkips(album.id)}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
         
         <div className="flex justify-between items-center mt-4">
           <h2 className="text-sm font-medium mb-2 text-black">top 4</h2>
