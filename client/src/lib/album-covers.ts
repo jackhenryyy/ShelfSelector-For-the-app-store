@@ -10,6 +10,10 @@ import cmiyglAlbum from "@assets/CMIYGL.jpg"; // Call Me If You Get Lost
 import vAlbum from "@assets/V.jpg"; // V
 import silverLiningsAlbum from "@assets/silver_linings.jpg"; // Silver Linings
 import inColourAlbum from "@assets/In_Colour.png"; // In Colour
+import flowerBoyAlbum from "@assets/flowerboy.jpg"; // Flower Boy
+import twentyTwoAmilli from "@assets/22,amilli.jpg"; // 22, A Million
+import swimmingAlbum from "@assets/swimming.jpg"; // Swimming
+import tripAlbum from "@assets/trip.jpg"; // Trip
 
 // Export array of album cover paths for use in the rotating background
 export const albumCovers = [
@@ -20,5 +24,9 @@ export const albumCovers = [
   cmiyglAlbum,
   vAlbum,
   silverLiningsAlbum,
-  inColourAlbum
+  inColourAlbum,
+  flowerBoyAlbum,
+  twentyTwoAmilli,
+  swimmingAlbum,
+  tripAlbum
 ];
