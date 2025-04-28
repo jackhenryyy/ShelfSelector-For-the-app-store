@@ -719,8 +719,8 @@ export default function NoSkipsPage() {
                 <EditableGenre albumId={album.album.id} genre={album.album.genre} />
               )}
               
-              {/* Overlay with buttons - positioned to cover only the album art */}
-              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+              {/* Overlay with buttons - positioned to cover only the album art with lower z-index */}
+              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
                 {/* Remove (X) button in top right corner */}
                 <button 
                   className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
