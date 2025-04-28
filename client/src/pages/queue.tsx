@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useQueueAlbums, useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
@@ -88,7 +88,6 @@ export default function QueuePage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState<{id: number, x: number, y: number} | null>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [genreEditorOpen, setGenreEditorOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
@@ -338,107 +337,77 @@ export default function QueuePage() {
     uniqueYears.push(...Array.from(yearsSet));
   }
 
-  // Album search dialog component
-  const AlbumSearchDialog = () => {
-    // Local search state for this component
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    
-    // Cleanup search timeout on unmount
-    useEffect(() => {
-      return () => {
-        if (searchTimeoutRef.current) {
-          clearTimeout(searchTimeoutRef.current);
-        }
-      };
-    }, []);
-    
-    // Handle search input with debouncing
-    const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setSearchQuery(value);
-      
-      // Cancel previous timeout
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      
-      // Only search after user stops typing for 400ms and has at least 2 characters
-      if (value.trim().length > 2) {
-        searchTimeoutRef.current = setTimeout(() => {
-          handleSearch();
-        }, 400);
-      }
-    };
-    
-    // Handle Enter key press
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (searchTimeoutRef.current) {
-          clearTimeout(searchTimeoutRef.current);
-        }
-        handleSearch();
-      }
-    };
-    
-    return (
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <button className={`whitespace-nowrap border border-black bg-white font-mono ${isMobile ? 'text-xs px-2 py-1' : 'text-sm px-4 py-1'}`}>
-            + add album
-          </button>
-        </DialogTrigger>
-        <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
-          <DialogTitle className="font-mono">Add an album</DialogTitle>
-          
-          <div className="flex items-center gap-2 mt-4">
-            <input
-              placeholder="Search albums..."
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              onKeyDown={handleKeyDown}
-              className="w-full p-2 border border-black font-mono text-sm"
-              autoFocus
-            />
-            <button 
-              className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
-              onClick={handleSearch} 
-              disabled={isSearching}
-            >
-              <SearchIcon className="h-4 w-4 mr-1" />
-              {isSearching ? "..." : "Search"}
-            </button>
-          </div>
-          
-          {searchResults.length > 0 && (
-            <div className="mt-4 max-h-[50vh] overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {searchResults.map((album) => (
-                  <div key={album.id} className="border border-black p-2">
-                    <AlbumArt
-                      src={album.imageUrl}
-                      alt={album.name}
-                      size="small"
-                    />
-                    <div className="mt-1">
-                      <div className="font-mono text-xs truncate">{album.name}</div>
-                      <div className="font-mono text-xs text-black/60 truncate">{album.artist}</div>
-                    </div>
-                    <button 
-                      className="w-full mt-2 px-2 py-1 border border-black bg-white font-mono text-xs"
-                      onClick={() => handleAddToQueue(album.id)}
-                    >
-                      Add to Queue
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    );
+  // Function to handle search input change
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
+  
+  // Function to handle search submission
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      handleSearch();
+    }
+  };
+  
+  // Album search dialog component
+  const AlbumSearchDialog = () => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button className={`whitespace-nowrap border border-black bg-white font-mono ${isMobile ? 'text-xs px-2 py-1' : 'text-sm px-4 py-1'}`}>
+          + add album
+        </button>
+      </DialogTrigger>
+      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+        <DialogTitle className="font-mono">Add an album</DialogTitle>
+        
+        <div className="flex items-center gap-2 mt-4">
+          <input
+            placeholder="Search albums..."
+            value={searchQuery}
+            onChange={handleSearchInputChange}
+            onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+            className="w-full p-2 border border-black font-mono text-sm"
+            autoFocus
+          />
+          <button 
+            className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+            onClick={handleSearchSubmit} 
+            disabled={isSearching}
+          >
+            <SearchIcon className="h-4 w-4 mr-1" />
+            {isSearching ? "..." : "Search"}
+          </button>
+        </div>
+        
+        {searchResults.length > 0 && (
+          <div className="mt-4 max-h-[50vh] overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {searchResults.map((album) => (
+                <div key={album.id} className="border border-black p-2">
+                  <AlbumArt
+                    src={album.imageUrl}
+                    alt={album.name}
+                    size="small"
+                  />
+                  <div className="mt-1">
+                    <div className="font-mono text-xs truncate">{album.name}</div>
+                    <div className="font-mono text-xs text-black/60 truncate">{album.artist}</div>
+                  </div>
+                  <button 
+                    className="w-full mt-2 px-2 py-1 border border-black bg-white font-mono text-xs"
+                    onClick={() => handleAddToQueue(album.id)}
+                  >
+                    Add to Queue
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <Layout
