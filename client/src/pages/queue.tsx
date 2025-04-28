@@ -337,9 +337,6 @@ export default function QueuePage() {
     uniqueYears.push(...Array.from(yearsSet));
   }
 
-  // State for dialog open/close
-  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-  
   // Function to handle search input change
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -353,15 +350,15 @@ export default function QueuePage() {
     }
   };
   
-  // Album search dialog component
-  const AlbumSearchDialog = () => (
-    <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
+  // Simple album search component (mobile)
+  const MobileAlbumSearchDialog = () => (
+    <Dialog>
       <DialogTrigger asChild>
-        <button className={`whitespace-nowrap border border-black bg-white font-mono ${isMobile ? 'text-xs px-2 py-1' : 'text-sm px-4 py-1'}`}>
-          + add album
+        <button className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs">
+          + add
         </button>
       </DialogTrigger>
-      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
         <DialogTitle className="font-mono">Add an album</DialogTitle>
         
         <div className="flex items-center gap-2 mt-4">
@@ -371,11 +368,10 @@ export default function QueuePage() {
             onChange={handleSearchInputChange}
             onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
             className="w-full p-2 border border-black font-mono text-sm"
-            autoFocus
           />
           <button 
             className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
-            onClick={handleSearchSubmit} 
+            onClick={handleSearchSubmit}
             disabled={isSearching}
           >
             <SearchIcon className="h-4 w-4 mr-1" />
@@ -383,28 +379,87 @@ export default function QueuePage() {
           </button>
         </div>
         
-        {searchResults.length > 0 && (
-          <div className="mt-4 max-h-[50vh] overflow-y-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {searchResults && searchResults.length > 0 && (
+          <div className="mt-4 max-h-80 overflow-y-auto">
+            <div className="grid grid-cols-1 gap-3">
               {searchResults.map((album) => (
-                <div key={album.id} className="border border-black p-2">
-                  <AlbumArt
-                    src={album.imageUrl}
-                    alt={album.name}
-                    size="small"
-                  />
-                  <div className="mt-1">
-                    <div className="font-mono text-xs truncate">{album.name}</div>
-                    <div className="font-mono text-xs text-black/60 truncate">{album.artist}</div>
+                <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <div className="flex items-center gap-2">
+                    <AlbumArt
+                      src={album.imageUrl}
+                      alt={album.name}
+                      size="small"
+                    />
+                    <div>
+                      <div className="font-mono text-sm">{album.name}</div>
+                      <div className="font-mono text-xs text-gray-500">{album.artist}</div>
+                    </div>
                   </div>
                   <button 
-                    className="w-full mt-2 px-2 py-1 border border-black bg-white font-mono text-xs"
-                    onClick={() => {
-                      handleAddToQueue(album.id);
-                      // Don't close the dialog automatically
-                    }}
+                    className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
+                    onClick={() => handleAddToQueue(album.id)}
                   >
-                    Add to Queue
+                    Add
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+  
+  // Desktop album search component
+  const DesktopAlbumSearchDialog = () => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
+          + add album
+        </button>
+      </DialogTrigger>
+      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+        <DialogTitle className="font-mono">Add an album</DialogTitle>
+        
+        <div className="flex items-center gap-2 mt-4">
+          <input
+            placeholder="Search albums..."
+            value={searchQuery}
+            onChange={handleSearchInputChange}
+            onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+            className="w-full p-2 border border-black font-mono text-sm"
+          />
+          <button 
+            className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+            onClick={handleSearchSubmit}
+            disabled={isSearching}
+          >
+            <SearchIcon className="h-4 w-4 mr-1" />
+            {isSearching ? "..." : "Search"}
+          </button>
+        </div>
+        
+        {searchResults && searchResults.length > 0 && (
+          <div className="mt-4 max-h-80 overflow-y-auto">
+            <div className="grid grid-cols-1 gap-3">
+              {searchResults.map((album) => (
+                <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <div className="flex items-center gap-2">
+                    <AlbumArt
+                      src={album.imageUrl}
+                      alt={album.name}
+                      size="small"
+                    />
+                    <div>
+                      <div className="font-mono text-sm">{album.name}</div>
+                      <div className="font-mono text-xs text-gray-500">{album.artist}</div>
+                    </div>
+                  </div>
+                  <button 
+                    className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
+                    onClick={() => handleAddToQueue(album.id)}
+                  >
+                    Add
                   </button>
                 </div>
               ))}
@@ -440,7 +495,7 @@ export default function QueuePage() {
                 uniqueGenres={uniqueGenres}
                 uniqueYears={uniqueYears}
               />
-              <AlbumSearchDialog />
+              <MobileAlbumSearchDialog />
             </div>
             
             {/* Desktop controls */}
@@ -492,7 +547,7 @@ export default function QueuePage() {
                 </div>
               </div>
               
-              <AlbumSearchDialog />
+              <DesktopAlbumSearchDialog />
             </div>
           </div>
           
