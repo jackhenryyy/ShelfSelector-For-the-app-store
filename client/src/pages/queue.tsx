@@ -16,6 +16,7 @@ import { EditableGenre } from "@/components/ui/editable-genre";
 import { GenreEditorDialog } from "@/components/ui/genre-editor-dialog";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SearchDialog } from "@/components/ui/search-dialog";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -337,9 +338,13 @@ export default function QueuePage() {
     uniqueYears.push(...Array.from(yearsSet));
   }
 
+  // Search dialog state
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [mobileSearchDialogOpen, setMobileSearchDialogOpen] = useState(false);
+  
   // Function to handle search input change
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearchInputChange = (query: string) => {
+    setSearchQuery(query);
   };
   
   // Function to handle search submission
@@ -350,124 +355,24 @@ export default function QueuePage() {
     }
   };
   
-  // Simple album search component (mobile)
-  const MobileAlbumSearchDialog = () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs">
-          + add
-        </button>
-      </DialogTrigger>
-      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
-        <DialogTitle className="font-mono">Add an album</DialogTitle>
-        
-        <div className="flex items-center gap-2 mt-4">
-          <input
-            placeholder="Search albums..."
-            value={searchQuery}
-            onChange={handleSearchInputChange}
-            onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
-            className="w-full p-2 border border-black font-mono text-sm"
-          />
-          <button 
-            className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
-            onClick={handleSearchSubmit}
-            disabled={isSearching}
-          >
-            <SearchIcon className="h-4 w-4 mr-1" />
-            {isSearching ? "..." : "Search"}
-          </button>
-        </div>
-        
-        {searchResults && searchResults.length > 0 && (
-          <div className="mt-4 max-h-80 overflow-y-auto">
-            <div className="grid grid-cols-1 gap-3">
-              {searchResults.map((album) => (
-                <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <div className="flex items-center gap-2">
-                    <AlbumArt
-                      src={album.imageUrl}
-                      alt={album.name}
-                      size="small"
-                    />
-                    <div>
-                      <div className="font-mono text-sm">{album.name}</div>
-                      <div className="font-mono text-xs text-gray-500">{album.artist}</div>
-                    </div>
-                  </div>
-                  <button 
-                    className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
-                    onClick={() => handleAddToQueue(album.id)}
-                  >
-                    Add
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+  // Mobile album search button component
+  const MobileAlbumSearchButton = () => (
+    <button 
+      className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs"
+      onClick={() => setMobileSearchDialogOpen(true)}
+    >
+      + add
+    </button>
   );
   
-  // Desktop album search component
-  const DesktopAlbumSearchDialog = () => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm">
-          + add album
-        </button>
-      </DialogTrigger>
-      <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
-        <DialogTitle className="font-mono">Add an album</DialogTitle>
-        
-        <div className="flex items-center gap-2 mt-4">
-          <input
-            placeholder="Search albums..."
-            value={searchQuery}
-            onChange={handleSearchInputChange}
-            onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
-            className="w-full p-2 border border-black font-mono text-sm"
-          />
-          <button 
-            className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
-            onClick={handleSearchSubmit}
-            disabled={isSearching}
-          >
-            <SearchIcon className="h-4 w-4 mr-1" />
-            {isSearching ? "..." : "Search"}
-          </button>
-        </div>
-        
-        {searchResults && searchResults.length > 0 && (
-          <div className="mt-4 max-h-80 overflow-y-auto">
-            <div className="grid grid-cols-1 gap-3">
-              {searchResults.map((album) => (
-                <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <div className="flex items-center gap-2">
-                    <AlbumArt
-                      src={album.imageUrl}
-                      alt={album.name}
-                      size="small"
-                    />
-                    <div>
-                      <div className="font-mono text-sm">{album.name}</div>
-                      <div className="font-mono text-xs text-gray-500">{album.artist}</div>
-                    </div>
-                  </div>
-                  <button 
-                    className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
-                    onClick={() => handleAddToQueue(album.id)}
-                  >
-                    Add
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+  // Desktop album search button component
+  const DesktopAlbumSearchButton = () => (
+    <button 
+      className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
+      onClick={() => setSearchDialogOpen(true)}
+    >
+      + add album
+    </button>
   );
 
   return (
@@ -495,7 +400,7 @@ export default function QueuePage() {
                 uniqueGenres={uniqueGenres}
                 uniqueYears={uniqueYears}
               />
-              <MobileAlbumSearchDialog />
+              <MobileAlbumSearchButton />
             </div>
             
             {/* Desktop controls */}
@@ -547,7 +452,7 @@ export default function QueuePage() {
                 </div>
               </div>
               
-              <DesktopAlbumSearchDialog />
+              <DesktopAlbumSearchButton />
             </div>
           </div>
           
@@ -733,6 +638,34 @@ export default function QueuePage() {
           artistName={selectedAlbum.artist}
         />
       )}
+
+      {/* Search dialogs */}
+      <SearchDialog
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+        searchQuery={searchQuery}
+        onSearchQueryChange={handleSearchInputChange}
+        onSearch={handleSearchSubmit}
+        searchResults={searchResults}
+        isSearching={isSearching}
+        onAddAlbum={handleAddToQueue}
+        dialogTitle="Add an album to Queue"
+        addButtonText="Add"
+      />
+
+      <SearchDialog
+        open={mobileSearchDialogOpen}
+        onOpenChange={setMobileSearchDialogOpen}
+        searchQuery={searchQuery}
+        onSearchQueryChange={handleSearchInputChange}
+        onSearch={handleSearchSubmit}
+        searchResults={searchResults}
+        isSearching={isSearching}
+        onAddAlbum={handleAddToQueue}
+        dialogTitle="Add an album to Queue"
+        addButtonText="Add"
+        mobile={true}
+      />
     </Layout>
   );
 }
