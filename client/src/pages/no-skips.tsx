@@ -86,34 +86,14 @@ export default function NoSkipsPage() {
   // Get filtered and sorted no skips albums (excluding top four)
   const filteredNoSkipsAlbums = noSkipsAlbums 
     ? filterAlbums(
-        [...noSkipsAlbums].filter(album => !album.isTopFour),
+        [...noSkipsAlbums].filter(album => !album.isTopFour) as any,
         filterOptions
-      ) as any
+      )
     : [];
     
   // Sort after filtering
   const sortedNoSkipsAlbums = filteredNoSkipsAlbums.length > 0
-    ? [...filteredNoSkipsAlbums].sort((a, b) => {
-        switch (sortOption) {
-          case "title-asc":
-            return a.album.name.localeCompare(b.album.name);
-          case "title-desc":
-            return b.album.name.localeCompare(a.album.name);
-          case "artist-asc":
-            return a.album.artist.localeCompare(b.album.artist);
-          case "artist-desc":
-            return b.album.artist.localeCompare(a.album.artist);
-          case "year-newest":
-            return (b.album.releaseYear || 0) - (a.album.releaseYear || 0);
-          case "year-oldest":
-            return (a.album.releaseYear || 0) - (b.album.releaseYear || 0);
-          case "date-added-newest":
-          default:
-            return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
-          case "date-added-oldest":
-            return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
-        }
-      })
+    ? [...filteredNoSkipsAlbums] as any[]
     : [];
   
   // Function to handle opening album in Spotify
