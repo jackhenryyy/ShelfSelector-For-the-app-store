@@ -282,12 +282,25 @@ export function groupAlbumsByMonth<T extends { listenedAt?: string | null, added
   albums.forEach(album => {
     try {
       // First try to use listenedAt date if it exists
-      const dateStr = album.listenedAt || (album.addedAt || '');
-      const date = new Date(dateStr);
+      let dateStr = album.listenedAt || album.addedAt || '';
+      
+      // Add debugging to see what the date looks like
+      console.log("Album dateStr before parsing:", dateStr, "Type:", typeof dateStr);
+      
+      // If it's already a valid ISO string, use it directly
+      let date: Date;
+      if (dateStr) {
+        date = new Date(dateStr);
+        console.log("Parsed date:", date, "Valid:", !isNaN(date.getTime()));
+      } else {
+        console.log("No date string available");
+        date = new Date(0); // Invalid date
+      }
       
       // Check if date is valid before formatting
       if (!isNaN(date.getTime())) {
         const monthYear = format(date, "MMMM yyyy").toLowerCase(); // e.g., "april 2025"
+        console.log("Formatted month-year:", monthYear);
         
         if (!grouped[monthYear]) {
           grouped[monthYear] = [];
@@ -296,6 +309,7 @@ export function groupAlbumsByMonth<T extends { listenedAt?: string | null, added
         grouped[monthYear].push(album);
       } else {
         // For invalid dates, place in "unknown date" group
+        console.log("Invalid date, adding to unknown date group");
         if (!grouped["unknown date"]) {
           grouped["unknown date"] = [];
         }
@@ -303,6 +317,7 @@ export function groupAlbumsByMonth<T extends { listenedAt?: string | null, added
         grouped["unknown date"].push(album);
       }
     } catch (error) {
+      console.error("Error grouping by month:", error);
       // In case of date parsing errors, place in "unknown date" group
       if (!grouped["unknown date"]) {
         grouped["unknown date"] = [];

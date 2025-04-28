@@ -84,22 +84,34 @@ export default function ListPage() {
   
   // Function to open review edit dialog
   const handleEditReview = (review: AlbumReview) => {
+    console.log("Original listenedAt from review:", review.listenedAt);
+    
+    // Convert to Date object if it exists
+    const dateObj = review.listenedAt ? new Date(review.listenedAt) : undefined;
+    console.log("Converted to Date object:", dateObj);
+    
     setActiveReview(review);
     setEditRating(review.rating);
     setEditReview(review.review || "");
-    setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
+    setEditListenedAt(dateObj);
   };
   
   // Function to save edited review
   const handleSaveReview = () => {
     if (!activeReview) return;
     
-    updateReview({
+    console.log("Saving review with listenedAt:", editListenedAt);
+    
+    const reviewData = {
       id: activeReview.id,
       rating: editRating,
       review: editReview,
       listenedAt: editListenedAt
-    });
+    };
+    
+    console.log("Review data being sent:", reviewData);
+    
+    updateReview(reviewData);
     
     setActiveReview(null);
   };
@@ -124,8 +136,23 @@ export default function ListPage() {
     
   // Helper function to get day from date string
   const getDay = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.getDate();
+    console.log("Getting day from date string:", dateString);
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn("Invalid date from string:", dateString);
+        return "--";
+      }
+      
+      const day = date.getDate();
+      console.log("Extracted day:", day);
+      return day;
+    } catch (error) {
+      console.error("Error parsing date for day extraction:", error);
+      return "--";
+    }
   };
 
   // Sort the month-year keys in reverse chronological order
@@ -134,10 +161,33 @@ export default function ListPage() {
     if (a === "search results") return -1;
     if (b === "search results") return 1;
     
-    // Otherwise, parse the month-year and compare dates
-    const dateA = new Date(a);
-    const dateB = new Date(b);
-    return dateB.getTime() - dateA.getTime();
+    // For unknown date, always show at the bottom
+    if (a === "unknown date") return 1;
+    if (b === "unknown date") return -1;
+    
+    console.log("Sorting months:", a, b);
+    
+    // Parse month names to numbers for proper sorting
+    const monthsOrder: Record<string, number> = {
+      "january": 0, "february": 1, "march": 2, "april": 3, "may": 4, "june": 5,
+      "july": 6, "august": 7, "september": 8, "october": 9, "november": 10, "december": 11
+    };
+    
+    try {
+      // Extract month and year from the key (format: "month year")
+      const [monthA, yearA] = a.split(" ");
+      const [monthB, yearB] = b.split(" ");
+      
+      // Compare years first
+      const yearDiff = parseInt(yearB) - parseInt(yearA);
+      if (yearDiff !== 0) return yearDiff;
+      
+      // If same year, compare months
+      return monthsOrder[monthB.toLowerCase()] - monthsOrder[monthA.toLowerCase()];
+    } catch (error) {
+      console.error("Error sorting month-year keys:", error);
+      return 0;
+    }
   });
 
   return (
