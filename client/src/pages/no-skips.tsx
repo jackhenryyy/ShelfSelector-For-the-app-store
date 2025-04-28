@@ -378,85 +378,83 @@ export default function NoSkipsPage() {
             </div>
           
             {/* Mobile controls */}
-            {isMobile && (
-              <div className="flex items-center gap-2">
-                <AlbumFilterSort
-                  onSortChange={handleSortChange}
-                  onFilterChange={handleFilterChange}
-                  selectedSort={sortOption}
-                  showFilterOptions={true}
-                  totalCount={filteredNoSkipsAlbums.length}
-                  uniqueArtists={uniqueArtists}
-                  uniqueGenres={uniqueGenres}
-                  uniqueYears={uniqueYears}
-                />
-                
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <button className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs">
-                      + add
+            <div className="flex items-center gap-2 sm:hidden">
+              <AlbumFilterSort
+                onSortChange={handleSortChange}
+                onFilterChange={handleFilterChange}
+                selectedSort={sortOption}
+                showFilterOptions={true}
+                totalCount={filteredNoSkipsAlbums.length}
+                uniqueArtists={uniqueArtists}
+                uniqueGenres={uniqueGenres}
+                uniqueYears={uniqueYears}
+              />
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs">
+                    + add
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
+                  <DialogTitle className="font-mono">Add an album</DialogTitle>
+                  
+                  <div className="flex items-center gap-2 mt-4">
+                    <input
+                      placeholder="Search albums..."
+                      value={searchQuery}
+                      onChange={handleSearchInputChange}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
+                      className="w-full p-2 border border-black font-mono text-sm"
+                    />
+                    <button 
+                      className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
+                      onClick={handleSearchSubmit}
+                      disabled={isSearching}
+                    >
+                      <SearchIcon className="h-4 w-4 mr-1" />
+                      {isSearching ? "..." : "Search"}
                     </button>
-                  </DialogTrigger>
-                  <DialogContent className="md:max-w-md w-[calc(100%-2rem)]">
-                    <DialogTitle className="font-mono">Add an album</DialogTitle>
-                    
-                    <div className="flex items-center gap-2 mt-4">
-                      <input
-                        placeholder="Search albums..."
-                        value={searchQuery}
-                        onChange={handleSearchInputChange}
-                        onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit(e)}
-                        className="w-full p-2 border border-black font-mono text-sm"
-                      />
-                      <button 
-                        className="whitespace-nowrap px-4 py-2 border border-black bg-black text-white font-mono text-sm flex items-center"
-                        onClick={handleSearchSubmit}
-                        disabled={isSearching}
-                      >
-                        <SearchIcon className="h-4 w-4 mr-1" />
-                        {isSearching ? "..." : "Search"}
-                      </button>
-                    </div>
-                    
-                    {searchResults && searchResults.length > 0 && (
-                      <div className="mt-4 max-h-80 overflow-y-auto">
-                        <div className="grid grid-cols-1 gap-3">
-                          {searchResults.map((album) => (
-                            <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
-                              <div className="flex items-center gap-2">
-                                <AlbumArt
-                                  src={album.imageUrl}
-                                  alt={album.name}
-                                  size="small"
-                                />
-                                <div>
-                                  <div className="font-mono text-sm">{album.name}</div>
-                                  <div className="font-mono text-xs text-gray-500">{album.artist}</div>
-                                </div>
+                  </div>
+                  
+                  {searchResults && searchResults.length > 0 && (
+                    <div className="mt-4 max-h-80 overflow-y-auto">
+                      <div className="grid grid-cols-1 gap-3">
+                        {searchResults.map((album) => (
+                          <div key={album.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                            <div className="flex items-center gap-2">
+                              <AlbumArt
+                                src={album.imageUrl}
+                                alt={album.name}
+                                size="small"
+                              />
+                              <div>
+                                <div className="font-mono text-sm">{album.name}</div>
+                                <div className="font-mono text-xs text-gray-500">{album.artist}</div>
                               </div>
-                              <button 
-                                className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
-                                onClick={() => handleAddToNoSkips(album.id)}
-                              >
-                                Add
-                              </button>
                             </div>
-                          ))}
-                        </div>
+                            <button 
+                              className="px-3 py-1 border border-black bg-white text-black font-mono text-xs"
+                              onClick={() => handleAddToNoSkips(album.id)}
+                            >
+                              Add
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </DialogContent>
-                </Dialog>
-              </div>
-            )}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
           
           {/* Mobile import/export/grid controls */}
           {isMobile && (
-            <div className="flex items-center gap-2 mt-2 overflow-x-auto">
+            <div className="flex gap-2 justify-between mt-2 sm:hidden">
               <label 
                 htmlFor="csv-upload-no-skips"
-                className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs cursor-pointer flex items-center gap-1"
+                className="flex-1 whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs cursor-pointer flex items-center justify-center gap-1"
                 title="Import from CSV"
               >
                 <UploadIcon className="h-3 w-3" />
@@ -472,14 +470,14 @@ export default function NoSkipsPage() {
               
               <button 
                 onClick={() => exportAlbumsToCSV(noSkipsAlbums || [], 'no-skips-export.csv', false, true)}
-                className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs flex items-center gap-1"
+                className="flex-1 whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs flex items-center justify-center gap-1"
                 title="Export to CSV"
               >
                 <DownloadIcon className="h-3 w-3" />
                 export
               </button>
               
-              <div className="px-2 ml-1">
+              <div className="flex-1 flex items-center justify-center px-2 border border-black">
                 <GridScaleSlider 
                   value={gridScale} 
                   onChange={setGridScale}
