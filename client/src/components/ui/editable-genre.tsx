@@ -94,9 +94,10 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   
   return (
     <div 
-      className={`group cursor-pointer ${className}`}
+      className={`group cursor-pointer mt-1 ${className}`}
       onClick={(e) => {
         e.stopPropagation(); // Stop event from reaching parent elements
+        e.preventDefault();
         handleStartEdit();
       }}
     >

@@ -522,20 +522,23 @@ export default function QueuePage() {
             <div 
               key={queueAlbum.id}
               className="relative group mb-2"
-              onClick={(e) => handleAlbumClick(queueAlbum.albumId, e)}
             >
-              <AlbumArt
-                src={queueAlbum.album.imageUrl}
-                alt={queueAlbum.album.name}
-              />
+              <div onClick={(e) => handleAlbumClick(queueAlbum.albumId, e)}>
+                <AlbumArt
+                  src={queueAlbum.album.imageUrl}
+                  alt={queueAlbum.album.name}
+                />
+                {gridScale < 5 && (
+                  <>
+                    <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
+                  </>
+                )}
+              </div>
               {gridScale < 5 && (
-                <>
-                  <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
-                  <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
-                  <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
-                </>
+                <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
               )}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ bottom: gridScale < 5 ? '42px' : '0' }}>
                 <div className="flex flex-col">
                   <button 
                     className="text-white text-xs mb-1 hover:underline"
