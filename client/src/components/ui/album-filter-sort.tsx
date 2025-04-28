@@ -87,7 +87,7 @@ export function AlbumFilterSort({
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={`whitespace-nowrap px-2 sm:px-4 py-1 border border-black ${isFilterOpen ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs sm:text-sm`}
           >
-            {uniqueArtists.length === 0 && uniqueYears.length === 0 ? 'genre' : 'filter'}{isFilterOpen ? 'ing' : ''}
+            {showGenreOnly || (uniqueArtists.length === 0 && uniqueYears.length === 0) ? 'genre' : 'filter'}{isFilterOpen ? 'ing' : ''}
           </button>
         )}
       </div>
@@ -100,7 +100,9 @@ export function AlbumFilterSort({
           />
           <div className="fixed left-1/2 transform -translate-x-1/2 top-1/4 mt-2 p-4 border border-black bg-white shadow-lg z-50 w-80 md:w-[32rem] max-w-[calc(100vw-2rem)]">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-mono text-sm">filter albums</h3>
+              <h3 className="font-mono text-sm">
+                {showGenreOnly ? "filter by genre" : "filter albums"}
+              </h3>
               <button 
                 onClick={() => setIsFilterOpen(false)}
                 className="px-2 py-1 border border-black font-mono text-xs"
@@ -110,7 +112,8 @@ export function AlbumFilterSort({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {uniqueArtists.length > 0 && (
+              {/* Only show artist filter if not in genre-only mode */}
+              {!showGenreOnly && uniqueArtists.length > 0 && (
                 <div>
                   <label className="block font-mono text-xs mb-1">artist</label>
                   <select 
@@ -126,8 +129,9 @@ export function AlbumFilterSort({
                 </div>
               )}
               
+              {/* Always show genre filter if available */}
               {uniqueGenres.length > 0 && (
-                <div>
+                <div className={showGenreOnly ? "md:col-span-3" : ""}>
                   <label className="block font-mono text-xs mb-1">genre</label>
                   <select 
                     value={filterOptions.genre || ""}
@@ -142,7 +146,8 @@ export function AlbumFilterSort({
                 </div>
               )}
               
-              {uniqueYears.length > 0 && (
+              {/* Only show year filter if not in genre-only mode */}
+              {!showGenreOnly && uniqueYears.length > 0 && (
                 <div>
                   <label className="block font-mono text-xs mb-1">year</label>
                   <select 
