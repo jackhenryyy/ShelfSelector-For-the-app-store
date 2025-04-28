@@ -13,6 +13,7 @@ import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { TopFourDialog } from "@/components/ui/top-four-dialog";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { 
@@ -28,6 +29,7 @@ export default function NoSkipsPage() {
   const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips } = useNoSkipsAlbums();
   const { searchAlbums, searchResults, isSearching } = useSpotifyAlbums();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // User ID derived from user
   const userId = user?.id;
