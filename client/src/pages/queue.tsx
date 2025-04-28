@@ -402,29 +402,14 @@ export default function QueuePage() {
     >
       <div className="p-3 pt-0">
         {/* Album count & mobile controls */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="font-mono text-xs text-black/60">
-            {filteredQueueAlbums.length} albums
-          </div>
+        <div className="flex flex-col mb-3">
+          <div className="flex items-center justify-between">
+            <div className="font-mono text-xs text-black/60">
+              {filteredQueueAlbums.length} albums
+            </div>
           
-          {/* Mobile controls */}
-          <div className="flex items-center gap-2 sm:hidden">
-            <AlbumFilterSort
-              onSortChange={setSortOption}
-              onFilterChange={setFilterOptions}
-              selectedSort={sortOption}
-              showFilterOptions={true}
-              totalCount={filteredQueueAlbums.length}
-              uniqueArtists={uniqueArtists}
-              uniqueGenres={uniqueGenres}
-              uniqueYears={uniqueYears}
-            />
-            <AlbumSearchDialog />
-          </div>
-          
-          {/* Desktop controls */}
-          <div className="hidden sm:flex items-center justify-between w-full">
-            <div className="flex gap-2">
+            {/* Mobile controls */}
+            <div className="flex items-center gap-2 sm:hidden">
               <AlbumFilterSort
                 onSortChange={setSortOption}
                 onFilterChange={setFilterOptions}
@@ -435,17 +420,75 @@ export default function QueuePage() {
                 uniqueGenres={uniqueGenres}
                 uniqueYears={uniqueYears}
               />
+              <AlbumSearchDialog />
+            </div>
+            
+            {/* Desktop controls */}
+            <div className="hidden sm:flex items-center justify-between w-full">
+              <div className="flex gap-2">
+                <AlbumFilterSort
+                  onSortChange={setSortOption}
+                  onFilterChange={setFilterOptions}
+                  selectedSort={sortOption}
+                  showFilterOptions={true}
+                  totalCount={filteredQueueAlbums.length}
+                  uniqueArtists={uniqueArtists}
+                  uniqueGenres={uniqueGenres}
+                  uniqueYears={uniqueYears}
+                />
+                
+                <label 
+                  htmlFor="csv-upload"
+                  className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm cursor-pointer flex items-center gap-1"
+                  title="Import from CSV"
+                >
+                  <UploadIcon className="h-4 w-4" />
+                  import csv
+                </label>
+                <input 
+                  id="csv-upload"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvUpload}
+                  className="hidden"
+                />
+                
+                <button
+                  onClick={handleExportCSV}
+                  className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+                  title="Export to CSV"
+                >
+                  <DownloadIcon className="h-4 w-4" />
+                  export csv
+                </button>
+                
+                <div className="px-2 border-l border-black ml-2">
+                  <GridScaleSlider 
+                    value={gridScale} 
+                    onChange={setGridScale}
+                    min={1}
+                    max={12}
+                  />
+                </div>
+              </div>
               
+              <AlbumSearchDialog />
+            </div>
+          </div>
+          
+          {/* Mobile secondary controls */}
+          {isMobile && (
+            <div className="flex gap-2 justify-between mt-2 sm:hidden">
               <label 
-                htmlFor="csv-upload"
-                className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm cursor-pointer flex items-center gap-1"
+                htmlFor="csv-upload-mobile"
+                className="flex-1 whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs cursor-pointer flex items-center justify-center gap-1"
                 title="Import from CSV"
               >
-                <UploadIcon className="h-4 w-4" />
-                import csv
+                <UploadIcon className="h-3 w-3" />
+                import
               </label>
               <input 
-                id="csv-upload"
+                id="csv-upload-mobile"
                 type="file"
                 accept=".csv"
                 onChange={handleCsvUpload}
@@ -454,14 +497,14 @@ export default function QueuePage() {
               
               <button
                 onClick={handleExportCSV}
-                className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+                className="flex-1 whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs cursor-pointer flex items-center justify-center gap-1"
                 title="Export to CSV"
               >
-                <DownloadIcon className="h-4 w-4" />
-                export csv
+                <DownloadIcon className="h-3 w-3" />
+                export
               </button>
               
-              <div className="px-2 border-l border-black ml-2">
+              <div className="flex-1 flex items-center justify-center px-2 border border-black">
                 <GridScaleSlider 
                   value={gridScale} 
                   onChange={setGridScale}
@@ -470,9 +513,7 @@ export default function QueuePage() {
                 />
               </div>
             </div>
-            
-            <AlbumSearchDialog />
-          </div>
+          )}
         </div>
         
         {/* Albums grid */}
@@ -539,44 +580,7 @@ export default function QueuePage() {
         </AlbumGrid>
       </div>
       
-      {/* Mobile bottom toolbar */}
-      {isMobile && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black p-2 flex gap-2 justify-between z-30">
-          <label 
-            htmlFor="csv-upload-mobile"
-            className="flex-1 whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs cursor-pointer flex items-center justify-center gap-1"
-            title="Import from CSV"
-          >
-            <UploadIcon className="h-3 w-3" />
-            import
-          </label>
-          <input 
-            id="csv-upload-mobile"
-            type="file"
-            accept=".csv"
-            onChange={handleCsvUpload}
-            className="hidden"
-          />
-          
-          <button
-            onClick={handleExportCSV}
-            className="flex-1 whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs cursor-pointer flex items-center justify-center gap-1"
-            title="Export to CSV"
-          >
-            <DownloadIcon className="h-3 w-3" />
-            export
-          </button>
-          
-          <div className="flex-1 flex items-center justify-center px-2 border border-black">
-            <GridScaleSlider 
-              value={gridScale} 
-              onChange={setGridScale}
-              min={1}
-              max={12}
-            />
-          </div>
-        </div>
-      )}
+      {/* Mobile controls are now integrated at the top */}
       
       {/* Context menu */}
       {showContextMenu && (
