@@ -135,20 +135,19 @@ export default function ListPage() {
     : { "search results": filteredReviews };
     
   // Helper function to get day from date string
-  const getDay = (dateString: string) => {
-    console.log("Getting day from date string:", dateString);
+  // Prioritize listenedAt (when user actually listened), fallback to reviewedAt (when review was created)
+  const getDay = (review: AlbumReview) => {
     try {
-      const date = new Date(dateString);
+      // First try to use listenedAt if it exists (user-selected date)
+      const dateStr = review.listenedAt || review.reviewedAt;
+      const date = new Date(dateStr);
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
-        console.warn("Invalid date from string:", dateString);
         return "--";
       }
       
-      const day = date.getDate();
-      console.log("Extracted day:", day);
-      return day;
+      return date.getDate();
     } catch (error) {
       console.error("Error parsing date for day extraction:", error);
       return "--";

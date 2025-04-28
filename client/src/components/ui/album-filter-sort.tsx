@@ -273,34 +273,29 @@ export function filterAlbums<T extends { album: Album; rating?: number }>(
   });
 }
 
-// Helper for grouping albums by listened date (month and year) for reviews
-export function groupAlbumsByMonth<T extends { listenedAt?: string | null, addedAt?: string }>(
+// Helper for grouping albums by review date (month and year) for reviews
+export function groupAlbumsByMonth<T extends { reviewedAt?: string, listenedAt?: string | null, addedAt?: string }>(
   albums: T[]
 ): Record<string, T[]> {
   const grouped: Record<string, T[]> = {};
   
   albums.forEach(album => {
     try {
-      // First try to use listenedAt date if it exists
-      let dateStr = album.listenedAt || album.addedAt || '';
-      
-      // Add debugging to see what the date looks like
-      console.log("Album dateStr before parsing:", dateStr, "Type:", typeof dateStr);
+      // Use reviewedAt as primary date (the date the review was created)
+      // Fall back to listenedAt (when user listened to album) or addedAt for other collections
+      let dateStr = album.reviewedAt || album.listenedAt || album.addedAt || '';
       
       // If it's already a valid ISO string, use it directly
       let date: Date;
       if (dateStr) {
         date = new Date(dateStr);
-        console.log("Parsed date:", date, "Valid:", !isNaN(date.getTime()));
       } else {
-        console.log("No date string available");
         date = new Date(0); // Invalid date
       }
       
       // Check if date is valid before formatting
       if (!isNaN(date.getTime())) {
         const monthYear = format(date, "MMMM yyyy").toLowerCase(); // e.g., "april 2025"
-        console.log("Formatted month-year:", monthYear);
         
         if (!grouped[monthYear]) {
           grouped[monthYear] = [];
@@ -309,7 +304,6 @@ export function groupAlbumsByMonth<T extends { listenedAt?: string | null, added
         grouped[monthYear].push(album);
       } else {
         // For invalid dates, place in "unknown date" group
-        console.log("Invalid date, adding to unknown date group");
         if (!grouped["unknown date"]) {
           grouped["unknown date"] = [];
         }
