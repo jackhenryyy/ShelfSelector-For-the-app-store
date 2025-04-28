@@ -50,6 +50,20 @@ export default function HomePage() {
     handleShuffle();
   }, [filteredSource]);
   
+  // Function to get unique genres from both sources
+  const getUniqueGenres = () => {
+    const allAlbums = [...(queueAlbums || []), ...(noSkipsAlbums || [])];
+    const genresSet = new Set<string>();
+    
+    allAlbums.forEach(item => {
+      if (item.album.genre) {
+        genresSet.add(item.album.genre);
+      }
+    });
+    
+    return Array.from(genresSet);
+  };
+  
   // Function to shuffle and get a random album
   const handleShuffle = () => {
     let album = null;
@@ -96,7 +110,7 @@ export default function HomePage() {
         <div className="p-3 relative z-10">
           <h1 className="text-lg sm:text-xl md:text-2xl font-mono text-center mb-3">t h e  s h e l f</h1>
           
-          <div className="flex justify-between mb-4 mx-1 sm:mx-4 gap-2">
+          <div className="flex justify-between mb-4 mx-1 sm:mx-4 gap-2 flex-wrap">
             <div className="flex">
               <button 
                 className={`px-2 py-1 border border-black ${!shuffleSource ? 'bg-green-300' : 'bg-white'} text-black font-mono text-xs`}
@@ -112,7 +126,16 @@ export default function HomePage() {
               </button>
             </div>
             
-            <div>
+            <div className="flex items-center gap-2">
+              {/* Genre Filter */}
+              <AlbumFilterSort
+                onFilterChange={setFilterOptions}
+                showFilterOptions={true}
+                showGenreOnly={true}
+                totalCount={filteredSource.length}
+                uniqueGenres={getUniqueGenres()}
+              />
+              
               <button 
                 className="px-2 py-1 border border-black bg-white text-black font-mono text-xs"
                 onClick={handleShuffle}

@@ -23,10 +23,11 @@ export type FilterOption = {
 }
 
 interface AlbumFilterSortProps {
-  onSortChange: (sort: SortOption) => void;
+  onSortChange?: (sort: SortOption) => void;
   onFilterChange?: (filter: FilterOption) => void;
-  selectedSort: SortOption;
+  selectedSort?: SortOption;
   showFilterOptions?: boolean;
+  showGenreOnly?: boolean;
   totalCount: number;
   uniqueArtists?: string[];
   uniqueGenres?: string[];
@@ -38,6 +39,7 @@ export function AlbumFilterSort({
   onFilterChange,
   selectedSort = "date-added-newest",
   showFilterOptions = false,
+  showGenreOnly = false,
   totalCount,
   uniqueArtists = [],
   uniqueGenres = [],
@@ -62,7 +64,7 @@ export function AlbumFilterSort({
   }, []);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onSortChange(e.target.value as SortOption);
+    onSortChange?.(e.target.value as SortOption);
   };
 
   const handleFilterChange = (key: keyof FilterOption, value: any) => {

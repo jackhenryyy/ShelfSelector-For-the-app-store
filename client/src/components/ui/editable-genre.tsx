@@ -103,7 +103,7 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
     >
       <div className="flex items-center space-x-1">
         <span className="text-xs text-gray-500 truncate">
-          {genre ? `genre: ${genre}` : "add genre..."}
+          {genre ? `${genre}` : "add genre..."}
         </span>
         <Pencil className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity text-gray-500" />
       </div>
