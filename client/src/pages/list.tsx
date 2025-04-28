@@ -243,7 +243,7 @@ export default function ListPage() {
                     <div key={review.id} className="flex gap-3">
                       {/* Day Number in Box */}
                       <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
-                        <div className="font-mono text-sm">{review.listenedAt ? getDay(review.listenedAt) : "--"}</div>
+                        <div className="font-mono text-sm">{getDay(review)}</div>
                       </div>
                       
                       {/* Album Art */}
