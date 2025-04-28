@@ -26,7 +26,7 @@ import {
 export default function NoSkipsPage() {
   // Hooks with contexts first
   const { user } = useAuth(); // Use the proper authentication hook
-  const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips } = useNoSkipsAlbums();
+  const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips, removeFromNoSkips } = useNoSkipsAlbums();
   const { searchAlbums, searchResults, isSearching } = useSpotifyAlbums();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -273,6 +273,16 @@ export default function NoSkipsPage() {
     // Close search after adding
     setShowSearch(false);
     setSearchQuery("");
+  };
+  
+  // Function to remove album from No Skips
+  const handleRemoveFromNoSkips = (albumId: number) => {
+    removeFromNoSkips(albumId);
+    
+    toast({
+      title: "Album removed",
+      description: "Album has been removed from your No Skips collection",
+    });
   };
   
   // Function to handle CSV upload
@@ -676,7 +686,8 @@ export default function NoSkipsPage() {
         <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>albums</h2>
         <AlbumGrid columns={gridScale}>
           {sortedNoSkipsAlbums.map((album) => (
-            <div key={album.id} className="mb-2">
+            <div key={album.id} className="relative group mb-2">
+              {/* Album art and details */}
               <a 
                 href="#" 
                 onClick={(e) => {
@@ -702,9 +713,54 @@ export default function NoSkipsPage() {
                   </>
                 )}
               </a>
+              
+              {/* Genre editor */}
               {gridScale < 5 && (
                 <EditableGenre albumId={album.album.id} genre={album.album.genre} />
               )}
+              
+              {/* Overlay with buttons */}
+              <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ bottom: gridScale < 5 ? '42px' : '0' }}>
+                {/* Remove (X) button in top right corner */}
+                <button 
+                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-5 h-5 flex items-center justify-center text-white hover:bg-white hover:text-black text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (!isEditingTopFour) {
+                      handleRemoveFromNoSkips(album.albumId);
+                    }
+                  }}
+                  title="Remove from No Skips"
+                >
+                  ✕
+                </button>
+                
+                {!isEditingTopFour && (
+                  <div className="flex flex-col">
+                    <button 
+                      className="text-white text-xs mb-1 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleOpenAlbumInSpotify(album.album.spotifyId);
+                      }}
+                    >
+                      Play
+                    </button>
+                    <button 
+                      className="text-white text-xs hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        // Add review functionality if needed
+                      }}
+                    >
+                      Review
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </AlbumGrid>

@@ -539,6 +539,18 @@ export default function QueuePage() {
                 <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
               )}
               <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ bottom: gridScale < 5 ? '42px' : '0' }}>
+                {/* Remove (X) button in top right corner */}
+                <button 
+                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-5 h-5 flex items-center justify-center text-white hover:bg-white hover:text-black text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFromQueue(queueAlbum.albumId);
+                  }}
+                  title="Remove from Queue"
+                >
+                  ✕
+                </button>
+                
                 <div className="flex flex-col">
                   <button 
                     className="text-white text-xs mb-1 hover:underline"
@@ -547,34 +559,16 @@ export default function QueuePage() {
                       handlePlayOnSpotify(queueAlbum.album.spotifyId);
                     }}
                   >
-                    Play on Spotify
+                    Play
                   </button>
                   <button 
-                    className="text-white text-xs mb-1 hover:underline"
+                    className="text-white text-xs hover:underline"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOpenReviewDialog(queueAlbum.albumId);
                     }}
                   >
-                    Review & Add to List
-                  </button>
-                  <button 
-                    className="text-white text-xs mb-1 hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditGenre(queueAlbum.albumId);
-                    }}
-                  >
-                    Edit Genre
-                  </button>
-                  <button 
-                    className="text-white text-xs hover:underline text-red-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromQueue(queueAlbum.albumId);
-                    }}
-                  >
-                    Remove from Queue
+                    Review
                   </button>
                 </div>
               </div>
@@ -606,19 +600,13 @@ export default function QueuePage() {
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
                   onClick={() => handlePlayOnSpotify(qa.album.spotifyId)}
                 >
-                  Play on Spotify
+                  Play
                 </button>
                 <button 
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
                   onClick={() => handleOpenReviewDialog(qa.albumId)}
                 >
-                  Review & Add to List
-                </button>
-                <button 
-                  className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
-                  onClick={() => handleEditGenre(qa.albumId)}
-                >
-                  Edit Genre
+                  Review
                 </button>
                 <button 
                   className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded text-red-500"
@@ -627,7 +615,7 @@ export default function QueuePage() {
                     handleCloseContextMenu();
                   }}
                 >
-                  Remove from Queue
+                  Remove
                 </button>
               </div>
             ))}
