@@ -462,7 +462,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Convert listenedAt string to Date object if provided
       if (listenedAt && typeof listenedAt === 'string') {
-        listenedAt = new Date(listenedAt);
+        try {
+          const date = new Date(listenedAt);
+          // Verify that the date is valid
+          if (!isNaN(date.getTime())) {
+            listenedAt = date;
+          } else {
+            console.warn('Invalid date format received:', listenedAt);
+            listenedAt = null;
+          }
+        } catch (error) {
+          console.error('Error parsing date:', error);
+          listenedAt = null;
+        }
       }
       
       const data = insertAlbumReviewSchema.parse({
@@ -495,7 +507,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const schema = z.object({
         rating: z.number().min(1).max(5),
         review: z.string().optional(),
-        listenedAt: z.string().optional().transform(val => val ? new Date(val) : null)
+        listenedAt: z.string().optional().transform(val => {
+          if (!val) return null;
+          try {
+            const date = new Date(val);
+            // Check if the date is valid
+            if (isNaN(date.getTime())) return null;
+            return date;
+          } catch (error) {
+            console.error('Invalid date format:', val);
+            return null;
+          }
+        })
       });
       
       const { rating, review, listenedAt } = schema.parse(req.body);

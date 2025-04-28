@@ -180,7 +180,13 @@ export function useAlbumReviews() {
   // Create/update review
   const createReviewMutation = useMutation({
     mutationFn: async (data: { albumId: number; rating: number; review?: string; listenedAt?: Date }) => {
-      const response = await apiRequest('POST', '/api/reviews', data);
+      // Convert Date object to ISO string for API
+      const formattedData = {
+        ...data,
+        listenedAt: data.listenedAt ? data.listenedAt.toISOString() : undefined
+      };
+      
+      const response = await apiRequest('POST', '/api/reviews', formattedData);
       return response.json();
     },
     onSuccess: () => {
@@ -192,7 +198,14 @@ export function useAlbumReviews() {
   const updateReviewMutation = useMutation({
     mutationFn: async (data: { id: number; rating: number; review?: string; listenedAt?: Date }) => {
       const { id, ...rest } = data;
-      const response = await apiRequest('PUT', `/api/reviews/${id}`, rest);
+      
+      // Convert Date object to ISO string for API
+      const formattedData = {
+        ...rest,
+        listenedAt: rest.listenedAt ? rest.listenedAt.toISOString() : undefined
+      };
+      
+      const response = await apiRequest('PUT', `/api/reviews/${id}`, formattedData);
       return response.json();
     },
     onSuccess: (_, variables) => {
