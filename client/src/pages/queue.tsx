@@ -523,56 +523,69 @@ export default function QueuePage() {
               key={queueAlbum.id}
               className="relative group mb-2"
             >
-              <div onClick={(e) => handleAlbumClick(queueAlbum.albumId, e)}>
-                <div className="relative">
-                  <AlbumArt
-                    src={queueAlbum.album.imageUrl}
-                    alt={queueAlbum.album.name}
-                  />
-                  <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                    <button 
-                      className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFromQueue(queueAlbum.albumId);
-                      }}
-                      title="Remove from Queue"
-                    >
-                      ✕
-                    </button>
-                    
-                    <div className="flex flex-col">
-                      <button 
-                        className="text-white text-xs mb-1 hover:underline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePlayOnSpotify(queueAlbum.album.spotifyId);
-                        }}
-                      >
-                        Play
-                      </button>
-                      <button 
-                        className="text-white text-xs hover:underline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenReviewDialog(queueAlbum.albumId);
-                        }}
-                      >
-                        Review
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              {/* Album art and details */}
+              <a 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAlbumClick(queueAlbum.albumId, e);
+                }}
+              >
+                <AlbumArt
+                  src={queueAlbum.album.imageUrl}
+                  alt={queueAlbum.album.name}
+                />
                 {gridScale < 5 && (
                   <>
                     <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
                     <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
                   </>
                 )}
-              </div>
+              </a>
+              
+              {/* Genre editor */}
               {gridScale < 5 && (
                 <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
               )}
+              
+              {/* Overlay with buttons - positioned to cover only the album art */}
+              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                {/* Remove (X) button in top right corner */}
+                <button 
+                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    removeFromQueue(queueAlbum.albumId);
+                  }}
+                  title="Remove from Queue"
+                >
+                  ✕
+                </button>
+                
+                <div className="flex flex-col">
+                  <button 
+                    className="text-white text-xs mb-1 hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handlePlayOnSpotify(queueAlbum.album.spotifyId);
+                    }}
+                  >
+                    Play
+                  </button>
+                  <button 
+                    className="text-white text-xs hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleOpenReviewDialog(queueAlbum.albumId);
+                    }}
+                  >
+                    Review
+                  </button>
+                </div>
+              </div>
             </div>
           ))}
         </AlbumGrid>
