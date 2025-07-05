@@ -86,7 +86,6 @@ export default function QueuePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [queueSearchQuery, setQueueSearchQuery] = useState("");
 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
@@ -96,7 +95,7 @@ export default function QueuePage() {
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   const [gridScale, setGridScale] = useState<number>(3);
   
-  // Update filtered queue albums when sorting, filtering, or searching changes
+  // Update filtered queue albums when sorting or filtering changes
   useEffect(() => {
     if (!queueAlbums) return;
     
@@ -105,18 +104,8 @@ export default function QueuePage() {
     processed = sortQueueAlbums(processed, sortOption);
     processed = filterQueueAlbums(processed, filterOptions);
     
-    // Apply queue search
-    if (queueSearchQuery.trim()) {
-      const searchTerm = queueSearchQuery.toLowerCase();
-      processed = processed.filter(queueAlbum => 
-        queueAlbum.album.name.toLowerCase().includes(searchTerm) ||
-        queueAlbum.album.artist.toLowerCase().includes(searchTerm) ||
-        (queueAlbum.album.genre && queueAlbum.album.genre.toLowerCase().includes(searchTerm))
-      );
-    }
-    
     setFilteredQueueAlbums(processed);
-  }, [queueAlbums, sortOption, filterOptions, queueSearchQuery]);
+  }, [queueAlbums, sortOption, filterOptions]);
   
   // Function to handle album click - now goes directly to review dialog
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
@@ -401,17 +390,6 @@ export default function QueuePage() {
               />
               <MobileAlbumSearchButton />
             </div>
-          </div>
-          
-          {/* Mobile search bar */}
-          <div className="sm:hidden mt-2">
-            <input
-              type="text"
-              placeholder="Search queue..."
-              value={queueSearchQuery}
-              onChange={(e) => setQueueSearchQuery(e.target.value)}
-              className="w-full px-3 py-1 border border-black font-mono text-sm focus:outline-none focus:border-gray-600"
-            />
             
             {/* Desktop controls */}
             <div className="hidden sm:flex items-center justify-between w-full">
@@ -462,16 +440,7 @@ export default function QueuePage() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Search queue..."
-                  value={queueSearchQuery}
-                  onChange={(e) => setQueueSearchQuery(e.target.value)}
-                  className="px-3 py-1 border border-black font-mono text-sm w-40 focus:outline-none focus:border-gray-600"
-                />
-                <DesktopAlbumSearchButton />
-              </div>
+              <DesktopAlbumSearchButton />
             </div>
           </div>
           

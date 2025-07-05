@@ -179,50 +179,24 @@ export function AlbumDetailsDialog({
               </label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <div key={star} className="relative">
-                    {/* Left half of star (for .5 ratings) */}
-                    <button
-                      type="button"
-                      className="absolute left-0 top-0 w-1/2 h-full z-10 p-1"
-                      onMouseEnter={() => setHoveredStar(star - 0.5)}
-                      onMouseLeave={() => setHoveredStar(0)}
-                      onClick={() => setRating(star - 0.5)}
-                    />
-                    {/* Right half of star (for full ratings) */}
-                    <button
-                      type="button"
-                      className="absolute right-0 top-0 w-1/2 h-full z-10 p-1"
-                      onMouseEnter={() => setHoveredStar(star)}
-                      onMouseLeave={() => setHoveredStar(0)}
-                      onClick={() => setRating(star)}
-                    />
-                    {/* Star visual */}
-                    <div className="relative p-1">
-                      <Star
-                        className={cn(
-                          "h-6 w-6 text-gray-300"
-                        )}
-                      />
-                      {/* Full star fill */}
-                      {(hoveredStar >= star || rating >= star) && (
-                        <Star
-                          className="absolute top-1 left-1 h-6 w-6 fill-yellow-400 text-yellow-400"
-                        />
+                  <button
+                    key={star}
+                    type="button"
+                    className="p-1"
+                    onMouseEnter={() => setHoveredStar(star)}
+                    onMouseLeave={() => setHoveredStar(0)}
+                    onClick={() => setRating(star)}
+                  >
+                    <Star
+                      className={cn(
+                        "h-6 w-6",
+                        (hoveredStar >= star || rating >= star)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
                       )}
-                      {/* Half star fill */}
-                      {((hoveredStar >= star - 0.5 && hoveredStar < star) || (rating >= star - 0.5 && rating < star)) && (
-                        <div className="absolute top-1 left-1 w-3 h-6 overflow-hidden">
-                          <Star
-                            className="h-6 w-6 fill-yellow-400 text-yellow-400"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    />
+                  </button>
                 ))}
-              </div>
-              <div className="text-xs text-gray-500 font-mono mt-1">
-                {rating > 0 ? `${rating} stars` : "No rating"}
               </div>
             </div>
 
