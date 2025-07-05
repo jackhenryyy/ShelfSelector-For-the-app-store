@@ -11,9 +11,7 @@ import { exportAlbumsToCSV } from "@/lib/csv-export";
 import { parseCSVToAlbums } from "@/lib/csv-export";
 import { useToast } from "@/hooks/use-toast";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
-import { ReviewDialog } from "@/components/ui/review-dialog";
-import { EditableGenre } from "@/components/ui/editable-genre";
-import { GenreEditorDialog } from "@/components/ui/genre-editor-dialog";
+import { AlbumDetailsDialog } from "@/components/ui/album-details-dialog";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SearchDialog } from "@/components/ui/search-dialog";
@@ -89,8 +87,7 @@ export default function QueuePage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [genreEditorOpen, setGenreEditorOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
@@ -114,8 +111,8 @@ export default function QueuePage() {
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
     event.preventDefault();
     
-    // Open review dialog directly
-    handleOpenReviewDialog(albumId);
+    // Open details dialog directly
+    handleOpenDetailsDialog(albumId);
   };
   
   // Function to play album on Spotify (keep this for potential future use)
@@ -123,30 +120,34 @@ export default function QueuePage() {
     openInSpotify(spotifyId);
   };
   
-  // Function to open the review dialog
-  const handleOpenReviewDialog = (albumId: number) => {
+  // Function to open the details dialog
+  const handleOpenDetailsDialog = (albumId: number) => {
     const album = queueAlbums?.find(qa => qa.albumId === albumId)?.album;
     if (album) {
       setSelectedAlbum(album);
-      setReviewDialogOpen(true);
+      setDetailsDialogOpen(true);
     }
   };
   
-  // Function to handle submitting a review
-  const handleSubmitReview = async (rating: number, review: string, listenedAt?: Date) => {
-    if (!selectedAlbum) return;
-    
+  // Function to handle saving a review
+  const handleSaveReview = async (data: {
+    albumId: number;
+    rating: number;
+    review?: string;
+    listenedAt?: Date;
+    genre?: string;
+  }) => {
     try {
       // Create the review in the database
       await createReview({
-        albumId: selectedAlbum.id,
-        rating,
-        review: review || "",
-        listenedAt
+        albumId: data.albumId,
+        rating: data.rating,
+        review: data.review || "",
+        listenedAt: data.listenedAt
       });
       
       // Remove the album from the queue
-      removeFromQueue(selectedAlbum.id);
+      removeFromQueue(data.albumId);
       
       toast({
         title: "Review submitted",
@@ -154,12 +155,30 @@ export default function QueuePage() {
       });
       
       setSelectedAlbum(null);
-      setReviewDialogOpen(false);
+      setDetailsDialogOpen(false);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast({
         title: "Review failed",
         description: "There was an error submitting your review",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Function to handle updating genre
+  const handleUpdateGenre = async (albumId: number, genre: string) => {
+    try {
+      await updateGenre(albumId, genre);
+      toast({
+        title: "Genre updated",
+        description: "Album genre has been updated",
+      });
+    } catch (error) {
+      console.error("Error updating genre:", error);
+      toast({
+        title: "Update failed",
+        description: "There was an error updating the genre",
         variant: "destructive"
       });
     }
@@ -492,9 +511,9 @@ export default function QueuePage() {
                 )}
               </a>
               
-              {/* Genre editor */}
-              {gridScale < 5 && (
-                <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
+              {/* Genre display */}
+              {gridScale < 5 && queueAlbum.album.genre && (
+                <div className="text-xs text-gray-400 truncate font-mono">{queueAlbum.album.genre}</div>
               )}
               
               {/* Remove (X) button in top right corner - with pointer-events-none to allow clicks through */}
@@ -520,25 +539,14 @@ export default function QueuePage() {
       
 
       
-      {/* Review dialog */}
+      {/* Album Details Dialog */}
       {selectedAlbum && (
-        <ReviewDialog
+        <AlbumDetailsDialog
+          isOpen={detailsDialogOpen}
+          onClose={() => setDetailsDialogOpen(false)}
           album={selectedAlbum}
-          open={reviewDialogOpen}
-          onOpenChange={setReviewDialogOpen}
-          onSubmit={handleSubmitReview}
-        />
-      )}
-      
-      {/* Genre editor dialog */}
-      {selectedAlbum && (
-        <GenreEditorDialog
-          albumId={selectedAlbum.id}
-          currentGenre={selectedAlbum.genre}
-          open={genreEditorOpen}
-          onOpenChange={setGenreEditorOpen}
-          albumName={selectedAlbum.name}
-          artistName={selectedAlbum.artist}
+          onSave={handleSaveReview}
+          onUpdateGenre={handleUpdateGenre}
         />
       )}
 
