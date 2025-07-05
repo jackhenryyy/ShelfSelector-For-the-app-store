@@ -497,10 +497,10 @@ export default function QueuePage() {
                 <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
               )}
               
-              {/* Remove (X) button in top right corner */}
-              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
+              {/* Remove (X) button in top right corner - with pointer-events-none to allow clicks through */}
+              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5] pointer-events-none">
                 <button 
-                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
+                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold pointer-events-auto"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
