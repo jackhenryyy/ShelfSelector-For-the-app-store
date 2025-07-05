@@ -88,7 +88,7 @@ export default function QueuePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showContextMenu, setShowContextMenu] = useState<{id: number, x: number, y: number} | null>(null);
+
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [genreEditorOpen, setGenreEditorOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
@@ -110,49 +110,17 @@ export default function QueuePage() {
     setFilteredQueueAlbums(processed);
   }, [queueAlbums, sortOption, filterOptions]);
   
-  // Function to handle album click
+  // Function to handle album click - now goes directly to review dialog
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
     event.preventDefault();
     
-    // Show context menu at click position
-    setShowContextMenu({
-      id: albumId,
-      x: event.clientX,
-      y: event.clientY
-    });
+    // Open review dialog directly
+    handleOpenReviewDialog(albumId);
   };
   
-  // Function to close context menu
-  const handleCloseContextMenu = () => {
-    setShowContextMenu(null);
-  };
-  
-  // Function to play album on Spotify
+  // Function to play album on Spotify (keep this for potential future use)
   const handlePlayOnSpotify = (spotifyId: string) => {
     openInSpotify(spotifyId);
-    handleCloseContextMenu();
-  };
-  
-  // Function to add to No Skips
-  const handleAddToNoSkips = (albumId: number) => {
-    addToNoSkips({ albumId, isTopFour: false });
-    toast({
-      title: "Added to No Skips",
-      description: "Album has been added to your No Skips collection",
-    });
-    handleCloseContextMenu();
-  };
-  
-  // Function to handle genre edit
-  const handleEditGenre = (albumId: number) => {
-    // Find the album
-    const album = queueAlbums?.find(qa => qa.albumId === albumId)?.album;
-    if (!album) return;
-    
-    // Open the genre editor dialog
-    setSelectedAlbum(album);
-    setGenreEditorOpen(true);
-    handleCloseContextMenu();
   };
   
   // Function to open the review dialog
@@ -161,12 +129,11 @@ export default function QueuePage() {
     if (album) {
       setSelectedAlbum(album);
       setReviewDialogOpen(true);
-      handleCloseContextMenu();
     }
   };
   
   // Function to handle submitting a review
-  const handleSubmitReview = async (rating: number, review: string) => {
+  const handleSubmitReview = async (rating: number, review: string, listenedAt?: Date) => {
     if (!selectedAlbum) return;
     
     try {
@@ -175,6 +142,7 @@ export default function QueuePage() {
         albumId: selectedAlbum.id,
         rating,
         review: review || "",
+        listenedAt
       });
       
       // Remove the album from the queue
@@ -186,6 +154,7 @@ export default function QueuePage() {
       });
       
       setSelectedAlbum(null);
+      setReviewDialogOpen(false);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast({
@@ -528,9 +497,8 @@ export default function QueuePage() {
                 <EditableGenre albumId={queueAlbum.album.id} genre={queueAlbum.album.genre} />
               )}
               
-              {/* Overlay with buttons - positioned to cover only the album art with lower z-index */}
-              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
-                {/* Remove (X) button in top right corner */}
+              {/* Remove (X) button in top right corner */}
+              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
                 <button 
                   className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
                   onClick={(e) => {
@@ -542,29 +510,6 @@ export default function QueuePage() {
                 >
                   ✕
                 </button>
-                
-                <div className="flex flex-col">
-                  <button 
-                    className="text-white text-xs mb-1 hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      handlePlayOnSpotify(queueAlbum.album.spotifyId);
-                    }}
-                  >
-                    Play
-                  </button>
-                  <button 
-                    className="text-white text-xs hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      handleOpenReviewDialog(queueAlbum.albumId);
-                    }}
-                  >
-                    Review
-                  </button>
-                </div>
               </div>
             </div>
           ))}
@@ -573,49 +518,7 @@ export default function QueuePage() {
       
       {/* Mobile controls are now integrated at the top */}
       
-      {/* Context menu */}
-      {showContextMenu && (
-        <>
-          <div 
-            className="fixed inset-0 z-40"
-            onClick={handleCloseContextMenu}
-          />
-          <div 
-            className="fixed z-40 bg-white shadow-lg rounded p-2 min-w-32"
-            style={{
-              top: showContextMenu.y,
-              left: showContextMenu.x,
-              transform: "translate(-50%, -50%)"
-            }}
-          >
-            {queueAlbums?.filter(qa => qa.albumId === showContextMenu.id).map(qa => (
-              <div key={qa.id} className="flex flex-col space-y-1">
-                <button 
-                  className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
-                  onClick={() => handlePlayOnSpotify(qa.album.spotifyId)}
-                >
-                  Play
-                </button>
-                <button 
-                  className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded"
-                  onClick={() => handleOpenReviewDialog(qa.albumId)}
-                >
-                  Review
-                </button>
-                <button 
-                  className="text-sm px-4 py-1 text-left hover:bg-gray-100 rounded text-red-500"
-                  onClick={() => {
-                    removeFromQueue(qa.albumId);
-                    handleCloseContextMenu();
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+
       
       {/* Review dialog */}
       {selectedAlbum && (
