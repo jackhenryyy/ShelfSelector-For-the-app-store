@@ -3,17 +3,12 @@ import { useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { ReviewPopup } from "@/components/ui/review-popup";
 import { openInSpotify } from "@/lib/spotify";
-import { MenuIcon, CalendarIcon, DownloadIcon } from "lucide-react";
+import { MenuIcon, DownloadIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { exportAlbumsToCSV } from "@/lib/csv-export";
-import { EditableGenre } from "@/components/ui/editable-genre";
+
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -30,9 +25,6 @@ export default function ListPage() {
   const [filteredReviews, setFilteredReviews] = useState<AlbumReview[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
-  const [editRating, setEditRating] = useState(0);
-  const [editReview, setEditReview] = useState("");
-  const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   
@@ -82,38 +74,24 @@ export default function ListPage() {
     openInSpotify(spotifyId);
   };
   
-  // Function to open review edit dialog
-  const handleEditReview = (review: AlbumReview) => {
-    console.log("Original listenedAt from review:", review.listenedAt);
-    
-    // Convert to Date object if it exists
-    const dateObj = review.listenedAt ? new Date(review.listenedAt) : undefined;
-    console.log("Converted to Date object:", dateObj);
-    
+  // Function to open review popup
+  const handleOpenReview = (review: AlbumReview) => {
     setActiveReview(review);
-    setEditRating(review.rating);
-    setEditReview(review.review || "");
-    setEditListenedAt(dateObj);
+  };
+  
+  // Function to close review popup
+  const handleCloseReview = () => {
+    setActiveReview(null);
   };
   
   // Function to save edited review
-  const handleSaveReview = () => {
-    if (!activeReview) return;
-    
-    console.log("Saving review with listenedAt:", editListenedAt);
-    
-    const reviewData = {
-      id: activeReview.id,
-      rating: editRating,
-      review: editReview,
-      listenedAt: editListenedAt
-    };
-    
-    console.log("Review data being sent:", reviewData);
-    
+  const handleSaveReview = (reviewData: {
+    id: number;
+    rating: number;
+    review: string;
+    listenedAt?: Date;
+  }) => {
     updateReview(reviewData);
-    
-    setActiveReview(null);
   };
 
   // Get unique artists, genres, and years for filters
@@ -274,15 +252,15 @@ export default function ListPage() {
                               )}
                             </div>
                           </div>
-                          <EditableGenre albumId={review.album.id} genre={review.album.genre} className="mt-0.5" />
+                          <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.genre || "no genre"}</p>
                         </div>
                       </div>
                       
                       {/* Menu Button */}
                       <div className="flex items-center">
                         <button 
-                          className="text-black/60"
-                          onClick={() => handleEditReview(review)}
+                          className="text-black/60 hover:text-black"
+                          onClick={() => handleOpenReview(review)}
                         >
                           <MenuIcon className="w-4 h-4" />
                         </button>
@@ -296,100 +274,13 @@ export default function ListPage() {
         </div>
       </div>
       
-      {/* Edit Review Dialog */}
-      <Dialog open={!!activeReview} onOpenChange={(open) => !open && setActiveReview(null)}>
-        <DialogContent>
-          <DialogTitle className="font-mono">Edit Review</DialogTitle>
-          
-          {activeReview && (
-            <div className="flex items-center gap-3 mt-2">
-              <AlbumArt
-                src={activeReview.album.imageUrl}
-                alt={activeReview.album.name}
-                size="small"
-              />
-              <div className="flex flex-col gap-1">
-                <h3 className="font-mono">{activeReview.album.name}</h3>
-                <p className="font-mono text-sm text-gray-500">{activeReview.album.artist}</p>
-                <EditableGenre albumId={activeReview.album.id} genre={activeReview.album.genre} />
-              </div>
-            </div>
-          )}
-          
-          <div className="mt-4">
-            <label className="block font-mono text-sm mb-1">Rating</label>
-            <StarRating 
-              value={editRating} 
-              onChange={setEditRating}
-              size="large"
-            />
-          </div>
-          
-          <div className="mt-4">
-            <label className="block font-mono text-sm mb-1">Review</label>
-            <textarea
-              value={editReview}
-              onChange={(e) => setEditReview(e.target.value)}
-              placeholder="Write a short review..."
-              maxLength={100}
-              className="w-full p-2 border border-black font-mono text-sm"
-              rows={3}
-            />
-            <p className="font-mono text-xs text-gray-500 mt-1">
-              {editReview.length}/100 characters
-            </p>
-          </div>
-          
-          <div className="py-2 mt-4">
-            <label className="block font-mono text-sm mb-1">When did you listen to this album?</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal font-mono border-black",
-                    !editListenedAt && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {editListenedAt ? format(editListenedAt, "PPP") : "Select date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 border border-black rounded-none">
-                <Calendar
-                  mode="single"
-                  selected={editListenedAt}
-                  onSelect={setEditListenedAt}
-                  initialFocus
-                  className="font-mono"
-                  classNames={{
-                    day_today: "bg-black text-white font-medium",
-                    day_selected: "bg-black text-white font-medium",
-                    day: "h-8 w-8 p-0 font-normal border border-gray-200 aspect-square",
-                    head_cell: "font-mono text-xs font-normal",
-                    cell: "text-center text-xs p-0 relative focus-within:relative first:text-gray-500 last:text-gray-500",
-                    caption: "flex justify-center pt-1 relative items-center font-mono",
-                    nav_button: "border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-100",
-                    table: "border-collapse space-y-1 font-mono"
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="flex justify-end gap-2 mt-4">
-            <DialogClose asChild>
-              <button className="px-4 py-1 border border-black bg-white text-black font-mono text-sm">Cancel</button>
-            </DialogClose>
-            <button 
-              onClick={handleSaveReview}
-              className="px-4 py-1 border border-black bg-black text-white font-mono text-sm"
-            >
-              Save Changes
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Review Popup */}
+      <ReviewPopup
+        review={activeReview}
+        isOpen={!!activeReview}
+        onClose={handleCloseReview}
+        onSave={handleSaveReview}
+      />
     </Layout>
   );
 }
