@@ -206,10 +206,10 @@ export function ReviewPopup({ review, isOpen, onClose, onSave }: ReviewPopupProp
             )}
 
             {/* Listen Date Display */}
-            {editListenedAt && (
+            {review.listenedAt && (
               <div className="mt-4">
                 <p className="font-mono text-xs text-gray-500">
-                  Listened on {format(editListenedAt, "PPP")}
+                  Listened on {format(new Date(review.listenedAt), "PPP")}
                 </p>
               </div>
             )}
