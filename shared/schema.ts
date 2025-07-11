@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -71,7 +71,7 @@ export const albumReviews = pgTable("album_reviews", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   albumId: integer("album_id").notNull(),
-  rating: integer("rating").notNull(), // 1-5 stars
+  rating: decimal("rating", { precision: 2, scale: 1 }).notNull(), // 0.5-5.0 stars (half-star increments)
   review: text("review"), // One sentence review
   reviewedAt: timestamp("reviewed_at").notNull(),
   listenedAt: timestamp("listened_at"), // When the user listened to the album

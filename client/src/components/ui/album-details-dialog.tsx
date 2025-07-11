@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { X, Edit2, Calendar, Star } from "lucide-react";
+import { X, Edit2, Calendar } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Textarea } from "./textarea";
+import { StarRating } from "./star-rating";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +56,7 @@ export function AlbumDetailsDialog({
   );
   const [genre, setGenre] = useState(album.genre || "");
   const [isEditingGenre, setIsEditingGenre] = useState(false);
-  const [hoveredStar, setHoveredStar] = useState(0);
+
 
   if (!isOpen) return null;
 
@@ -177,27 +178,11 @@ export function AlbumDetailsDialog({
               <label className="block text-sm font-bold font-mono mb-2">
                 Rating
               </label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    className="p-1"
-                    onMouseEnter={() => setHoveredStar(star)}
-                    onMouseLeave={() => setHoveredStar(0)}
-                    onClick={() => setRating(star)}
-                  >
-                    <Star
-                      className={cn(
-                        "h-6 w-6",
-                        (hoveredStar >= star || rating >= star)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
-                      )}
-                    />
-                  </button>
-                ))}
-              </div>
+              <StarRating 
+                value={rating}
+                onChange={setRating}
+                size="large"
+              />
             </div>
 
             {/* Listen Date Section */}

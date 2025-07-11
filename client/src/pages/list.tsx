@@ -268,7 +268,7 @@ export default function ListPage() {
                           <div className="flex items-center mt-0.5">
                             <p className="font-mono text-xs text-black/60">{review.album.artist}</p>
                             <div className="flex items-center gap-2 ml-4">
-                              <StarRating rating={review.rating} size="medium" readonly />
+                              <StarRating value={parseFloat(review.rating.toString())} size="medium" readonly />
                               {review.review && (
                                 <p className="font-mono text-xs line-clamp-1">{review.review}</p>
                               )}
@@ -319,7 +319,7 @@ export default function ListPage() {
           <div className="mt-4">
             <label className="block font-mono text-sm mb-1">Rating</label>
             <StarRating 
-              rating={editRating} 
+              value={editRating} 
               onChange={setEditRating}
               size="large"
             />
