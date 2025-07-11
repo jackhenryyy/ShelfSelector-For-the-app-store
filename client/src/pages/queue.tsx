@@ -403,13 +403,14 @@ export default function QueuePage() {
                 uniqueGenres={uniqueGenres}
                 uniqueYears={uniqueYears}
               />
-              <div className="flex-1 max-w-32">
+              <div className="relative flex-1 max-w-32">
+                <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search..."
                   value={queueSearchQuery}
                   onChange={(e) => setQueueSearchQuery(e.target.value)}
-                  className="w-full px-2 py-1 border border-black font-mono text-xs focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full pl-7 pr-2 py-1 border border-black font-mono text-xs focus:outline-none focus:ring-1 focus:ring-black"
                 />
               </div>
               <MobileAlbumSearchButton />
@@ -465,13 +466,16 @@ export default function QueuePage() {
               </div>
               
               <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Search queue..."
-                  value={queueSearchQuery}
-                  onChange={(e) => setQueueSearchQuery(e.target.value)}
-                  className="px-4 py-1 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black w-40"
-                />
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Search queue..."
+                    value={queueSearchQuery}
+                    onChange={(e) => setQueueSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-1 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black w-40"
+                  />
+                </div>
                 <DesktopAlbumSearchButton />
               </div>
             </div>

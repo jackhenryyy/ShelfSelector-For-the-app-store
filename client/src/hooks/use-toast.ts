@@ -62,15 +62,10 @@ const addToRemoveQueue = (toastId: string) => {
 
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
-    try {
-      dispatch({
-        type: "REMOVE_TOAST",
-        toastId: toastId,
-      })
-    } catch (error) {
-      // Silently handle cases where dispatch is called outside React context
-      console.warn("Toast dispatch called outside React context:", error)
-    }
+    dispatch({
+      type: "REMOVE_TOAST",
+      toastId: toastId,
+    })
   }, TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
