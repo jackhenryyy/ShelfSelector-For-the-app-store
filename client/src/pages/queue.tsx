@@ -49,11 +49,25 @@ function sortQueueAlbums(albums: any[], sortOption: SortOption) {
 }
 
 // Helper function for filtering adapted to our specific needs
-function filterQueueAlbums(albums: any[], filter: FilterOption) {
+function filterQueueAlbums(albums: any[], filter: FilterOption, searchQuery?: string) {
   if (!albums) return [];
-  if (!filter || Object.keys(filter).length === 0) return albums;
   
-  return albums.filter(item => {
+  let filtered = albums;
+  
+  // Apply text search first
+  if (searchQuery && searchQuery.trim()) {
+    const lowerSearch = searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(item => 
+      item.album.name.toLowerCase().includes(lowerSearch) ||
+      item.album.artist.toLowerCase().includes(lowerSearch) ||
+      (item.album.genre && item.album.genre.toLowerCase().includes(lowerSearch))
+    );
+  }
+  
+  // Apply other filters
+  if (!filter || Object.keys(filter).length === 0) return filtered;
+  
+  return filtered.filter(item => {
     // Filter by artist
     if (filter.artist && item.album.artist !== filter.artist) {
       return false;
@@ -86,6 +100,7 @@ export default function QueuePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [queueSearchQuery, setQueueSearchQuery] = useState("");
 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
@@ -102,10 +117,10 @@ export default function QueuePage() {
     // Apply sorting and filtering
     let processed = [...queueAlbums];
     processed = sortQueueAlbums(processed, sortOption);
-    processed = filterQueueAlbums(processed, filterOptions);
+    processed = filterQueueAlbums(processed, filterOptions, queueSearchQuery);
     
     setFilteredQueueAlbums(processed);
-  }, [queueAlbums, sortOption, filterOptions]);
+  }, [queueAlbums, sortOption, filterOptions, queueSearchQuery]);
   
   // Function to handle album click - now goes directly to review dialog
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
@@ -369,11 +384,25 @@ export default function QueuePage() {
       subtitle=""
     >
       <div className="p-3 pt-0">
+        {/* Search Bar */}
+        <div className="mb-3">
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search your queue..."
+              value={queueSearchQuery}
+              onChange={(e) => setQueueSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </div>
+        </div>
+
         {/* Album count & mobile controls */}
         <div className="flex flex-col mb-3">
           <div className="flex items-center justify-between">
             <div className="font-mono text-xs text-black/60">
-              {filteredQueueAlbums.length} albums
+              {filteredQueueAlbums.length} albums {queueSearchQuery && `(filtered from ${queueAlbums?.length || 0})`}
             </div>
           
             {/* Mobile controls */}
@@ -489,47 +518,50 @@ export default function QueuePage() {
           {filteredQueueAlbums.map((queueAlbum) => (
             <div 
               key={queueAlbum.id}
-              className="relative group mb-2"
+              className="mb-2"
             >
-              {/* Album art and details */}
-              <a 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleAlbumClick(queueAlbum.albumId, e);
-                }}
-              >
-                <AlbumArt
-                  src={queueAlbum.album.imageUrl}
-                  alt={queueAlbum.album.name}
-                />
-                {gridScale < 5 && (
-                  <>
-                    <div className="mt-1 text-xs truncate">{queueAlbum.album.name}</div>
-                    <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
-                  </>
-                )}
-              </a>
-              
-              {/* Genre display */}
-              {gridScale < 5 && queueAlbum.album.genre && (
-                <div className="text-xs text-gray-400 truncate font-mono">{queueAlbum.album.genre}</div>
-              )}
-              
-              {/* Remove (X) button in top right corner - with pointer-events-none to allow clicks through */}
-              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5] pointer-events-none">
-                <button 
-                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold pointer-events-auto"
+              {/* Album art with overlay */}
+              <div className="relative group">
+                <a 
+                  href="#" 
                   onClick={(e) => {
-                    e.stopPropagation();
                     e.preventDefault();
-                    removeFromQueue(queueAlbum.albumId);
+                    handleAlbumClick(queueAlbum.albumId, e);
                   }}
-                  title="Remove from Queue"
+                  className="block"
                 >
-                  ✕
-                </button>
+                  <AlbumArt
+                    src={queueAlbum.album.imageUrl}
+                    alt={queueAlbum.album.name}
+                  />
+                </a>
+                
+                {/* Click overlay - only on album art */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5] pointer-events-none">
+                  <button 
+                    className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold pointer-events-auto"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      removeFromQueue(queueAlbum.albumId);
+                    }}
+                    title="Remove from Queue"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
+              
+              {/* Album details - outside the overlay */}
+              {gridScale < 5 && (
+                <div className="mt-1">
+                  <div className="text-xs truncate">{queueAlbum.album.name}</div>
+                  <div className="text-xs text-gray-500 truncate">{queueAlbum.album.artist}</div>
+                  {queueAlbum.album.genre && (
+                    <div className="text-xs text-gray-400 truncate font-mono">{queueAlbum.album.genre}</div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </AlbumGrid>
