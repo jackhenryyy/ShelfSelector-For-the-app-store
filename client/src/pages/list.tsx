@@ -242,22 +242,12 @@ export default function ListPage() {
                       {/* Album Details */}
                       <div className="flex-grow">
                         <h3 className="font-mono text-sm">{review.album.name}</h3>
-                        <div className="flex flex-col">
-                          <div className="flex items-center mt-0.5">
-                            <p className="font-mono text-xs text-black/60">{review.album.artist}</p>
-                            <div className="flex items-center gap-2 ml-4">
-                              <StarRating value={parseFloat(review.rating.toString())} size="medium" readonly />
-                              {review.review && (
-                                <p className="font-mono text-xs line-clamp-1">{review.review}</p>
-                              )}
-                            </div>
-                          </div>
-                          <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.genre || "no genre"}</p>
-                        </div>
+                        <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
                       </div>
                       
-                      {/* Menu Button */}
-                      <div className="flex items-center">
+                      {/* Rating and Menu Button */}
+                      <div className="flex items-center gap-3">
+                        <StarRating value={parseFloat(review.rating.toString())} size="medium" readonly />
                         <button 
                           className="text-black/60 hover:text-black"
                           onClick={() => handleOpenReview(review)}
