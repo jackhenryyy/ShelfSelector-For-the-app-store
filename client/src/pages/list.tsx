@@ -5,7 +5,7 @@ import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
 import { ReviewPopup } from "@/components/ui/review-popup";
 import { openInSpotify } from "@/lib/spotify";
-import { MenuIcon, DownloadIcon } from "lucide-react";
+import { MenuIcon, DownloadIcon, EditIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
 import { exportAlbumsToCSV } from "@/lib/csv-export";
 
@@ -27,6 +27,7 @@ export default function ListPage() {
   const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
+  const [isEditMode, setIsEditMode] = useState(false);
   
   // Update filtered reviews when albums or search changes
   useEffect(() => {
@@ -189,15 +190,28 @@ export default function ListPage() {
             uniqueYears={uniqueYears}
           />
           
-          {/* Export Button */}
-          <button 
-            onClick={() => exportAlbumsToCSV(filteredReviews, 'the-shelf-export.csv', true)}
-            className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
-            title="Export to CSV"
-          >
-            <DownloadIcon className="h-4 w-4" />
-            export csv
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`whitespace-nowrap px-4 py-1 border border-black font-mono text-sm flex items-center gap-1 ${
+                isEditMode ? 'bg-black text-white' : 'bg-white text-black'
+              }`}
+              title={isEditMode ? "Exit Edit Mode" : "Enter Edit Mode"}
+            >
+              <EditIcon className="h-4 w-4" />
+              {isEditMode ? 'done' : 'edit'}
+            </button>
+            
+            <button 
+              onClick={() => exportAlbumsToCSV(filteredReviews, 'the-shelf-export.csv', true)}
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+              title="Export to CSV"
+            >
+              <DownloadIcon className="h-4 w-4" />
+              export csv
+            </button>
+          </div>
         </div>
         
         <div className="space-y-6">
@@ -248,12 +262,14 @@ export default function ListPage() {
                       {/* Rating and Menu Button */}
                       <div className="flex items-center gap-3">
                         <StarRating value={parseFloat(review.rating.toString())} size="medium" readonly />
-                        <button 
-                          className="text-black/60 hover:text-black"
-                          onClick={() => handleOpenReview(review)}
-                        >
-                          <MenuIcon className="w-4 h-4" />
-                        </button>
+                        {isEditMode && (
+                          <button 
+                            className="text-black/60 hover:text-black"
+                            onClick={() => handleOpenReview(review)}
+                          >
+                            <MenuIcon className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
