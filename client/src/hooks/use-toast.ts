@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from "react"
+import * as React from "react"
 
 import type {
   ToastActionElement,
@@ -6,12 +6,12 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 2000
+const TOAST_REMOVE_DELAY = 2000 // Reduced from 1000000 to 2000ms (2 seconds)
 
 type ToasterToast = ToastProps & {
   id: string
-  title?: ReactNode
-  description?: ReactNode
+  title?: React.ReactNode
+  description?: React.ReactNode
   action?: ToastActionElement
 }
 
@@ -53,6 +53,24 @@ interface State {
   toasts: ToasterToast[]
 }
 
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+const addToRemoveQueue = (toastId: string) => {
+  if (toastTimeouts.has(toastId)) {
+    return
+  }
+
+  const timeout = setTimeout(() => {
+    toastTimeouts.delete(toastId)
+    dispatch({
+      type: "REMOVE_TOAST",
+      toastId: toastId,
+    })
+  }, TOAST_REMOVE_DELAY)
+
+  toastTimeouts.set(toastId, timeout)
+}
+
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -72,26 +90,26 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
       if (toastId) {
-        return {
-          ...state,
-          toasts: state.toasts.map((t) =>
-            t.id === toastId || toastId === undefined
-              ? {
-                  ...t,
-                  open: false,
-                }
-              : t
-          ),
-        }
+        addToRemoveQueue(toastId)
       } else {
-        return {
-          ...state,
-          toasts: state.toasts.map((t) => ({
-            ...t,
-            open: false,
-          })),
-        }
+        state.toasts.forEach((toast) => {
+          addToRemoveQueue(toast.id)
+        })
+      }
+
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t
+        ),
       }
     }
     case "REMOVE_TOAST":
@@ -151,9 +169,9 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  const [state, setState] = useState<State>(memoryState)
+  const [state, setState] = React.useState<State>(memoryState)
 
-  useEffect(() => {
+  React.useEffect(() => {
     listeners.push(setState)
     return () => {
       const index = listeners.indexOf(setState)

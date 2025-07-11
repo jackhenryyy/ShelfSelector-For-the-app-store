@@ -404,12 +404,13 @@ export default function QueuePage() {
                 uniqueYears={uniqueYears}
               />
               <div className="relative flex-1 max-w-32">
+                <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search..."
                   value={queueSearchQuery}
                   onChange={(e) => setQueueSearchQuery(e.target.value)}
-                  className="w-full px-2 py-1 border border-black font-mono text-xs focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full pl-7 pr-2 py-1 border border-black font-mono text-xs focus:outline-none focus:ring-1 focus:ring-black"
                 />
               </div>
               <MobileAlbumSearchButton />
@@ -466,12 +467,13 @@ export default function QueuePage() {
               
               <div className="flex items-center gap-2">
                 <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <input
                     type="text"
                     placeholder="Search queue..."
                     value={queueSearchQuery}
                     onChange={(e) => setQueueSearchQuery(e.target.value)}
-                    className="px-4 py-1 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black w-40"
+                    className="pl-10 pr-4 py-1 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black w-40"
                   />
                 </div>
                 <DesktopAlbumSearchButton />
@@ -545,7 +547,7 @@ export default function QueuePage() {
                 {/* Click overlay - only on album art */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5] pointer-events-none">
                   <button 
-                    className="absolute top-2 right-2 bg-transparent border border-white w-6 h-6 flex items-center justify-center text-white hover:text-gray-300 text-sm font-bold pointer-events-auto"
+                    className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold pointer-events-auto"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
