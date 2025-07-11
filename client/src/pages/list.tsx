@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAlbumReviews } from "@/hooks/use-albums";
+import { useAlbumReviews, useQueueAlbums, useNoSkipsAlbums } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
@@ -7,8 +7,9 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } fr
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { openInSpotify } from "@/lib/spotify";
-import { MenuIcon, CalendarIcon, DownloadIcon } from "lucide-react";
+import { MenuIcon, CalendarIcon, DownloadIcon, MoreVertical, Edit3Icon, ExternalLinkIcon, PlusIcon, HeartIcon, Trash2Icon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,8 @@ import {
 
 export default function ListPage() {
   const { albumReviews, searchReviews, updateReview } = useAlbumReviews();
+  const { addToQueue } = useQueueAlbums();
+  const { addToNoSkips } = useNoSkipsAlbums();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReviews, setFilteredReviews] = useState<AlbumReview[]>([]);
@@ -114,6 +117,30 @@ export default function ListPage() {
     updateReview(reviewData);
     
     setActiveReview(null);
+  };
+
+  // Handler functions for dropdown menu actions
+  const handleAddToQueue = async (review: AlbumReview) => {
+    try {
+      await addToQueue(review.albumId);
+      console.log(`Added ${review.album.name} to queue`);
+    } catch (error) {
+      console.error("Failed to add to queue:", error);
+    }
+  };
+
+  const handleAddToNoSkips = async (review: AlbumReview) => {
+    try {
+      await addToNoSkips({ albumId: review.albumId });
+      console.log(`Added ${review.album.name} to no skips`);
+    } catch (error) {
+      console.error("Failed to add to no skips:", error);
+    }
+  };
+
+  const handleRemoveFromList = async (review: AlbumReview) => {
+    // Note: This would need a deleteReview function in the useAlbumReviews hook
+    console.log("Remove from list feature will be implemented soon");
   };
 
   // Get unique artists, genres, and years for filters
@@ -280,12 +307,50 @@ export default function ListPage() {
                       
                       {/* Menu Button */}
                       <div className="flex items-center">
-                        <button 
-                          className="text-black/60"
-                          onClick={() => handleEditReview(review)}
-                        >
-                          <MenuIcon className="w-4 h-4" />
-                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="text-black/60 hover:text-black p-1">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 border border-black rounded-none font-mono">
+                            <DropdownMenuItem 
+                              onClick={() => handleEditReview(review)}
+                              className="flex items-center gap-2 text-sm"
+                            >
+                              <Edit3Icon className="w-4 h-4" />
+                              Edit Review
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleOpenAlbumInSpotify(review.album.spotifyId)}
+                              className="flex items-center gap-2 text-sm"
+                            >
+                              <ExternalLinkIcon className="w-4 h-4" />
+                              Open in Spotify
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleAddToQueue(review)}
+                              className="flex items-center gap-2 text-sm"
+                            >
+                              <PlusIcon className="w-4 h-4" />
+                              Add to Queue
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleAddToNoSkips(review)}
+                              className="flex items-center gap-2 text-sm"
+                            >
+                              <HeartIcon className="w-4 h-4" />
+                              Add to No Skips
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleRemoveFromList(review)}
+                              className="flex items-center gap-2 text-sm text-red-600"
+                            >
+                              <Trash2Icon className="w-4 h-4" />
+                              Remove from List
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))}
