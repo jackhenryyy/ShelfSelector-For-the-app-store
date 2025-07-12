@@ -505,7 +505,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate request body
       const schema = z.object({
-        rating: z.number().min(1).max(5),
+        rating: z.number().min(0.5).max(5).refine(val => val % 0.5 === 0, {
+          message: "Rating must be in 0.5 increments"
+        }),
         review: z.string().optional(),
         listenedAt: z.string().optional().transform(val => {
           if (!val) return null;
@@ -532,6 +534,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedReview);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('Review validation error:', error.errors);
+        console.error('Request body was:', req.body);
         return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
       }
       console.error('Update review error:', error);
