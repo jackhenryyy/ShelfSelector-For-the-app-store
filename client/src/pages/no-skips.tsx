@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNoSkipsAlbums } from "@/hooks/use-albums";
+import { useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } 
 import { Input } from "@/components/ui/input";
 import { SearchIcon, Plus, DownloadIcon, UploadIcon } from "lucide-react";
 import { EditableGenre } from "@/components/ui/editable-genre";
+import { ReviewPopup } from "@/components/ui/review-popup";
 import { exportAlbumsToCSV, parseCSVToAlbums } from "@/lib/csv-export";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
@@ -22,12 +23,14 @@ import {
   FilterOption, 
   filterAlbums
 } from "@/components/ui/album-filter-sort";
+import { AlbumReview } from "@/hooks/use-albums";
 
 export default function NoSkipsPage() {
   // Hooks with contexts first
   const { user } = useAuth(); // Use the proper authentication hook
   const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips, removeFromNoSkips } = useNoSkipsAlbums();
   const { searchAlbums, searchResults, isSearching } = useSpotifyAlbums();
+  const { getAlbumReview, updateReview, deleteReview, createReview } = useAlbumReviews();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -45,6 +48,7 @@ export default function NoSkipsPage() {
   const [topFourDialogOpen, setTopFourDialogOpen] = useState(false);
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   const [gridScale, setGridScale] = useState<number>(3);
+  const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
   
   // Function to handle sorting and filtering
   const handleSortChange = (sort: SortOption) => {
@@ -99,6 +103,73 @@ export default function NoSkipsPage() {
   // Function to handle opening album in Spotify
   const handleOpenAlbumInSpotify = (spotifyId: string) => {
     openInSpotify(spotifyId);
+  };
+
+  // Review popup handlers
+  const handleOpenReview = async (albumId: number) => {
+    try {
+      const existingReview = await getAlbumReview(albumId);
+      if (existingReview) {
+        setActiveReview(existingReview);
+      } else {
+        // Find the album data to create a new review
+        const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
+        if (albumData) {
+          const newReview: AlbumReview = {
+            id: 0, // Will be set by the backend
+            userId: user?.id || 0,
+            albumId: albumId,
+            rating: 0,
+            review: '',
+            reviewedAt: new Date().toISOString(),
+            listenedAt: null,
+            album: albumData.album
+          };
+          setActiveReview(newReview);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load album review",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCloseReview = () => {
+    setActiveReview(null);
+  };
+
+  const handleSaveReview = async (data: { id: number; rating: number; review: string; listenedAt?: Date }) => {
+    try {
+      if (data.id === 0) {
+        // Create new review
+        await createReview({
+          albumId: activeReview?.albumId || 0,
+          rating: data.rating,
+          review: data.review,
+          listenedAt: data.listenedAt
+        });
+      } else {
+        // Update existing review
+        await updateReview(data);
+      }
+      
+      setActiveReview(null);
+      toast({
+        title: "Review saved",
+        description: "Your album review has been saved successfully"
+      });
+    } catch (error) {
+      console.error('Error saving review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save review",
+        variant: "destructive"
+      });
+    }
   };
   
   // Function to share No Skips page
@@ -655,7 +726,7 @@ export default function NoSkipsPage() {
                       href="#" 
                       onClick={(e) => {
                         e.preventDefault();
-                        handleOpenAlbumInSpotify(album.album.spotifyId);
+                        handleOpenReview(album.album.id);
                       }}
                     >
                       <AlbumArt
@@ -695,7 +766,7 @@ export default function NoSkipsPage() {
                   if (isEditingTopFour) {
                     handleSelectForTopFour(album.albumId);
                   } else {
-                    handleOpenAlbumInSpotify(album.album.spotifyId);
+                    handleOpenReview(album.album.id);
                   }
                 }}
               >
@@ -753,7 +824,7 @@ export default function NoSkipsPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        // Add review functionality if needed
+                        handleOpenReview(album.album.id);
                       }}
                     >
                       Review
@@ -840,6 +911,15 @@ export default function NoSkipsPage() {
             </div>
           </DialogContent>
         </Dialog>
+        
+        {/* Review Popup */}
+        <ReviewPopup
+          review={activeReview}
+          isOpen={!!activeReview}
+          onClose={handleCloseReview}
+          onSave={handleSaveReview}
+          onDelete={deleteReview}
+        />
       </div>
     </Layout>
   );
