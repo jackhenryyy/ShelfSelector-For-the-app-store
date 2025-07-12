@@ -613,7 +613,7 @@ export class DatabaseStorage implements IStorage {
       .set({ 
         rating, 
         review,
-        ...(listenedAt && { listenedAt })
+        listenedAt
       })
       .where(eq(albumReviews.id, id))
       .returning();
