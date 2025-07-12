@@ -46,6 +46,7 @@ export interface IStorage {
   getAlbumReview(userId: number, albumId: number): Promise<(AlbumReview & { album: Album }) | undefined>;
   createAlbumReview(review: InsertAlbumReview): Promise<AlbumReview>;
   updateAlbumReview(id: number, rating: number, review: string, listenedAt?: Date | null): Promise<AlbumReview | undefined>;
+  deleteAlbumReview(id: number): Promise<void>;
   searchAlbumReviews(userId: number, query: string): Promise<(AlbumReview & { album: Album })[]>;
 }
 
@@ -322,6 +323,10 @@ export class MemStorage implements IStorage {
 
     this.albumReviews.set(id, updatedReview);
     return updatedReview;
+  }
+
+  async deleteAlbumReview(id: number): Promise<void> {
+    this.albumReviews.delete(id);
   }
 
   async searchAlbumReviews(userId: number, query: string): Promise<(AlbumReview & { album: Album })[]> {
@@ -618,6 +623,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(albumReviews.id, id))
       .returning();
     return updatedReview;
+  }
+
+  async deleteAlbumReview(id: number): Promise<void> {
+    await db.delete(albumReviews).where(eq(albumReviews.id, id));
   }
 
   async searchAlbumReviews(userId: number, query: string): Promise<(AlbumReview & { album: Album })[]> {

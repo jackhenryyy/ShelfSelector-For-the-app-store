@@ -543,6 +543,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to update review' });
     }
   });
+
+  // Delete review
+  app.delete('/api/reviews/:id', requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid review ID' });
+      }
+
+      await storage.deleteAlbumReview(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete review error:', error);
+      res.status(500).json({ message: 'Failed to delete review' });
+    }
+  });
   
   // Get shared user's No Skips collection (GET /api/shared/no-skips/:userId)
   app.get('/api/shared/no-skips/:userId', async (req, res) => {

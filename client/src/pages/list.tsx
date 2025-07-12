@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/album-filter-sort";
 
 export default function ListPage() {
-  const { albumReviews, searchReviews, updateReview } = useAlbumReviews();
+  const { albumReviews, searchReviews, updateReview, deleteReview } = useAlbumReviews();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReviews, setFilteredReviews] = useState<AlbumReview[]>([]);
@@ -270,6 +270,7 @@ export default function ListPage() {
         isOpen={!!activeReview}
         onClose={handleCloseReview}
         onSave={handleSaveReview}
+        onDelete={deleteReview}
       />
     </Layout>
   );

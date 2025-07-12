@@ -20,9 +20,10 @@ interface ReviewPopupProps {
     review: string;
     listenedAt?: Date;
   }) => void;
+  onDelete?: (id: number) => void;
 }
 
-export function ReviewPopup({ review, isOpen, onClose, onSave }: ReviewPopupProps) {
+export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete }: ReviewPopupProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editRating, setEditRating] = useState(0);
   const [editReview, setEditReview] = useState("");
@@ -64,6 +65,13 @@ export function ReviewPopup({ review, isOpen, onClose, onSave }: ReviewPopupProp
       setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
     }
     setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    if (review && onDelete) {
+      onDelete(review.id);
+      onClose();
+    }
   };
 
   if (!review) return null;
@@ -168,19 +176,29 @@ export function ReviewPopup({ review, isOpen, onClose, onSave }: ReviewPopupProp
             </div>
 
             {/* Edit Action Buttons */}
-            <div className="flex justify-end gap-2 mt-6">
-              <button 
-                onClick={handleCancel}
-                className="px-4 py-2 border border-black bg-white text-black font-mono text-sm hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleSave}
-                className="px-4 py-2 border border-black bg-black text-white font-mono text-sm hover:bg-gray-800"
-              >
-                Save Changes
-              </button>
+            <div className="flex justify-between items-center mt-6">
+              {onDelete && (
+                <button 
+                  onClick={handleDelete}
+                  className="px-4 py-2 border border-red-600 bg-white text-red-600 font-mono text-sm hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <button 
+                  onClick={handleCancel}
+                  className="px-4 py-2 border border-black bg-white text-black font-mono text-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSave}
+                  className="px-4 py-2 border border-black bg-black text-white font-mono text-sm hover:bg-gray-800"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </>
         ) : (

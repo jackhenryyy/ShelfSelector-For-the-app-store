@@ -214,6 +214,17 @@ export function useAlbumReviews() {
     }
   });
 
+  // Delete review
+  const deleteReviewMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/reviews/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reviews'] });
+    }
+  });
+
   return {
     albumReviews,
     isLoading,
@@ -223,7 +234,9 @@ export function useAlbumReviews() {
       createReviewMutation.mutate(data),
     updateReview: (data: { id: number; rating: number; review?: string; listenedAt?: Date }) => 
       updateReviewMutation.mutate(data),
+    deleteReview: (id: number) => deleteReviewMutation.mutate(id),
     isCreatingReview: createReviewMutation.isPending,
     isUpdatingReview: updateReviewMutation.isPending,
+    isDeletingReview: deleteReviewMutation.isPending,
   };
 }
