@@ -31,9 +31,15 @@ export function ReviewPopup({ review, isOpen, onClose, onSave }: ReviewPopupProp
   // Update local state when review changes
   useEffect(() => {
     if (review) {
+      console.log("Loading review data:", {
+        listenedAt: review.listenedAt,
+        type: typeof review.listenedAt
+      });
       setEditRating(review.rating);
       setEditReview(review.review || "");
-      setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
+      const dateObj = review.listenedAt ? new Date(review.listenedAt) : undefined;
+      console.log("Parsed date:", dateObj);
+      setEditListenedAt(dateObj);
     }
   }, [review]);
 
