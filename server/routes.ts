@@ -488,8 +488,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(review);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error('Review creation validation error:', error.errors);
-        console.error('Request body was:', req.body);
         return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
       }
       console.error('Create review error:', error);
@@ -539,8 +537,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedReview);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        console.error('Review validation error:', error.errors);
-        console.error('Request body was:', req.body);
         return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
       }
       console.error('Update review error:', error);

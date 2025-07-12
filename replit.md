@@ -108,6 +108,12 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 12, 2025. Completed review system fixes:
+  - Fixed decimal rating validation to support 0.5-5.0 star ratings
+  - Resolved date persistence issues in review popup
+  - Fixed database type conversion for ratings (decimal to number)
+  - Enhanced review popup with dual view/edit modes
+  - Improved queue and list page layouts
 - July 05, 2025. Initial setup
 
 ## User Preferences

@@ -205,7 +205,6 @@ export function useAlbumReviews() {
         listenedAt: rest.listenedAt ? rest.listenedAt.toISOString() : undefined
       };
       
-      console.log('Sending update request with data:', formattedData);
       const response = await apiRequest('PUT', `/api/reviews/${id}`, formattedData);
       return response.json();
     },
