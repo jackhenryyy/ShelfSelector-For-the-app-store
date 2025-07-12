@@ -488,6 +488,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(review);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('Review creation validation error:', error.errors);
+        console.error('Request body was:', req.body);
         return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
       }
       console.error('Create review error:', error);
@@ -505,8 +507,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate request body
       const schema = z.object({
-        rating: z.number().min(0.5).max(5).refine(val => val % 0.5 === 0, {
-          message: "Rating must be in 0.5 increments"
+        rating: z.union([z.number(), z.string()]).transform(val => {
+          const num = typeof val === 'string' ? parseFloat(val) : val;
+          return num;
+        }).refine(val => val >= 0.5 && val <= 5 && val % 0.5 === 0, {
+          message: "Rating must be between 0.5 and 5.0 in 0.5 increments"
         }),
         review: z.string().optional(),
         listenedAt: z.string().optional().transform(val => {

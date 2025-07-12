@@ -79,6 +79,13 @@ export const albumReviews = pgTable("album_reviews", {
 
 export const insertAlbumReviewSchema = createInsertSchema(albumReviews).omit({
   id: true,
+}).extend({
+  rating: z.union([z.number(), z.string()]).transform(val => {
+    const num = typeof val === 'string' ? parseFloat(val) : val;
+    return num;
+  }).refine(val => val >= 0.5 && val <= 5 && val % 0.5 === 0, {
+    message: "Rating must be between 0.5 and 5.0 in 0.5 increments"
+  }),
 });
 
 // Type definitions
