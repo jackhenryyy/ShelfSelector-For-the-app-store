@@ -107,11 +107,14 @@ export default function NoSkipsPage() {
 
   // Review popup handlers
   const handleOpenReview = async (albumId: number) => {
+    console.log('handleOpenReview called with albumId:', albumId);
     try {
       const existingReview = await getAlbumReview(albumId);
       if (existingReview) {
+        console.log('Found existing review:', existingReview);
         setActiveReview(existingReview);
       } else {
+        console.log('No existing review found, creating new one');
         // Find the album data to create a new review
         const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
         if (albumData) {
@@ -125,6 +128,7 @@ export default function NoSkipsPage() {
             listenedAt: null,
             album: albumData.album
           };
+          console.log('Setting new review:', newReview);
           setActiveReview(newReview);
         }
       }

@@ -31,6 +31,7 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   };
   
   const handleSaveEdit = () => {
+    console.log('handleSaveEdit called with albumId:', albumId, 'newGenre:', newGenre);
     updateGenre(albumId, newGenre || null);
     setIsEditing(false);
   };
