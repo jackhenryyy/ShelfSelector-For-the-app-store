@@ -56,15 +56,35 @@ export function NowPlayingWidget() {
     return (
       <div className="bg-white border border-black p-3 mx-4 mb-4 text-center">
         <p className="font-mono text-xs text-gray-500 mb-3">Connect Spotify to see what you're playing</p>
-        <button 
-          onClick={() => {
-            console.log('Spotify login button clicked - redirecting to /api/auth/spotify');
-            window.location.href = '/api/auth/spotify';
-          }}
-          className="px-4 py-2 border border-black bg-green-500 text-white font-mono text-sm hover:bg-green-600 transition-colors"
-        >
-          Connect Spotify
-        </button>
+        <div className="space-y-2">
+          <button 
+            onClick={() => {
+              console.log('Spotify login button clicked - redirecting to /api/auth/spotify');
+              window.location.href = '/api/auth/spotify';
+            }}
+            className="px-4 py-2 border border-black bg-green-500 text-white font-mono text-sm hover:bg-green-600 transition-colors w-full"
+          >
+            Connect Spotify
+          </button>
+          <button 
+            onClick={() => {
+              console.log('Testing callback URL configuration');
+              fetch('/api/test/spotify-login')
+                .then(res => res.json())
+                .then(data => {
+                  console.log('Spotify config test result:', data);
+                  alert(`Redirect URI configured: ${data.redirectUri}\n\nMake sure this EXACT URL is in your Spotify app settings!`);
+                })
+                .catch(err => {
+                  console.error('Config test failed:', err);
+                  alert('Failed to test configuration');
+                });
+            }}
+            className="px-2 py-1 border border-gray-400 bg-gray-100 text-gray-700 font-mono text-xs hover:bg-gray-200 transition-colors w-full"
+          >
+            Test Config
+          </button>
+        </div>
       </div>
     );
   }
