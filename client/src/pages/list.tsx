@@ -271,6 +271,10 @@ export default function ListPage() {
         onClose={handleCloseReview}
         onSave={handleSaveReview}
         onDelete={deleteReview}
+        onGenreUpdate={async (albumId: number, genre: string) => {
+          // Handle genre update for list page if needed
+          console.log('Genre update requested for album', albumId, 'to', genre);
+        }}
       />
     </Layout>
   );

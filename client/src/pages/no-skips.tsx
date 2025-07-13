@@ -107,7 +107,6 @@ export default function NoSkipsPage() {
 
   // Review popup handlers
   const handleOpenReview = async (albumId: number) => {
-    console.log('handleOpenReview called with albumId:', albumId);
     try {
       const existingReview = await getAlbumReview(albumId);
       if (existingReview) {
@@ -153,7 +152,7 @@ export default function NoSkipsPage() {
     setActiveReview(null);
   };
 
-  const handleSaveReview = async (data: { id: number; rating: number; review: string; listenedAt?: Date }) => {
+  const handleSaveReview = async (data: { id: number; rating: number; review: string; listenedAt?: Date; genre?: string }) => {
     try {
       if (data.id === 0) {
         // Create new review
@@ -180,6 +179,14 @@ export default function NoSkipsPage() {
         description: "Failed to save review",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleGenreUpdate = async (albumId: number, genre: string) => {
+    try {
+      await updateAlbumGenre(albumId, genre);
+    } catch (error) {
+      console.error('Error updating genre:', error);
     }
   };
   
@@ -775,7 +782,6 @@ export default function NoSkipsPage() {
                   href="#" 
                   onClick={(e) => {
                     e.preventDefault();
-                    console.log('Album clicked:', album.album.id, album.album.name);
                     if (isEditingTopFour) {
                       handleSelectForTopFour(album.albumId);
                     } else {
@@ -911,6 +917,7 @@ export default function NoSkipsPage() {
           onClose={handleCloseReview}
           onSave={handleSaveReview}
           onDelete={deleteReview}
+          onGenreUpdate={handleGenreUpdate}
         />
       </div>
     </Layout>
