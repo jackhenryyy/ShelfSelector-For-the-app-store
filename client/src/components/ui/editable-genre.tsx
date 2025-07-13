@@ -14,6 +14,11 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   const inputRef = useRef<HTMLInputElement>(null);
   const { updateGenre, isUpdating } = useAlbumGenre();
   
+  // Update newGenre when genre prop changes
+  useEffect(() => {
+    setNewGenre(genre || "");
+  }, [genre]);
+  
   // Focus input when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {

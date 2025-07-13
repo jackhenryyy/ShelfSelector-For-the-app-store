@@ -19,6 +19,7 @@ export function useAlbumGenre() {
       return await res.json() as Album;
     },
     onSuccess: (album) => {
+      console.log('Genre update successful:', album);
       // Invalidate queries that might contain this album
       queryClient.invalidateQueries({ queryKey: ["/api/queue"] });
       queryClient.invalidateQueries({ queryKey: ["/api/no-skips"] });
