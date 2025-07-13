@@ -767,56 +767,61 @@ export default function NoSkipsPage() {
         <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>albums</h2>
         <AlbumGrid columns={gridScale}>
           {sortedNoSkipsAlbums.map((album) => (
-            <div key={album.id} className="relative group mb-2">
-              {/* Album art and details */}
-              <a 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (isEditingTopFour) {
-                    handleSelectForTopFour(album.albumId);
-                  } else {
-                    handleOpenReview(album.album.id);
-                  }
-                }}
-              >
-                <AlbumArt
-                  src={album.album.imageUrl}
-                  alt={album.album.name}
-                  className={isEditingTopFour && selectedForTopFour.some(item => item.albumId === album.albumId) 
-                    ? "border-2 border-green-500" 
-                    : ""}
-                />
-                {gridScale < 5 && (
-                  <>
-                    <div className="mt-1 text-xs truncate">{album.album.name}</div>
-                    <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
-                  </>
-                )}
-              </a>
+            <div key={album.id} className="mb-2">
+              {/* Album art container with overlay */}
+              <div className="relative group">
+                <a 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (isEditingTopFour) {
+                      handleSelectForTopFour(album.albumId);
+                    } else {
+                      handleOpenReview(album.album.id);
+                    }
+                  }}
+                  className="block"
+                >
+                  <AlbumArt
+                    src={album.album.imageUrl}
+                    alt={album.album.name}
+                    className={isEditingTopFour && selectedForTopFour.some(item => item.albumId === album.albumId) 
+                      ? "border-2 border-green-500" 
+                      : ""}
+                  />
+                </a>
+                
+                {/* Overlay with remove button only - covers only album art */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
+                  {/* Remove (X) button in top right corner */}
+                  <button 
+                    className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (!isEditingTopFour) {
+                        handleRemoveFromNoSkips(album.albumId);
+                      }
+                    }}
+                    title="Remove from No Skips"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              
+              {/* Album details outside the overlay area */}
+              {gridScale < 5 && (
+                <>
+                  <div className="mt-1 text-xs truncate">{album.album.name}</div>
+                  <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
+                </>
+              )}
               
               {/* Genre editor */}
               {gridScale < 5 && (
                 <EditableGenre albumId={album.album.id} genre={album.album.genre} />
               )}
-              
-              {/* Overlay with remove button only */}
-              <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
-                {/* Remove (X) button in top right corner */}
-                <button 
-                  className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (!isEditingTopFour) {
-                      handleRemoveFromNoSkips(album.albumId);
-                    }
-                  }}
-                  title="Remove from No Skips"
-                >
-                  ✕
-                </button>
-              </div>
             </div>
           ))}
         </AlbumGrid>
