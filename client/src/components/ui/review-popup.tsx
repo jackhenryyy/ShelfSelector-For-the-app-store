@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { AlbumArt } from "@/components/ui/album-art";
-import { CalendarIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 
 interface ReviewPopupProps {
   review: AlbumReview | null;
@@ -28,14 +22,12 @@ interface ReviewPopupProps {
 export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenreUpdate }: ReviewPopupProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editReview, setEditReview] = useState("");
-  const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
   const [editGenre, setEditGenre] = useState("");
 
   // Update local state when review changes
   useEffect(() => {
     if (review) {
       setEditReview(review.review || "");
-      setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
       setEditGenre(review.album?.genre || "");
     }
   }, [review]);
@@ -52,9 +44,9 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
     
     onSave({
       id: review.id,
-      rating: 0, // No longer using ratings
+      rating: 5, // Set a default rating since backend expects it
       review: editReview,
-      listenedAt: editListenedAt,
+      listenedAt: undefined, // Remove date requirement
       genre: editGenre
     });
     
@@ -69,7 +61,6 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
   const handleCancel = () => {
     if (review) {
       setEditReview(review.review || "");
-      setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
       setEditGenre(review.album?.genre || "");
     }
     setIsEditing(false);
@@ -88,7 +79,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <div className="flex items-center justify-between">
-          <DialogTitle className="font-mono">Why you love it</DialogTitle>
+          <DialogTitle className="font-mono">Review</DialogTitle>
           {!isEditing && (
             <button 
               onClick={() => setIsEditing(true)}
@@ -134,7 +125,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
           <>
             {/* Review Text */}
             <div className="mt-6">
-              <label className="block font-mono text-sm mb-2">Why you love it</label>
+              <label className="block font-mono text-sm mb-2">Review</label>
               <textarea
                 value={editReview}
                 onChange={(e) => setEditReview(e.target.value)}
@@ -146,44 +137,6 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
               <p className="font-mono text-xs text-gray-500 mt-1 text-right">
                 {editReview.length}/200 characters
               </p>
-            </div>
-
-            {/* Listen Date */}
-            <div className="mt-4">
-              <label className="block font-mono text-sm mb-2">When did you listen?</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal font-mono border-black",
-                      !editListenedAt && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {editListenedAt ? format(editListenedAt, "PPP") : "Select date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 border border-black rounded-none">
-                  <Calendar
-                    mode="single"
-                    selected={editListenedAt}
-                    onSelect={setEditListenedAt}
-                    initialFocus
-                    className="font-mono"
-                    classNames={{
-                      day_today: "bg-black text-white font-medium",
-                      day_selected: "bg-black text-white font-medium",
-                      day: "h-8 w-8 p-0 font-normal border border-gray-200 aspect-square",
-                      head_cell: "font-mono text-xs font-normal",
-                      cell: "text-center text-xs p-0 relative focus-within:relative first:text-gray-500 last:text-gray-500",
-                      caption: "flex justify-center pt-1 relative items-center font-mono",
-                      nav_button: "border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-100",
-                      table: "border-collapse space-y-1 font-mono"
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
             </div>
 
             {/* Edit Action Buttons */}
@@ -218,17 +171,8 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
             {/* Review Text Display */}
             {review.review && (
               <div className="mt-6">
-                <h4 className="font-mono text-sm mb-2">Why you love it</h4>
+                <h4 className="font-mono text-sm mb-2">Review</h4>
                 <p className="font-mono text-sm leading-relaxed">{review.review}</p>
-              </div>
-            )}
-
-            {/* Listen Date Display */}
-            {review.listenedAt && (
-              <div className="mt-4">
-                <p className="font-mono text-xs text-gray-500">
-                  Listened on {format(new Date(review.listenedAt), "PPP")}
-                </p>
               </div>
             )}
 
