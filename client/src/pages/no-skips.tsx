@@ -799,23 +799,20 @@ export default function NoSkipsPage() {
                   />
                 </div>
                 
-                {/* Overlay with remove button only - covers only album art */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                  {/* Remove (X) button in top right corner */}
-                  <button 
-                    className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold pointer-events-auto"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      if (!isEditingTopFour) {
-                        handleRemoveFromNoSkips(album.albumId);
-                      }
-                    }}
-                    title="Remove from No Skips"
-                  >
-                    ✕
-                  </button>
-                </div>
+                {/* Remove button in top right corner - only appears on hover */}
+                <button 
+                  className="absolute top-2 right-2 bg-black bg-opacity-50 border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (!isEditingTopFour) {
+                      handleRemoveFromNoSkips(album.albumId);
+                    }
+                  }}
+                  title="Remove from No Skips"
+                >
+                  ✕
+                </button>
               </div>
               
               {/* Album details outside the overlay area */}
