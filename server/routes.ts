@@ -38,6 +38,11 @@ function requireAuth(req: Request, res: Response, next: Function) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Simple test route first - no auth
+  app.get('/api/test', (req, res) => {
+    res.json({ message: 'Test route working', authenticated: req.isAuthenticated() });
+  });
+
   // Setup authentication with passport
   setupAuth(app);
   
@@ -205,12 +210,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint - no auth required
+  app.get('/api/debug', async (req, res) => {
+    res.json({ message: "Debug endpoint working", timestamp: new Date().toISOString() });
+  });
+
   // Test endpoint to check redirect URI
-  app.get('/api/spotify/config', requireAuth, async (req, res) => {
+  app.get('/api/spotify/config', async (req, res) => {
     try {
-      const { getRedirectUri } = await import('./spotify');
+      const { getRedirectUri, getSpotifyCredentials } = await import('./spotify');
       const redirectUri = getRedirectUri();
-      res.json({ redirectUri, env: process.env.NODE_ENV });
+      const { clientId } = getSpotifyCredentials();
+      res.json({ 
+        redirectUri, 
+        clientIdPresent: !!clientId,
+        env: process.env.NODE_ENV,
+        domains: process.env.REPLIT_DOMAINS 
+      });
     } catch (error) {
       console.error('Config check error:', error);
       res.status(500).json({ message: 'Failed to get config' });
@@ -218,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Spotify authentication routes
-  app.get('/api/auth/spotify', requireAuth, async (req, res) => {
+  app.get('/api/auth/spotify', async (req, res) => {
     try {
       const { getSpotifyLoginUrl } = await import('./spotify');
       const loginUrl = getSpotifyLoginUrl();
@@ -231,17 +247,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/api/auth/callback', async (req, res) => {
+    console.log('===== SPOTIFY CALLBACK RECEIVED =====');
+    console.log('Query params:', req.query);
+    console.log('Headers:', req.headers);
+    
     try {
       const { code, error } = req.query;
       
       // Check if Spotify returned an error
       if (error) {
-        console.error('Spotify auth error:', error);
+        console.error('Spotify returned an error:', error);
         return res.redirect('/?error=spotify_denied');
       }
       
       if (!code || typeof code !== 'string') {
-        console.error('No authorization code provided');
+        console.error('No authorization code provided, query:', req.query);
         return res.redirect('/?error=no_code');
       }
 
@@ -264,7 +284,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.redirect('/');
       });
     } catch (error) {
-      console.error('Spotify callback error:', error);
+      console.error('Spotify callback error details:', error);
+      console.error('Error stack:', error.stack);
       res.redirect('/?error=auth_failed');
     }
   });
