@@ -58,6 +58,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Catch-all route to log any missing auth callbacks
+  app.get('/api/auth/*', (req, res) => {
+    console.log('===== UNHANDLED AUTH ROUTE =====');
+    console.log('Path:', req.path);
+    console.log('URL:', req.url);
+    console.log('Query:', req.query);
+    console.log('Headers:', req.headers);
+    res.status(404).json({ message: 'Auth route not found', path: req.path, url: req.url });
+  });
+
+  // Also catch potential callback at root level in case Spotify redirects differently
+  app.get('/callback', (req, res) => {
+    console.log('===== ROOT CALLBACK RECEIVED =====');
+    console.log('Query params:', req.query);
+    console.log('URL:', req.url);
+    console.log('This might be Spotify redirecting to /callback instead of /api/auth/callback');
+    res.redirect(`/api/auth/callback${req.url.substring(req.url.indexOf('?'))}`);
+  });
+
   // Setup authentication with passport
   setupAuth(app);
   
@@ -280,9 +299,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getSpotifyLoginUrl, getRedirectUri } = await import('./spotify');
       const redirectUri = getRedirectUri();
       console.log('Using redirect URI:', redirectUri);
+      console.log('IMPORTANT: Make sure this EXACT URL is configured in your Spotify app settings');
       
       const loginUrl = getSpotifyLoginUrl();
       console.log('Generated Spotify login URL:', loginUrl);
+      console.log('Full redirect parameters in URL:', loginUrl);
       console.log('Redirecting user to Spotify...');
       
       res.redirect(loginUrl);
@@ -297,6 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('===== SPOTIFY CALLBACK RECEIVED =====');
     console.log('Query params:', req.query);
     console.log('Headers:', req.headers);
+    console.log('Full URL:', req.url);
+    console.log('Path:', req.path);
     
     try {
       const { code, error } = req.query;
