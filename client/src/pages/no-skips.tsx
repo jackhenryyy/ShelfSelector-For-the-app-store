@@ -794,10 +794,10 @@ export default function NoSkipsPage() {
                 </a>
                 
                 {/* Overlay with remove button only - covers only album art */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                   {/* Remove (X) button in top right corner */}
                   <button 
-                    className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold"
+                    className="absolute top-2 right-2 bg-transparent border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold pointer-events-auto"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
