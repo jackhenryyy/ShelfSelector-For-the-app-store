@@ -101,8 +101,8 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
         handleStartEdit();
       }}
     >
-      <div className="flex items-center space-x-1">
-        <Pencil className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity text-gray-500" />
+      <div className="text-xs text-gray-500 hover:text-black transition-colors">
+        {genre || "no genre"}
       </div>
     </div>
   );
