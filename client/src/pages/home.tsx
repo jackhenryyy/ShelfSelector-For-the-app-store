@@ -9,6 +9,7 @@ import { Album } from "@shared/schema";
 import { BlurredBackground } from "@/components/ui/blurred-background";
 import { AlbumFilterSort, FilterOption } from "@/components/ui/album-filter-sort";
 import { EditableGenre } from "@/components/ui/editable-genre";
+import { NowPlayingWidget } from "@/components/ui/now-playing-widget";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -176,6 +177,9 @@ export default function HomePage() {
               </div>
             </div>
           )}
+          
+          {/* Now Playing Widget */}
+          <NowPlayingWidget />
         </div>
       </div>
     </Layout>

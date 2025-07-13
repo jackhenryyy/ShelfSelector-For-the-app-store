@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { 
   searchSpotifyAlbums,
   getAlbumDetails,
-  processAndSaveAlbum
+  processAndSaveAlbum,
+  getCurrentlyPlaying
 } from "./spotify";
 import { 
   insertQueueAlbumSchema, 
@@ -167,6 +168,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get saved albums error:', error);
       res.status(500).json({ message: 'Failed to fetch albums' });
+    }
+  });
+
+  // Get currently playing track
+  app.get('/api/spotify/currently-playing', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      
+      if (!user.accessToken) {
+        return res.status(401).json({ message: 'Spotify access token not found' });
+      }
+      
+      const currentlyPlaying = await getCurrentlyPlaying(user.accessToken);
+      res.json(currentlyPlaying);
+    } catch (error) {
+      console.error('Currently playing error:', error);
+      if (error instanceof Error && error.message.includes('Unauthorized')) {
+        return res.status(401).json({ message: 'Spotify token expired. Please reconnect.' });
+      }
+      res.status(500).json({ message: 'Failed to get currently playing track' });
+    }
+  });
+
+  // Process and save album from Spotify data
+  app.post('/api/spotify/albums/process', requireAuth, async (req, res) => {
+    try {
+      const accessToken = await getClientCredentialsToken();
+      const album = await processAndSaveAlbum(req.body, accessToken);
+      res.json(album);
+    } catch (error) {
+      console.error('Process album error:', error);
+      res.status(500).json({ message: 'Failed to process album' });
     }
   });
   

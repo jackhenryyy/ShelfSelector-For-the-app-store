@@ -41,7 +41,9 @@ export function getSpotifyLoginUrl() {
     'user-read-email',
     'user-library-read',
     'playlist-read-private',
-    'playlist-read-collaborative'
+    'playlist-read-collaborative',
+    'user-read-currently-playing',
+    'user-read-playback-state'
   ];
   
   const params = new URLSearchParams({
@@ -488,4 +490,58 @@ export async function processAndSaveAlbum(albumData: any, accessToken?: string) 
   }
   
   return album;
+}
+
+// Get user's currently playing track
+export async function getCurrentlyPlaying(accessToken: string) {
+  try {
+    const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (response.status === 204 || response.status === 202) {
+      return null; // No track currently playing
+    }
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized - token may have expired');
+      }
+      throw new Error(`Failed to get currently playing: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.item || data.item.type !== 'track') {
+      return null; // Not playing a track (could be podcast, etc.)
+    }
+
+    // Extract album information
+    const track = data.item;
+    const album = track.album;
+    
+    return {
+      isPlaying: data.is_playing,
+      track: {
+        id: track.id,
+        name: track.name,
+        artists: track.artists.map((artist: any) => artist.name),
+        album: {
+          id: album.id,
+          name: album.name,
+          artist: album.artists[0]?.name || 'Unknown Artist',
+          imageUrl: album.images[0]?.url || '',
+          spotifyId: album.id,
+          releaseYear: album.release_date ? new Date(album.release_date).getFullYear() : undefined
+        }
+      },
+      progressMs: data.progress_ms,
+      durationMs: track.duration_ms
+    };
+  } catch (error) {
+    console.error('Error fetching currently playing:', error);
+    throw error;
+  }
 }
