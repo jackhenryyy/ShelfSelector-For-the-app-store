@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useQueueAlbums, useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
+import { useAuth } from "@/hooks/use-auth";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
@@ -12,6 +13,8 @@ import { parseCSVToAlbums } from "@/lib/csv-export";
 import { useToast } from "@/hooks/use-toast";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { AlbumDetailsDialog } from "@/components/ui/album-details-dialog";
+import { ReviewPopup } from "@/components/ui/review-popup";
+import { AlbumReview } from "@/hooks/use-albums";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SearchDialog } from "@/components/ui/search-dialog";
@@ -91,7 +94,8 @@ function filterQueueAlbums(albums: any[], filter: FilterOption, searchQuery?: st
 export default function QueuePage() {
   const { queueAlbums, addToQueue, removeFromQueue } = useQueueAlbums();
   const { addToNoSkips } = useNoSkipsAlbums();
-  const { createReview } = useAlbumReviews();
+  const { createReview, deleteReview, getAlbumReview } = useAlbumReviews();
+  const { user } = useAuth();
   const { searchAlbums } = useSpotifyAlbums();
   const { updateGenre } = useAlbumGenre();
   const { toast } = useToast();
@@ -104,6 +108,7 @@ export default function QueuePage() {
 
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+  const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
@@ -122,12 +127,110 @@ export default function QueuePage() {
     setFilteredQueueAlbums(processed);
   }, [queueAlbums, sortOption, filterOptions, queueSearchQuery]);
   
-  // Function to handle album click - now goes directly to review dialog
+  // Function to handle album click - now opens review popup
   const handleAlbumClick = (albumId: number, event: React.MouseEvent) => {
     event.preventDefault();
-    
-    // Open details dialog directly
-    handleOpenDetailsDialog(albumId);
+    console.log('Album cover clicked for album:', albumId);
+    handleOpenReview(albumId);
+  };
+
+  // Review popup handlers (same as no-skips page)
+  const handleOpenReview = async (albumId: number) => {
+    console.log('handleOpenReview called with albumId:', albumId);
+    try {
+      const existingReview = await getAlbumReview(albumId);
+      if (existingReview) {
+        console.log('Found existing review:', existingReview);
+        setActiveReview(existingReview);
+      } else {
+        console.log('No existing review found, creating new one');
+        // Find the album data to create a new review
+        const albumData = queueAlbums?.find(a => a.album.id === albumId);
+        if (albumData) {
+          const newReview: AlbumReview = {
+            id: 0, // Will be set by the backend
+            userId: user?.id || 0,
+            albumId: albumId,
+            rating: 0,
+            review: '',
+            reviewedAt: new Date().toISOString(),
+            listenedAt: null,
+            album: albumData.album
+          };
+          console.log('Setting new review:', newReview);
+          setActiveReview(newReview);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading review:', error);
+      // Don't show error toast for missing reviews, just create a new one
+      const albumData = queueAlbums?.find(a => a.album.id === albumId);
+      if (albumData) {
+        const newReview: AlbumReview = {
+          id: 0,
+          userId: user?.id || 0,
+          albumId: albumId,
+          rating: 0,
+          review: '',
+          reviewedAt: new Date().toISOString(),
+          listenedAt: null,
+          album: albumData.album
+        };
+        setActiveReview(newReview);
+      }
+    }
+  };
+
+  const handleCloseReview = () => {
+    setActiveReview(null);
+  };
+
+  const handleSaveReview = async (data: { id: number; rating: number; review: string; listenedAt?: Date; genre?: string }) => {
+    try {
+      if (data.id === 0) {
+        // Creating new review
+        await createReview({
+          albumId: activeReview?.albumId || 0,
+          rating: data.rating,
+          review: data.review,
+          listenedAt: data.listenedAt
+        });
+      } else {
+        // Would update existing review - implement if needed
+        console.log('Update review not implemented yet in queue page');
+      }
+      
+      toast({
+        title: "Review saved",
+        description: "Your review has been saved successfully",
+      });
+      
+      handleCloseReview();
+    } catch (error) {
+      console.error('Error saving review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save review",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleGenreUpdate = async (albumId: number, genre: string) => {
+    try {
+      await updateGenre(albumId, genre);
+      toast({
+        title: "Genre updated",
+        description: "Album genre has been updated",
+      });
+    } catch (error) {
+      console.error('Error updating genre:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update genre",
+        variant: "destructive"
+      });
+    }
   };
   
   // Function to play album on Spotify (keep this for potential future use)
@@ -144,42 +247,7 @@ export default function QueuePage() {
     }
   };
   
-  // Function to handle saving a review
-  const handleSaveReview = async (data: {
-    albumId: number;
-    rating: number;
-    review?: string;
-    listenedAt?: Date;
-    genre?: string;
-  }) => {
-    try {
-      // Create the review in the database
-      await createReview({
-        albumId: data.albumId,
-        rating: data.rating,
-        review: data.review || "",
-        listenedAt: data.listenedAt
-      });
-      
-      // Remove the album from the queue
-      removeFromQueue(data.albumId);
-      
-      toast({
-        title: "Review submitted",
-        description: "Album has been added to your list and removed from your queue",
-      });
-      
-      setSelectedAlbum(null);
-      setDetailsDialogOpen(false);
-    } catch (error) {
-      console.error("Error submitting review:", error);
-      toast({
-        title: "Review failed",
-        description: "There was an error submitting your review",
-        variant: "destructive"
-      });
-    }
-  };
+
 
   // Function to handle updating genre
   const handleUpdateGenre = async (albumId: number, genre: string) => {
@@ -614,6 +682,16 @@ export default function QueuePage() {
         dialogTitle="Add an album to Queue"
         addButtonText="Add"
         mobile={true}
+      />
+      
+      {/* Review Popup */}
+      <ReviewPopup
+        review={activeReview}
+        isOpen={!!activeReview}
+        onClose={handleCloseReview}
+        onSave={handleSaveReview}
+        onDelete={deleteReview}
+        onGenreUpdate={handleGenreUpdate}
       />
     </Layout>
   );
