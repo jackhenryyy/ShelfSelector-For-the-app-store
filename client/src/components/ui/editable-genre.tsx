@@ -22,6 +22,7 @@ export function EditableGenre({ albumId, genre, className = "" }: EditableGenreP
   }, [isEditing]);
   
   const handleStartEdit = () => {
+    console.log('handleStartEdit called for album:', albumId, 'current genre:', genre);
     setNewGenre(genre || "");
     setIsEditing(true);
   };
