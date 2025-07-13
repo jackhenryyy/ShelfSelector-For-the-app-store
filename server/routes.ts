@@ -58,24 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Catch-all route to log any missing auth callbacks
-  app.get('/api/auth/*', (req, res) => {
-    console.log('===== UNHANDLED AUTH ROUTE =====');
-    console.log('Path:', req.path);
-    console.log('URL:', req.url);
-    console.log('Query:', req.query);
-    console.log('Headers:', req.headers);
-    res.status(404).json({ message: 'Auth route not found', path: req.path, url: req.url });
-  });
-
-  // Also catch potential callback at root level in case Spotify redirects differently
-  app.get('/callback', (req, res) => {
-    console.log('===== ROOT CALLBACK RECEIVED =====');
-    console.log('Query params:', req.query);
-    console.log('URL:', req.url);
-    console.log('This might be Spotify redirecting to /callback instead of /api/auth/callback');
-    res.redirect(`/api/auth/callback${req.url.substring(req.url.indexOf('?'))}`);
-  });
+  // Removed catch-all routes - will be added at the end after specific routes
 
   // Setup authentication with passport
   setupAuth(app);
@@ -783,6 +766,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error fetching shared No Skips collection:', error);
       res.status(500).json({ message: 'Failed to fetch shared collection' });
     }
+  });
+
+  // Catch-all routes at the end (after all specific routes are registered)
+  app.get('/callback', (req, res) => {
+    console.log('===== ROOT CALLBACK RECEIVED =====');
+    console.log('Query params:', req.query);
+    console.log('URL:', req.url);
+    console.log('This might be Spotify redirecting to /callback instead of /api/auth/callback');
+    res.redirect(`/api/auth/callback${req.url.substring(req.url.indexOf('?'))}`);
+  });
+
+  app.get('/api/auth/*', (req, res) => {
+    console.log('===== UNHANDLED AUTH ROUTE =====');
+    console.log('Path:', req.path);
+    console.log('URL:', req.url);
+    console.log('Query:', req.query);
+    console.log('Headers:', req.headers);
+    res.status(404).json({ message: 'Auth route not found', path: req.path, url: req.url });
   });
   
   // Create HTTP server
