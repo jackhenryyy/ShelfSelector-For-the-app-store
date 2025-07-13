@@ -804,9 +804,9 @@ export default function NoSkipsPage() {
                   />
                 </div>
                 
-                {/* Remove button in top right corner - only appears on hover */}
+                {/* Remove button in top right corner - square overlay */}
                 <button 
-                  className="absolute top-2 right-2 bg-black bg-opacity-50 border border-white rounded-full w-6 h-6 flex items-center justify-center text-white hover:bg-white hover:text-black text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                  className="absolute top-2 right-2 bg-black bg-opacity-75 w-6 h-6 flex items-center justify-center text-white hover:bg-opacity-90 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -828,9 +828,11 @@ export default function NoSkipsPage() {
                 </>
               )}
               
-              {/* Genre editor */}
+              {/* Genre display (non-editable) */}
               {gridScale < 5 && (
-                <EditableGenre albumId={album.album.id} genre={album.album.genre} />
+                <div className="mt-1 text-xs text-gray-500">
+                  {album.album.genre || "no genre"}
+                </div>
               )}
             </div>
           ))}

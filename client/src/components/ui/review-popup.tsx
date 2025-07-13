@@ -86,7 +86,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
           {!isEditing && (
             <button 
               onClick={() => setIsEditing(true)}
-              className="px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50"
+              className="px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 mr-8"
             >
               Edit
             </button>
@@ -133,13 +133,9 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
                 value={editReview}
                 onChange={(e) => setEditReview(e.target.value)}
                 placeholder="What makes this special to you?"
-                maxLength={200}
                 className="w-full p-3 border border-black font-mono text-sm resize-none"
                 rows={4}
               />
-              <p className="font-mono text-xs text-gray-500 mt-1 text-right">
-                {editReview.length}/200 characters
-              </p>
             </div>
 
             {/* Edit Action Buttons */}
