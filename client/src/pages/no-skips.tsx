@@ -778,17 +778,17 @@ export default function NoSkipsPage() {
             <div key={album.id} className="mb-2">
               {/* Album art container with overlay */}
               <div className="relative group">
-                <a 
-                  href="#" 
+                <div 
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     if (isEditingTopFour) {
                       handleSelectForTopFour(album.albumId);
                     } else {
                       handleOpenReview(album.album.id);
                     }
                   }}
-                  className="block"
+                  className="block cursor-pointer"
                 >
                   <AlbumArt
                     src={album.album.imageUrl}
@@ -797,7 +797,7 @@ export default function NoSkipsPage() {
                       ? "border-2 border-green-500" 
                       : ""}
                   />
-                </a>
+                </div>
                 
                 {/* Overlay with remove button only - covers only album art */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
