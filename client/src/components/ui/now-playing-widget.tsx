@@ -111,7 +111,6 @@ export function NowPlayingWidget() {
   const handleAddToList = async () => {
     if (!nowPlaying || isAddingToList) return;
     
-    console.log('Adding to list, nowPlaying:', nowPlaying);
     setIsAddingToList(true);
     try {
       // First, save the album to our database
@@ -124,14 +123,12 @@ export function NowPlayingWidget() {
       });
 
       // Create a new review entry with default values
-      console.log('Creating review with albumId:', albumData.id);
       const newReview = await createReview({
         albumId: albumData.id,
         rating: 2.5, // Default rating that user can edit
         review: '',
         listenedAt: new Date()
       });
-      console.log('Review created:', newReview);
 
       // Create a full AlbumReview object for the popup
       const reviewForPopup: AlbumReview = {

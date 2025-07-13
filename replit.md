@@ -117,6 +117,8 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
   - Real-time display of currently playing track with progress bar
   - "Add to Queue" and "Add to List" buttons for quick album management
   - Spotify login button for users without connected accounts
+  - "Add to List" button opens review popup immediately for full editing experience
+  - Ready for deployment with stable Spotify redirect URI
 - July 12, 2025. Completed review system fixes:
   - Fixed decimal rating validation to support 0.5-5.0 star ratings
   - Resolved date persistence issues in review popup
