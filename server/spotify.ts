@@ -19,22 +19,8 @@ export function getSpotifyCredentials() {
 
 // Function to get the redirect URI
 export function getRedirectUri() {
-  // Check if we're on the deployed domain
-  const replitDomains = process.env.REPLIT_DOMAINS;
-  if (replitDomains) {
-    const domains = replitDomains.split(',');
-    if (domains.length > 0) {
-      const domain = domains[0];
-      // If it's the production deployed domain, use that
-      if (domain.includes('shelf-selector-thejackattack.replit.app')) {
-        return 'https://shelf-selector-thejackattack.replit.app/api/auth/callback';
-      }
-      // Otherwise use the development domain
-      return `https://${domain}/api/auth/callback`;
-    }
-  }
-  
-  // Always try the deployed URL first as fallback
+  // For this deployed app, always use the production URL
+  // The Spotify dashboard should have this exact URL configured
   return 'https://shelf-selector-thejackattack.replit.app/api/auth/callback';
 }
 
@@ -67,6 +53,8 @@ export function getSpotifyLoginUrl() {
 export async function exchangeCodeForToken(code: string) {
   const { clientId, clientSecret, redirectUri } = getSpotifyCredentials();
   
+  console.log('Attempting token exchange with redirect URI:', redirectUri);
+  
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
@@ -83,10 +71,14 @@ export async function exchangeCodeForToken(code: string) {
   });
   
   if (!response.ok) {
-    throw new Error(`Failed to exchange code for token: ${response.statusText}`);
+    const errorBody = await response.text();
+    console.error('Token exchange failed:', response.status, response.statusText, errorBody);
+    throw new Error(`Failed to exchange code for token: ${response.statusText} - ${errorBody}`);
   }
   
-  return await response.json();
+  const tokenData = await response.json();
+  console.log('Token exchange successful');
+  return tokenData;
 }
 
 // Refresh an access token

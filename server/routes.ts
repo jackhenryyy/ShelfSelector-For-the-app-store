@@ -205,11 +205,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to check redirect URI
+  app.get('/api/spotify/config', requireAuth, async (req, res) => {
+    try {
+      const { getRedirectUri } = await import('./spotify');
+      const redirectUri = getRedirectUri();
+      res.json({ redirectUri, env: process.env.NODE_ENV });
+    } catch (error) {
+      console.error('Config check error:', error);
+      res.status(500).json({ message: 'Failed to get config' });
+    }
+  });
+
   // Spotify authentication routes
   app.get('/api/auth/spotify', requireAuth, async (req, res) => {
     try {
       const { getSpotifyLoginUrl } = await import('./spotify');
       const loginUrl = getSpotifyLoginUrl();
+      console.log('Redirecting to Spotify with URL:', loginUrl);
       res.redirect(loginUrl);
     } catch (error) {
       console.error('Spotify auth redirect error:', error);
