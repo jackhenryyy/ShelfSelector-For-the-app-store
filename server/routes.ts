@@ -6,7 +6,9 @@ import {
   searchSpotifyAlbums,
   getAlbumDetails,
   processAndSaveAlbum,
-  getCurrentlyPlaying
+  getCurrentlyPlaying,
+  getSpotifyLoginUrl,
+  handleSpotifyAuth
 } from "./spotify";
 import { 
   insertQueueAlbumSchema, 
@@ -200,6 +202,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Process album error:', error);
       res.status(500).json({ message: 'Failed to process album' });
+    }
+  });
+
+  // Spotify authentication routes
+  app.get('/api/auth/spotify', requireAuth, async (req, res) => {
+    try {
+      const { getSpotifyLoginUrl } = await import('./spotify');
+      const loginUrl = getSpotifyLoginUrl();
+      res.redirect(loginUrl);
+    } catch (error) {
+      console.error('Spotify auth redirect error:', error);
+      res.status(500).json({ message: 'Failed to redirect to Spotify' });
+    }
+  });
+
+  app.get('/api/auth/callback', async (req, res) => {
+    try {
+      const { code } = req.query;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ message: 'Authorization code not provided' });
+      }
+
+      const { handleSpotifyAuth } = await import('./spotify');
+      const user = await handleSpotifyAuth(code);
+      
+      // Log the user in
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Login error after Spotify auth:', err);
+          return res.status(500).json({ message: 'Failed to log in user' });
+        }
+        
+        // Redirect to home page
+        res.redirect('/');
+      });
+    } catch (error) {
+      console.error('Spotify callback error:', error);
+      res.status(500).json({ message: 'Spotify authentication failed' });
     }
   });
   

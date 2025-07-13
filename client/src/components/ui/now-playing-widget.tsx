@@ -46,9 +46,19 @@ export function NowPlayingWidget() {
     },
   });
 
-  // Don't show widget if user doesn't have Spotify connected or there's an auth error
+  // Show Spotify login button if user doesn't have Spotify connected
   if (isError || !user?.accessToken) {
-    return null;
+    return (
+      <div className="bg-white border border-black p-3 mx-4 mb-4 text-center">
+        <p className="font-mono text-xs text-gray-500 mb-3">Connect Spotify to see what you're playing</p>
+        <button 
+          onClick={() => window.open('/api/auth/spotify', '_blank')}
+          className="px-4 py-2 border border-black bg-green-500 text-white font-mono text-sm hover:bg-green-600 transition-colors"
+        >
+          Connect Spotify
+        </button>
+      </div>
+    );
   }
 
   // Don't show widget if nothing is playing

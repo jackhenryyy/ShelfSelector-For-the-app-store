@@ -108,6 +108,15 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 13, 2025. Completed major UI improvements and Spotify integration:
+  - Moved edit button away from close button in review popup
+  - Made genre editing popup-only (removed from main page display)
+  - Changed album removal X button to square overlay instead of circle
+  - Removed 200 character limit for reviews
+  - Added Spotify now playing widget to home page
+  - Real-time display of currently playing track with progress bar
+  - "Add to Queue" and "Add to List" buttons for quick album management
+  - Spotify login button for users without connected accounts
 - July 12, 2025. Completed review system fixes:
   - Fixed decimal rating validation to support 0.5-5.0 star ratings
   - Resolved date persistence issues in review popup
