@@ -57,7 +57,10 @@ export function NowPlayingWidget() {
       <div className="bg-white border border-black p-3 mx-4 mb-4 text-center">
         <p className="font-mono text-xs text-gray-500 mb-3">Connect Spotify to see what you're playing</p>
         <button 
-          onClick={() => window.location.href = '/api/auth/spotify'}
+          onClick={() => {
+            console.log('Spotify login button clicked - redirecting to /api/auth/spotify');
+            window.location.href = '/api/auth/spotify';
+          }}
           className="px-4 py-2 border border-black bg-green-500 text-white font-mono text-sm hover:bg-green-600 transition-colors"
         >
           Connect Spotify

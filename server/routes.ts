@@ -43,6 +43,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: 'Test route working', authenticated: req.isAuthenticated() });
   });
 
+  // Test route for Spotify login (should not require auth)
+  app.get('/api/test/spotify-login', async (req, res) => {
+    try {
+      const { getRedirectUri } = await import('./spotify');
+      const redirectUri = getRedirectUri();
+      res.json({ 
+        message: 'Spotify login test route working', 
+        redirectUri,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message, timestamp: new Date().toISOString() });
+    }
+  });
+
   // Setup authentication with passport
   setupAuth(app);
   
@@ -258,6 +273,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('===== SPOTIFY LOGIN REQUEST RECEIVED =====');
     console.log('Request headers:', req.headers);
     console.log('User authenticated:', req.isAuthenticated());
+    console.log('Request URL:', req.url);
+    console.log('Request host:', req.get('host'));
     
     try {
       const { getSpotifyLoginUrl, getRedirectUri } = await import('./spotify');
@@ -271,7 +288,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.redirect(loginUrl);
     } catch (error) {
       console.error('Spotify auth redirect error:', error);
-      res.status(500).json({ message: 'Failed to redirect to Spotify' });
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ message: 'Failed to redirect to Spotify', error: error.message });
     }
   });
 
