@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlbumArt } from "@/components/ui/album-art";
-import { useQueueAlbums, useAlbumReviews } from "@/hooks/use-albums";
+import { useQueueAlbums, useAlbumReviews, AlbumReview } from "@/hooks/use-albums";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { processAndSaveAlbum } from "@/lib/spotify";
+import { ReviewPopup } from "@/components/ui/review-popup";
+import { useAlbumGenre } from "@/hooks/use-album-genre";
 
 interface CurrentlyPlayingData {
   isPlaying: boolean;
@@ -29,9 +31,12 @@ export function NowPlayingWidget() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { addToQueue } = useQueueAlbums();
-  const { createReview } = useAlbumReviews();
+  const { createReview, updateReview, deleteReview } = useAlbumReviews();
+  const { updateGenre } = useAlbumGenre();
   const [isAddingToQueue, setIsAddingToQueue] = useState(false);
   const [isAddingToList, setIsAddingToList] = useState(false);
+  const [reviewPopupOpen, setReviewPopupOpen] = useState(false);
+  const [currentReview, setCurrentReview] = useState<AlbumReview | null>(null);
 
   // Query for currently playing track
   const { data: nowPlaying, isError } = useQuery<CurrentlyPlayingData | null>({
@@ -117,18 +122,39 @@ export function NowPlayingWidget() {
         release_date: nowPlaying.track.album.releaseYear?.toString()
       });
 
-      // Then create a review entry
-      await createReview({
+      // Create a new review entry with default values
+      const newReview = await createReview({
         albumId: albumData.id,
-        rating: 0, // Default rating, user can edit later
+        rating: 2.5, // Default rating that user can edit
         review: '',
         listenedAt: new Date()
       });
+
+      // Create a full AlbumReview object for the popup
+      const reviewForPopup: AlbumReview = {
+        id: newReview.id,
+        userId: newReview.userId,
+        albumId: newReview.albumId,
+        rating: newReview.rating,
+        review: newReview.review || '',
+        reviewedAt: newReview.reviewedAt,
+        listenedAt: newReview.listenedAt || null,
+        album: {
+          id: albumData.id,
+          spotifyId: albumData.spotifyId,
+          name: albumData.name,
+          artist: albumData.artist,
+          imageUrl: albumData.imageUrl,
+          releaseYear: albumData.releaseYear,
+          genre: albumData.genre,
+          energyLevel: albumData.energyLevel
+        }
+      };
+
+      // Set the current review and open the popup
+      setCurrentReview(reviewForPopup);
+      setReviewPopupOpen(true);
       
-      toast({
-        title: "Added to List",
-        description: `"${nowPlaying.track.album.name}" has been added to your review list`,
-      });
     } catch (error) {
       console.error('Error adding to list:', error);
       toast({
@@ -147,10 +173,66 @@ export function NowPlayingWidget() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const handleReviewSave = async (data: {
+    id: number;
+    rating: number;
+    review: string;
+    listenedAt?: Date;
+    genre?: string;
+  }) => {
+    try {
+      await updateReview({
+        id: data.id,
+        rating: data.rating,
+        review: data.review,
+        listenedAt: data.listenedAt
+      });
+
+      if (data.genre && currentReview?.album) {
+        await updateGenre(currentReview.album.id, data.genre);
+      }
+
+      toast({
+        title: "Review Updated",
+        description: "Your review has been saved",
+      });
+      
+      setReviewPopupOpen(false);
+      setCurrentReview(null);
+    } catch (error) {
+      console.error('Error saving review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save review",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReviewDelete = async (id: number) => {
+    try {
+      await deleteReview(id);
+      toast({
+        title: "Review Deleted",
+        description: "Your review has been deleted",
+      });
+      setReviewPopupOpen(false);
+      setCurrentReview(null);
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete review",
+        variant: "destructive",
+      });
+    }
+  };
+
   const progressPercent = (nowPlaying.progressMs / nowPlaying.durationMs) * 100;
 
   return (
-    <div className="bg-white border border-black p-3 mx-4 mb-4">
+    <>
+      <div className="bg-white border border-black p-3 mx-4 mb-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-mono text-sm font-medium">
           {nowPlaying.isPlaying ? "Now Playing" : "Paused"}
@@ -205,6 +287,20 @@ export function NowPlayingWidget() {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+
+      {/* Review Popup */}
+      <ReviewPopup
+        review={currentReview}
+        isOpen={reviewPopupOpen}
+        onClose={() => {
+          setReviewPopupOpen(false);
+          setCurrentReview(null);
+        }}
+        onSave={handleReviewSave}
+        onDelete={handleReviewDelete}
+        onGenreUpdate={updateGenre}
+      />
+    </>
   );
 }
