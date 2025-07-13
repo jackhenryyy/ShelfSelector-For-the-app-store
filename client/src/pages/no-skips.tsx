@@ -107,6 +107,7 @@ export default function NoSkipsPage() {
 
   // Review popup handlers
   const handleOpenReview = async (albumId: number) => {
+    console.log('handleOpenReview called with albumId:', albumId);
     try {
       const existingReview = await getAlbumReview(albumId);
       if (existingReview) {
@@ -774,6 +775,7 @@ export default function NoSkipsPage() {
                   href="#" 
                   onClick={(e) => {
                     e.preventDefault();
+                    console.log('Album clicked:', album.album.id, album.album.name);
                     if (isEditingTopFour) {
                       handleSelectForTopFour(album.albumId);
                     } else {
