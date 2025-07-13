@@ -130,11 +130,21 @@ export default function NoSkipsPage() {
       }
     } catch (error) {
       console.error('Error loading review:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load album review",
-        variant: "destructive"
-      });
+      // Don't show error toast for missing reviews, just create a new one
+      const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
+      if (albumData) {
+        const newReview: AlbumReview = {
+          id: 0,
+          userId: user?.id || 0,
+          albumId: albumId,
+          rating: 0,
+          review: '',
+          reviewedAt: new Date().toISOString(),
+          listenedAt: null,
+          album: albumData.album
+        };
+        setActiveReview(newReview);
+      }
     }
   };
 
@@ -790,7 +800,7 @@ export default function NoSkipsPage() {
                 <EditableGenre albumId={album.album.id} genre={album.album.genre} />
               )}
               
-              {/* Overlay with buttons - positioned to cover only the album art with lower z-index */}
+              {/* Overlay with remove button only */}
               <div className="absolute top-0 left-0 right-0 h-[100%] w-[100%] max-h-[calc(100%-2rem)] bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-[5]">
                 {/* Remove (X) button in top right corner */}
                 <button 
@@ -806,31 +816,6 @@ export default function NoSkipsPage() {
                 >
                   ✕
                 </button>
-                
-                {!isEditingTopFour && (
-                  <div className="flex flex-col">
-                    <button 
-                      className="text-white text-xs mb-1 hover:underline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        handleOpenAlbumInSpotify(album.album.spotifyId);
-                      }}
-                    >
-                      Play
-                    </button>
-                    <button 
-                      className="text-white text-xs hover:underline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        handleOpenReview(album.album.id);
-                      }}
-                    >
-                      Review
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           ))}
