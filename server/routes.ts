@@ -215,6 +215,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Debug endpoint working", timestamp: new Date().toISOString() });
   });
 
+  // Test Spotify configuration
+  app.get('/api/debug/spotify', async (req, res) => {
+    try {
+      const { getRedirectUri, getSpotifyCredentials, getSpotifyLoginUrl } = await import('./spotify');
+      const redirectUri = getRedirectUri();
+      const { clientId } = getSpotifyCredentials();
+      const loginUrl = getSpotifyLoginUrl();
+      
+      res.json({ 
+        redirectUri,
+        clientIdExists: !!clientId,
+        clientIdPreview: clientId ? clientId.substring(0, 8) + '...' : 'NOT_SET',
+        loginUrl: loginUrl.substring(0, 100) + '...',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Test endpoint to check redirect URI
   app.get('/api/spotify/config', async (req, res) => {
     try {
@@ -235,10 +255,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Spotify authentication routes
   app.get('/api/auth/spotify', async (req, res) => {
+    console.log('===== SPOTIFY LOGIN REQUEST RECEIVED =====');
+    console.log('Request headers:', req.headers);
+    console.log('User authenticated:', req.isAuthenticated());
+    
     try {
-      const { getSpotifyLoginUrl } = await import('./spotify');
+      const { getSpotifyLoginUrl, getRedirectUri } = await import('./spotify');
+      const redirectUri = getRedirectUri();
+      console.log('Using redirect URI:', redirectUri);
+      
       const loginUrl = getSpotifyLoginUrl();
-      console.log('Redirecting to Spotify with URL:', loginUrl);
+      console.log('Generated Spotify login URL:', loginUrl);
+      console.log('Redirecting user to Spotify...');
+      
       res.redirect(loginUrl);
     } catch (error) {
       console.error('Spotify auth redirect error:', error);
