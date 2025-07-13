@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumReview } from "@/hooks/use-albums";
+import { useAlbumGenre } from "@/hooks/use-album-genre";
 
 interface ReviewPopupProps {
   review: AlbumReview | null;
@@ -23,6 +24,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
   const [isEditing, setIsEditing] = useState(false);
   const [editReview, setEditReview] = useState("");
   const [editGenre, setEditGenre] = useState("");
+  const { updateGenre, isUpdating } = useAlbumGenre();
 
   // Update local state when review changes
   useEffect(() => {
@@ -39,8 +41,14 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
     }
   }, [isOpen]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!review) return;
+    
+    // Update genre first if it changed, using the hook directly
+    if (editGenre !== review.album?.genre) {
+      console.log('Updating genre in popup from', review.album?.genre, 'to', editGenre);
+      await updateGenre(review.album.id, editGenre || null);
+    }
     
     onSave({
       id: review.id,
@@ -49,11 +57,6 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
       listenedAt: undefined, // Remove date requirement
       genre: editGenre
     });
-    
-    // Update genre if changed and callback provided
-    if (onGenreUpdate && editGenre !== review.album?.genre) {
-      onGenreUpdate(review.album.id, editGenre);
-    }
     
     setIsEditing(false);
   };
