@@ -9,7 +9,13 @@ export function useAlbumGenre() {
 
   const updateGenreMutation = useMutation({
     mutationFn: async ({ albumId, genre }: { albumId: number; genre: string | null }) => {
+      console.log('Updating genre for album', albumId, 'to:', genre);
       const res = await apiRequest("PATCH", `/api/albums/${albumId}/genre`, { genre });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Genre update failed:', res.status, errorText);
+        throw new Error(`Failed to update genre: ${res.status} ${errorText}`);
+      }
       return await res.json() as Album;
     },
     onSuccess: (album) => {

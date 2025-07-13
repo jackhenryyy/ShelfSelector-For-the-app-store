@@ -780,6 +780,7 @@ export default function NoSkipsPage() {
               <div className="relative group">
                 <div 
                   onClick={(e) => {
+                    console.log('Album cover clicked for album:', album.album.id);
                     e.preventDefault();
                     e.stopPropagation();
                     if (isEditingTopFour) {
