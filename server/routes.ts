@@ -219,28 +219,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/callback', async (req, res) => {
     try {
-      const { code } = req.query;
+      const { code, error } = req.query;
+      
+      // Check if Spotify returned an error
+      if (error) {
+        console.error('Spotify auth error:', error);
+        return res.redirect('/?error=spotify_denied');
+      }
       
       if (!code || typeof code !== 'string') {
-        return res.status(400).json({ message: 'Authorization code not provided' });
+        console.error('No authorization code provided');
+        return res.redirect('/?error=no_code');
       }
 
+      console.log('Processing Spotify callback with code:', code.substring(0, 10) + '...');
+      
       const { handleSpotifyAuth } = await import('./spotify');
       const user = await handleSpotifyAuth(code);
+      
+      console.log('Spotify auth successful for user:', user.username);
       
       // Log the user in
       req.login(user, (err) => {
         if (err) {
           console.error('Login error after Spotify auth:', err);
-          return res.status(500).json({ message: 'Failed to log in user' });
+          return res.redirect('/?error=login_failed');
         }
         
+        console.log('User logged in successfully after Spotify auth');
         // Redirect to home page
         res.redirect('/');
       });
     } catch (error) {
       console.error('Spotify callback error:', error);
-      res.status(500).json({ message: 'Spotify authentication failed' });
+      res.redirect('/?error=auth_failed');
     }
   });
   

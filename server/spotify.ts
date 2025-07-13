@@ -19,17 +19,23 @@ export function getSpotifyCredentials() {
 
 // Function to get the redirect URI
 export function getRedirectUri() {
-  // Use REPLIT_DOMAINS environment variable if available
+  // Check if we're on the deployed domain
   const replitDomains = process.env.REPLIT_DOMAINS;
   if (replitDomains) {
     const domains = replitDomains.split(',');
     if (domains.length > 0) {
-      return `https://${domains[0]}/api/auth/callback`;
+      const domain = domains[0];
+      // If it's the production deployed domain, use that
+      if (domain.includes('shelf-selector-thejackattack.replit.app')) {
+        return 'https://shelf-selector-thejackattack.replit.app/api/auth/callback';
+      }
+      // Otherwise use the development domain
+      return `https://${domain}/api/auth/callback`;
     }
   }
   
-  // Fallback to localhost for local development
-  return 'http://localhost:5000/api/auth/callback';
+  // Always try the deployed URL first as fallback
+  return 'https://shelf-selector-thejackattack.replit.app/api/auth/callback';
 }
 
 // Generate a login URL for Spotify
