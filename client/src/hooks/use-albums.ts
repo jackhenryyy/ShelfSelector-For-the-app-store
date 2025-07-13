@@ -157,16 +157,21 @@ export function useAlbumReviews() {
     queryKey: ['/api/reviews'],
   });
 
-  // Get review for specific album
-  const getAlbumReview = (albumId: number) => {
-    return useQuery<AlbumReview>({
-      queryKey: ['/api/reviews', albumId],
-      queryFn: async () => {
-        const response = await apiRequest('GET', `/api/reviews/${albumId}`);
-        return response.json();
-      },
-      enabled: !!albumId,
-    });
+  // Get review for specific album (async function)
+  const getAlbumReview = async (albumId: number): Promise<AlbumReview | null> => {
+    try {
+      const response = await apiRequest('GET', `/api/reviews/${albumId}`);
+      if (response.ok) {
+        return await response.json();
+      } else if (response.status === 404) {
+        return null; // No review found
+      } else {
+        throw new Error(`Failed to fetch review: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error fetching album review:', error);
+      return null;
+    }
   };
 
   // Search reviews
