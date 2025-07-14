@@ -58,6 +58,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple test for auth routes
+  app.get('/api/auth/test', (req, res) => {
+    console.log('===== AUTH TEST ROUTE HIT =====');
+    res.json({ 
+      message: 'Auth routes are working', 
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      url: req.url
+    });
+  });
+
   // Removed catch-all routes - will be added at the end after specific routes
 
   // Setup authentication with passport
@@ -268,6 +279,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Config check error:', error);
       res.status(500).json({ message: 'Failed to get config' });
     }
+  });
+
+  // Log all incoming requests for debugging
+  app.use((req, res, next) => {
+    if (req.path.includes('/api/auth')) {
+      console.log(`===== AUTH REQUEST: ${req.method} ${req.path} =====`);
+      console.log('Query:', req.query);
+      console.log('Headers:', req.get('user-agent'));
+    }
+    next();
   });
 
   // Spotify authentication routes
