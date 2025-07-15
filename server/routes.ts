@@ -62,8 +62,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Spotify redirect URI configuration helper
-  app.get('/api/spotify/redirect-uris', async (req, res) => {
+  // Test endpoint to verify Spotify configuration
+  app.get('/api/spotify/test-config', async (req, res) => {
     try {
       const { getAuthUrl } = await import('./spotify-simple');
       const authUrl = getAuthUrl();
@@ -71,23 +71,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentRedirectUri = url.searchParams.get('redirect_uri');
       
       res.json({
-        message: 'Spotify Redirect URI Configuration',
-        currentEnvironment: process.env.NODE_ENV || 'development',
-        currentRedirectUri,
-        requiredSpotifyAppSettings: {
-          developmentUri: 'http://localhost:5000/api/spotify/callback',
-          productionUri: 'https://shelf-selector-thejackattack.replit.app/api/spotify/callback',
-          instructions: [
-            '1. Go to https://developer.spotify.com/dashboard',
-            '2. Select your app',
-            '3. Click "Edit Settings"',
-            '4. In "Redirect URIs", add BOTH URIs above',
-            '5. Click "Save"'
-          ]
-        }
+        status: 'success',
+        message: 'Spotify configuration is ready',
+        environment: process.env.NODE_ENV || 'development',
+        redirectUri: currentRedirectUri,
+        authUrl: authUrl,
+        timestamp: new Date().toISOString()
       });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ 
+        status: 'error',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
   });
   
