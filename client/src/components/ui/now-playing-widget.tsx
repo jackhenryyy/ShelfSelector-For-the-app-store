@@ -59,8 +59,60 @@ export function NowPlayingWidget() {
         <div className="space-y-2">
           <button 
             onClick={() => {
-              console.log('Spotify login button clicked - redirecting to /api/auth/spotify');
-              window.location.href = '/api/auth/spotify';
+              console.log('Spotify login button clicked - opening popup');
+              
+              // Open Spotify authentication in a popup
+              const popup = window.open(
+                '/api/auth/spotify',
+                'spotify-auth',
+                'width=500,height=600,left=' + (window.screen.width / 2 - 250) + ',top=' + (window.screen.height / 2 - 300)
+              );
+              
+              if (!popup) {
+                console.log('Popup blocked, falling back to redirect');
+                window.location.href = '/api/auth/spotify';
+                return;
+              }
+
+              // Listen for messages from the popup
+              const messageHandler = (event: MessageEvent) => {
+                if (event.data?.type === 'SPOTIFY_AUTH_SUCCESS') {
+                  console.log('Received authentication success message from popup');
+                  window.removeEventListener('message', messageHandler);
+                  clearInterval(checkClosed);
+                  clearTimeout(timeout);
+                  
+                  // Refresh the page to show the now playing widget
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 500);
+                }
+              };
+              
+              window.addEventListener('message', messageHandler);
+
+              // Listen for popup completion (fallback)
+              const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                  clearInterval(checkClosed);
+                  window.removeEventListener('message', messageHandler);
+                  console.log('Popup closed, checking authentication status');
+                  
+                  // Refresh the page to check if authentication succeeded
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1000);
+                }
+              }, 1000);
+
+              // Close popup after 5 minutes if still open
+              const timeout = setTimeout(() => {
+                if (!popup.closed) {
+                  popup.close();
+                  clearInterval(checkClosed);
+                  window.removeEventListener('message', messageHandler);
+                }
+              }, 300000);
             }}
             className="px-4 py-2 border border-black bg-green-500 text-white font-mono text-sm hover:bg-green-600 transition-colors w-full"
           >

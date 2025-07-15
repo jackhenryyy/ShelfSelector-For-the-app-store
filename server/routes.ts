@@ -354,8 +354,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         console.log('User logged in successfully after Spotify auth');
-        // Redirect to home page
-        res.redirect('/');
+        
+        // Check if this is a popup authentication by looking for window.opener
+        // If so, close the popup and let the parent window handle the success
+        res.send(`
+          <html>
+            <head><title>Spotify Authentication Complete</title></head>
+            <body>
+              <script>
+                console.log('Spotify authentication successful!');
+                if (window.opener) {
+                  console.log('Popup authentication detected - closing popup');
+                  window.opener.postMessage({ type: 'SPOTIFY_AUTH_SUCCESS' }, '*');
+                  window.close();
+                } else {
+                  console.log('Non-popup authentication - redirecting to home');
+                  window.location.href = '/';
+                }
+              </script>
+              <p>Authentication successful! This window should close automatically.</p>
+              <p>If it doesn't close, <a href="/" onclick="window.close()">click here</a>.</p>
+            </body>
+          </html>
+        `);
       });
     } catch (error) {
       console.error('Spotify callback error details:', error);
