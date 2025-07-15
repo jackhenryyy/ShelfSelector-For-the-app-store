@@ -61,6 +61,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       url: req.url
     });
   });
+
+  // Spotify redirect URI configuration helper
+  app.get('/api/spotify/redirect-uris', async (req, res) => {
+    try {
+      const { getAuthUrl } = await import('./spotify-simple');
+      const authUrl = getAuthUrl();
+      const url = new URL(authUrl);
+      const currentRedirectUri = url.searchParams.get('redirect_uri');
+      
+      res.json({
+        message: 'Spotify Redirect URI Configuration',
+        currentEnvironment: process.env.NODE_ENV || 'development',
+        currentRedirectUri,
+        requiredSpotifyAppSettings: {
+          developmentUri: 'http://localhost:5000/api/spotify/callback',
+          productionUri: 'https://shelf-selector-thejackattack.replit.app/api/spotify/callback',
+          instructions: [
+            '1. Go to https://developer.spotify.com/dashboard',
+            '2. Select your app',
+            '3. Click "Edit Settings"',
+            '4. In "Redirect URIs", add BOTH URIs above',
+            '5. Click "Save"'
+          ]
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
   
   // Get Spotify access token using client credentials flow
   const getClientCredentialsToken = async () => {
