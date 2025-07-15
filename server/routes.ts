@@ -38,24 +38,17 @@ function requireAuth(req: Request, res: Response, next: Function) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication with passport FIRST
+  setupAuth(app);
+  
   // Simple test route first - no auth
   app.get('/api/test', (req, res) => {
-    res.json({ message: 'Test route working', authenticated: req.isAuthenticated() });
-  });
-
-  // Test route for Spotify login (should not require auth)
-  app.get('/api/test/spotify-login', async (req, res) => {
-    try {
-      const { getRedirectUri } = await import('./spotify');
-      const redirectUri = getRedirectUri();
-      res.json({ 
-        message: 'Spotify login test route working', 
-        redirectUri,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message, timestamp: new Date().toISOString() });
-    }
+    res.json({ 
+      message: 'Test route working', 
+      authenticated: req.isAuthenticated ? req.isAuthenticated() : false,
+      hasIsAuthenticated: !!req.isAuthenticated,
+      user: req.user || null
+    });
   });
 
   // Simple test for auth routes
@@ -68,11 +61,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       url: req.url
     });
   });
-
-  // Removed catch-all routes - will be added at the end after specific routes
-
-  // Setup authentication with passport
-  setupAuth(app);
   
   // Get Spotify access token using client credentials flow
   const getClientCredentialsToken = async () => {
@@ -305,6 +293,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
+
+
 
   app.get('/api/spotify/callback', async (req, res) => {
     console.log('=== SIMPLE SPOTIFY CALLBACK ===');

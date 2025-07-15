@@ -108,6 +108,16 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 15, 2025. Fixed Spotify authentication and API route issues:
+  - Resolved authentication setup ordering issues that prevented req.isAuthenticated from working
+  - Fixed route registration order to ensure API routes work before Vite catch-all
+  - Simplified Spotify authentication system with environment-based URL detection
+  - Configured proper redirect URIs for both development and production environments
+  - Development: http://localhost:5000/api/spotify/callback
+  - Production: https://shelf-selector-thejackattack.replit.app/api/spotify/callback
+  - Added debug endpoint to verify Spotify configuration
+  - Authentication flow now works correctly with proper token storage
+  - All API routes verified working with proper authentication middleware
 - July 13, 2025. Completed major UI improvements and Spotify integration:
   - Moved edit button away from close button in review popup
   - Made genre editing popup-only (removed from main page display)
@@ -119,7 +129,6 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
   - Spotify login button for users without connected accounts
   - "Add to List" button opens review popup immediately for full editing experience
   - Fixed Spotify authentication flow issue (popup vs same-window redirect)
-  - Configured production redirect URI: https://shelf-selector-thejackattack.replit.app/api/auth/callback
   - Ready for deployment with working Spotify authentication
 - July 12, 2025. Completed review system fixes:
   - Fixed decimal rating validation to support 0.5-5.0 star ratings
