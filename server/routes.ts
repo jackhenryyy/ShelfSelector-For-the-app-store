@@ -291,97 +291,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Spotify authentication routes
-  app.get('/api/auth/spotify', async (req, res) => {
-    console.log('===== SPOTIFY LOGIN REQUEST RECEIVED =====');
-    console.log('Request headers:', req.headers);
-    console.log('User authenticated:', req.isAuthenticated());
-    console.log('Request URL:', req.url);
-    console.log('Request host:', req.get('host'));
+  // Simple Spotify authentication - fresh start
+  app.get('/api/spotify/auth', async (req, res) => {
+    console.log('=== SIMPLE SPOTIFY AUTH START ===');
     
     try {
-      const { getSpotifyLoginUrl, getRedirectUri } = await import('./spotify');
-      const redirectUri = getRedirectUri();
-      console.log('Using redirect URI:', redirectUri);
-      console.log('IMPORTANT: Make sure this EXACT URL is configured in your Spotify app settings');
-      
-      const loginUrl = getSpotifyLoginUrl();
-      console.log('Generated Spotify login URL:', loginUrl);
-      console.log('Full redirect parameters in URL:', loginUrl);
-      console.log('Redirecting user to Spotify...');
-      
-      res.redirect(loginUrl);
+      const { getAuthUrl } = await import('./spotify-simple');
+      const authUrl = getAuthUrl();
+      console.log('Redirecting to Spotify:', authUrl);
+      res.redirect(authUrl);
     } catch (error) {
-      console.error('Spotify auth redirect error:', error);
-      console.error('Error stack:', error.stack);
-      res.status(500).json({ message: 'Failed to redirect to Spotify', error: error.message });
+      console.error('Auth error:', error.message);
+      res.status(500).json({ error: error.message });
     }
   });
 
-  app.get('/api/auth/callback', async (req, res) => {
-    console.log('===== SPOTIFY CALLBACK RECEIVED =====');
-    console.log('Query params:', req.query);
-    console.log('Headers:', req.headers);
-    console.log('Full URL:', req.url);
-    console.log('Path:', req.path);
+  app.get('/api/spotify/callback', async (req, res) => {
+    console.log('=== SIMPLE SPOTIFY CALLBACK ===');
+    console.log('Query:', req.query);
     
     try {
       const { code, error } = req.query;
       
-      // Check if Spotify returned an error
       if (error) {
-        console.error('Spotify returned an error:', error);
+        console.log('Spotify error:', error);
         return res.redirect('/?error=spotify_denied');
       }
       
       if (!code || typeof code !== 'string') {
-        console.error('No authorization code provided, query:', req.query);
+        console.log('No code provided');
         return res.redirect('/?error=no_code');
       }
-
-      console.log('Processing Spotify callback with code:', code.substring(0, 10) + '...');
       
-      const { handleSpotifyAuth } = await import('./spotify');
-      const user = await handleSpotifyAuth(code);
+      console.log('Exchanging code for tokens...');
+      const { exchangeCode } = await import('./spotify-simple');
+      const tokens = await exchangeCode(code);
       
-      console.log('Spotify auth successful for user:', user.username);
+      console.log('Got tokens, updating user...');
       
-      // Log the user in
-      req.login(user, (err) => {
-        if (err) {
-          console.error('Login error after Spotify auth:', err);
-          return res.redirect('/?error=login_failed');
-        }
+      // Update current user with Spotify tokens
+      if (req.user) {
+        const userId = (req.user as any).id;
+        const expiryDate = new Date(Date.now() + tokens.expires_in * 1000);
         
-        console.log('User logged in successfully after Spotify auth');
+        await storage.updateUserTokens(
+          userId,
+          tokens.access_token,
+          tokens.refresh_token || '',
+          expiryDate
+        );
         
-        // Check if this is a popup authentication by looking for window.opener
-        // If so, close the popup and let the parent window handle the success
-        res.send(`
-          <html>
-            <head><title>Spotify Authentication Complete</title></head>
-            <body>
-              <script>
-                console.log('Spotify authentication successful!');
-                if (window.opener) {
-                  console.log('Popup authentication detected - closing popup');
-                  window.opener.postMessage({ type: 'SPOTIFY_AUTH_SUCCESS' }, '*');
-                  window.close();
-                } else {
-                  console.log('Non-popup authentication - redirecting to home');
-                  window.location.href = '/';
-                }
-              </script>
-              <p>Authentication successful! This window should close automatically.</p>
-              <p>If it doesn't close, <a href="/" onclick="window.close()">click here</a>.</p>
-            </body>
-          </html>
-        `);
-      });
+        console.log('Tokens saved successfully');
+        res.redirect('/?spotify=connected');
+      } else {
+        console.log('No user logged in');
+        res.redirect('/?error=not_logged_in');
+      }
     } catch (error) {
-      console.error('Spotify callback error details:', error);
-      console.error('Error stack:', error.stack);
-      res.redirect('/?error=auth_failed');
+      console.error('Callback error:', error.message);
+      res.redirect('/?error=callback_failed');
     }
   });
   

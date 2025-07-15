@@ -63,14 +63,14 @@ export function NowPlayingWidget() {
               
               // Open Spotify authentication in a popup
               const popup = window.open(
-                '/api/auth/spotify',
+                '/api/spotify/auth',
                 'spotify-auth',
                 'width=500,height=600,left=' + (window.screen.width / 2 - 250) + ',top=' + (window.screen.height / 2 - 300)
               );
               
               if (!popup) {
                 console.log('Popup blocked, falling back to redirect');
-                window.location.href = '/api/auth/spotify';
+                window.location.href = '/api/spotify/auth';
                 return;
               }
 
