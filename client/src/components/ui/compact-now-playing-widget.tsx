@@ -196,7 +196,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         </div>
         
         {/* Progress bar */}
-        <div className="w-full bg-gray-200 h-0.5 mb-2 mx-2">
+        <div className="bg-gray-200 h-0.5 mb-2 mx-2">
           <div 
             className="bg-black h-0.5 transition-all duration-1000"
             style={{ width: `${progressPercent}%` }}
