@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } 
 import { Input } from "@/components/ui/input";
 import { SearchIcon, Plus, DownloadIcon, UploadIcon } from "lucide-react";
 import { EditableGenre } from "@/components/ui/editable-genre";
-import { ReviewPopup } from "@/components/ui/review-popup";
+import { SimpleReviewPopup } from "@/components/ui/simple-review-popup";
 import { exportAlbumsToCSV, parseCSVToAlbums } from "@/lib/csv-export";
 import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
@@ -156,19 +156,24 @@ export default function NoSkipsPage() {
     setActiveReview(null);
   };
 
-  const handleSaveReview = async (data: { id: number; rating: number; review: string; listenedAt?: Date; genre?: string }) => {
+  const handleSaveReview = async (data: { id: number; review: string; genre?: string }) => {
     try {
       if (data.id === 0) {
-        // Create new review
+        // Create new review (no rating required for no skips)
         await createReview({
           albumId: activeReview?.albumId || 0,
-          rating: data.rating,
+          rating: 5.0, // Default to 5 stars for no skips albums
           review: data.review,
-          listenedAt: data.listenedAt
+          listenedAt: new Date() // Set current date
         });
       } else {
-        // Update existing review
-        await updateReview(data);
+        // Update existing review (only review text, keep original rating and date)
+        await updateReview({
+          id: data.id,
+          rating: activeReview?.rating || 5.0, // Keep existing rating
+          review: data.review,
+          listenedAt: activeReview?.listenedAt ? new Date(activeReview.listenedAt) : undefined
+        });
       }
       
       setActiveReview(null);
@@ -915,7 +920,7 @@ export default function NoSkipsPage() {
         </Dialog>
         
         {/* Review Popup */}
-        <ReviewPopup
+        <SimpleReviewPopup
           review={activeReview}
           isOpen={!!activeReview}
           onClose={handleCloseReview}
