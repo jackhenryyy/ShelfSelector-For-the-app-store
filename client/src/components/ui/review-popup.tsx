@@ -177,7 +177,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
               <RichTextEditor
                 value={editReview}
                 onChange={setEditReview}
-                placeholder="What makes this special to you? Use **bold**, *italic*, or [links](URL)"
+                placeholder="What makes this special to you? Select text and use the toolbar for formatting."
                 rows={4}
               />
             </div>

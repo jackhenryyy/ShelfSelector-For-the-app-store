@@ -108,6 +108,16 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 18, 2025. Implemented comprehensive WYSIWYG rich text editing system:
+  - Replaced all text input areas with visual rich text editors
+  - Users can now bold, italicize, and hyperlink text with immediate visual feedback
+  - No more markdown syntax - formatting appears directly in the text box
+  - Toolbar buttons for Bold, Italic, and Link functionality
+  - Keyboard shortcuts: Ctrl+B for bold, Ctrl+I for italic
+  - Link dialog for easy hyperlink creation with custom text and URLs
+  - Rich text content properly displayed in all review views
+  - Updated placeholders to guide users on formatting options
+  - Eliminated preview boxes for cleaner, more intuitive interface
 - July 18, 2025. Enhanced "The List" review popup functionality:
   - Added star rating display and editing capability in review popup
   - Added "Listened On" date display and editing with calendar picker

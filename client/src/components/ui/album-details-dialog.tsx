@@ -210,7 +210,7 @@ export function AlbumDetailsDialog({
             <RichTextEditor
               value={review}
               onChange={setReview}
-              placeholder="What did you think of this album? Use **bold**, *italic*, or [links](URL)"
+              placeholder="What did you think of this album? Select text and use the toolbar for formatting."
               rows={3}
             />
           </div>

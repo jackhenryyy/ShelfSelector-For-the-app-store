@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Bold, Italic, Link, Type } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Bold, Italic, Link } from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -18,117 +18,146 @@ export function RichTextEditor({
   rows = 4,
   disabled = false
 }: RichTextEditorProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkText, setLinkText] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
+  const [currentRange, setCurrentRange] = useState<Range | null>(null);
 
-  // Convert HTML to display format and vice versa
-  const htmlToDisplay = (html: string) => {
+  // Convert HTML to display format (remove HTML tags for editing)
+  const htmlToPlainText = (html: string) => {
     return html
-      .replace(/<strong>/g, '**')
-      .replace(/<\/strong>/g, '**')
-      .replace(/<em>/g, '*')
-      .replace(/<\/em>/g, '*')
-      .replace(/<a href="([^"]*)"[^>]*>/g, '[')
-      .replace(/<\/a>/g, ']($1)');
+      .replace(/<strong>/g, '')
+      .replace(/<\/strong>/g, '')
+      .replace(/<em>/g, '')
+      .replace(/<\/em>/g, '')
+      .replace(/<a href="[^"]*"[^>]*>/g, '')
+      .replace(/<\/a>/g, '');
   };
 
-  const displayToHtml = (text: string) => {
-    return text
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  };
-
-  const [displayValue, setDisplayValue] = useState(htmlToDisplay(value));
-
+  // Initialize content
   useEffect(() => {
-    setDisplayValue(htmlToDisplay(value));
-  }, [value]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newDisplayValue = e.target.value;
-    setDisplayValue(newDisplayValue);
-    onChange(displayToHtml(newDisplayValue));
-  };
-
-  const applyFormat = (format: 'bold' | 'italic') => {
-    const textarea = document.querySelector(`textarea[data-editor-id="${editorRef.current?.id}"]`) as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = displayValue.substring(start, end);
-    
-    if (selectedText) {
-      let formattedText = '';
-      if (format === 'bold') {
-        formattedText = `**${selectedText}**`;
-      } else if (format === 'italic') {
-        formattedText = `*${selectedText}*`;
+    if (editorRef.current && value) {
+      // Only set if different to avoid cursor jumping
+      if (editorRef.current.innerHTML !== value) {
+        editorRef.current.innerHTML = value;
       }
-      
-      const newValue = displayValue.substring(0, start) + formattedText + displayValue.substring(end);
-      setDisplayValue(newValue);
-      onChange(displayToHtml(newValue));
-      
-      // Restore cursor position
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
-      }, 0);
+    }
+  }, []);
+
+  const handleInput = useCallback(() => {
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML;
+      onChange(html);
+    }
+  }, [onChange]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle keyboard shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'b') {
+        e.preventDefault();
+        applyFormat('bold');
+      } else if (e.key === 'i') {
+        e.preventDefault();
+        applyFormat('italic');
+      }
     }
   };
 
-  const addLink = () => {
-    const textarea = document.querySelector(`textarea[data-editor-id="${editorRef.current?.id}"]`) as HTMLTextAreaElement;
-    if (!textarea) return;
+  const applyFormat = (format: 'bold' | 'italic') => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = displayValue.substring(start, end);
-    
-    setLinkText(selectedText);
+    const range = selection.getRangeAt(0);
+    if (!editorRef.current?.contains(range.commonAncestorContainer)) return;
+
+    // Check if we're inside the formatted element already
+    let parentElement = range.commonAncestorContainer;
+    if (parentElement.nodeType === Node.TEXT_NODE) {
+      parentElement = parentElement.parentNode!;
+    }
+
+    const tagName = format === 'bold' ? 'STRONG' : 'EM';
+    const formattedParent = (parentElement as Element).closest(tagName.toLowerCase());
+
+    if (formattedParent) {
+      // Remove formatting
+      const textContent = formattedParent.textContent || '';
+      const textNode = document.createTextNode(textContent);
+      formattedParent.parentNode?.replaceChild(textNode, formattedParent);
+    } else {
+      // Apply formatting
+      if (!range.collapsed) {
+        const selectedContent = range.extractContents();
+        const formattedElement = document.createElement(tagName.toLowerCase());
+        formattedElement.appendChild(selectedContent);
+        range.insertNode(formattedElement);
+        
+        // Restore selection
+        selection.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(formattedElement);
+        selection.addRange(newRange);
+      }
+    }
+
+    handleInput();
+  };
+
+  const addLink = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    if (!editorRef.current?.contains(range.commonAncestorContainer)) return;
+
+    setCurrentRange(range.cloneRange());
+    setLinkText(range.toString());
     setLinkUrl("");
     setShowLinkDialog(true);
   };
 
   const insertLink = () => {
-    const textarea = document.querySelector(`textarea[data-editor-id="${editorRef.current?.id}"]`) as HTMLTextAreaElement;
-    if (!textarea || !linkText || !linkUrl) return;
+    if (!currentRange || !linkText || !linkUrl) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    
-    const linkMarkdown = `[${linkText}](${linkUrl})`;
-    const newValue = displayValue.substring(0, start) + linkMarkdown + displayValue.substring(end);
-    
-    setDisplayValue(newValue);
-    onChange(displayToHtml(newValue));
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(currentRange);
+
+      const link = document.createElement('a');
+      link.href = linkUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'text-blue-600 hover:text-blue-800 underline';
+      link.textContent = linkText;
+
+      try {
+        currentRange.deleteContents();
+        currentRange.insertNode(link);
+      } catch (e) {
+        // Fallback if range is no longer valid
+        editorRef.current?.appendChild(link);
+      }
+    }
+
     setShowLinkDialog(false);
     setLinkText("");
     setLinkUrl("");
-    
-    // Restore focus
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + linkMarkdown.length, start + linkMarkdown.length);
-    }, 0);
+    setCurrentRange(null);
+    handleInput();
   };
 
-  const editorId = `editor-${Math.random().toString(36).substr(2, 9)}`;
-
   return (
-    <div className={`relative ${className}`} ref={editorRef} id={editorId}>
+    <div className={`relative ${className}`}>
       {/* Toolbar */}
-      <div className="flex items-center gap-1 mb-2 p-2 border border-gray-200 bg-gray-50 rounded-t">
+      <div className="flex items-center gap-1 mb-2 p-2 border border-black bg-gray-50">
         <button
           type="button"
           onClick={() => applyFormat('bold')}
           className="p-1.5 hover:bg-gray-200 rounded transition-colors"
-          title="Bold (wrap selection with **)"
+          title="Bold (Ctrl+B)"
           disabled={disabled}
         >
           <Bold className="w-4 h-4" />
@@ -138,7 +167,7 @@ export function RichTextEditor({
           type="button"
           onClick={() => applyFormat('italic')}
           className="p-1.5 hover:bg-gray-200 rounded transition-colors"
-          title="Italic (wrap selection with *)"
+          title="Italic (Ctrl+I)"
           disabled={disabled}
         >
           <Italic className="w-4 h-4" />
@@ -153,41 +182,21 @@ export function RichTextEditor({
         >
           <Link className="w-4 h-4" />
         </button>
-
-        <div className="mx-2 w-px h-4 bg-gray-300"></div>
-        
-        <button
-          type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="p-1.5 hover:bg-gray-200 rounded transition-colors"
-          title={isExpanded ? "Collapse" : "Expand"}
-          disabled={disabled}
-        >
-          <Type className="w-4 h-4" />
-        </button>
       </div>
 
-      {/* Text Area */}
-      <textarea
-        data-editor-id={editorId}
-        value={displayValue}
-        onChange={handleInputChange}
-        placeholder={placeholder}
-        className="w-full p-3 border border-gray-200 border-t-0 rounded-b font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/20"
-        rows={isExpanded ? rows * 2 : rows}
-        disabled={disabled}
+      {/* Rich Text Editor */}
+      <div
+        ref={editorRef}
+        contentEditable={!disabled}
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
+        className="w-full p-3 border border-black border-t-0 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/20 min-h-[120px] max-h-[300px] overflow-y-auto"
+        style={{ 
+          minHeight: `${rows * 1.5}em`,
+        }}
+        data-placeholder={placeholder}
+        suppressContentEditableWarning={true}
       />
-
-      {/* Preview */}
-      {displayValue && (
-        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
-          <div className="text-xs font-mono text-gray-500 mb-2">Preview:</div>
-          <div 
-            className="prose prose-sm max-w-none font-mono text-sm"
-            dangerouslySetInnerHTML={{ __html: displayToHtml(displayValue) }}
-          />
-        </div>
-      )}
 
       {/* Link Dialog */}
       {showLinkDialog && (
@@ -237,6 +246,19 @@ export function RichTextEditor({
           </div>
         </div>
       )}
+
+      {/* Custom CSS for placeholder */}
+      <style>{`
+        [contenteditable]:empty:before {
+          content: attr(data-placeholder);
+          color: #9ca3af;
+          font-style: italic;
+          pointer-events: none;
+        }
+        [contenteditable]:focus:empty:before {
+          color: #d1d5db;
+        }
+      `}</style>
     </div>
   );
 }
@@ -248,17 +270,10 @@ interface RichTextDisplayProps {
 }
 
 export function RichTextDisplay({ content, className = "" }: RichTextDisplayProps) {
-  const displayToHtml = (text: string) => {
-    return text
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>');
-  };
-
   return (
     <div 
       className={`prose prose-sm max-w-none font-mono text-sm ${className}`}
-      dangerouslySetInnerHTML={{ __html: displayToHtml(content) }}
+      dangerouslySetInnerHTML={{ __html: content }}
     />
   );
 }
