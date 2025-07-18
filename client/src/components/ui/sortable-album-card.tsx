@@ -95,22 +95,24 @@ export function SortableAlbumCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="mb-2"
+      className={`mb-2 ${isDragMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
       {...(isDragMode ? { ...attributes, ...listeners } : {})}
     >
       {/* Album art container with overlay */}
       <div className="relative group">
         <div 
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (isEditingTopFour) {
-              onSelectForTopFour?.();
-            } else {
-              onReview?.();
+            if (!isDragMode) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (isEditingTopFour) {
+                onSelectForTopFour?.();
+              } else {
+                onReview?.();
+              }
             }
           }}
-          className={`block cursor-pointer ${isDragMode ? 'cursor-grab' : ''}`}
+          className="block cursor-pointer"
         >
           <AlbumArt
             src={album.imageUrl}

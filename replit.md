@@ -108,6 +108,14 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 18, 2025. Implemented complete custom drag-and-drop sorting system:
+  - Added custom order option to sort dropdown with three sorting modes: A-Z, date added, and custom order
+  - Created SortableAlbumCard component using @dnd-kit libraries for seamless drag-and-drop functionality
+  - Built API endpoint (/api/no-skips/custom-order) for updating album positions with proper database integration
+  - Added customOrder field to noSkipsAlbums database table for storing user-defined sort positions
+  - Conditional rendering shows draggable grid when "custom order" selected, regular grid for other sorts
+  - Maintains identical visual format (album titles, artists, genres) while enabling drag-and-drop reordering
+  - Real-time database updates with automatic cache invalidation for immediate UI reflection
 - July 18, 2025. Enhanced shared page functionality and improved review indicators:
   - Added read-only review popups to shared no-skips pages with same functionality as main page
   - Updated review indicators from 📝 emoji to black square with white notebook icon for consistent design
