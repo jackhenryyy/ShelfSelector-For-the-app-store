@@ -108,6 +108,13 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 18, 2025. Enhanced shelf page UI and Spotify integration:
+  - Fixed logout button layering issue on shelf page by increasing z-index to z-50
+  - Added compact Spotify widget to bottom navigation bar on shelf page only
+  - Compact widget is 50% smaller with condensed layout and smaller album art
+  - Widget includes same "Add to Queue" and "Add to List" functionality as home page
+  - "Add to List" uses identical AlbumDetailsDialog for consistent review interface
+  - Real-time updates with 1-second refresh rate maintained in compact format
 - July 18, 2025. Enhanced Spotify player functionality and token management:
   - Updated now playing widget to refresh every 1 second for real-time updates
   - Implemented automatic Spotify token refresh to prevent daily re-authentication
