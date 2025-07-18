@@ -6,7 +6,7 @@ import { useQueueAlbums, useAlbumReviews, AlbumReview } from "@/hooks/use-albums
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { processAndSaveAlbum } from "@/lib/spotify";
-import { ReviewPopup } from "@/components/ui/review-popup";
+import { AlbumDetailsDialog } from "@/components/ui/album-details-dialog";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
 
 interface CurrentlyPlayingData {
@@ -37,8 +37,8 @@ export function NowPlayingWidget() {
   const { updateGenre } = useAlbumGenre();
   const [isAddingToQueue, setIsAddingToQueue] = useState(false);
   const [isAddingToList, setIsAddingToList] = useState(false);
-  const [reviewPopupOpen, setReviewPopupOpen] = useState(false);
-  const [currentReview, setCurrentReview] = useState<AlbumReview | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
 
   // Query for currently playing track
   const { data: nowPlaying, isError } = useQuery<CurrentlyPlayingData | null>({
@@ -202,44 +202,15 @@ export function NowPlayingWidget() {
         release_date: nowPlaying.track.album.releaseYear?.toString()
       });
 
-      // Create a new review entry with default values
-      const newReview = await createReview({
-        albumId: albumData.id,
-        rating: 2.5, // Default rating that user can edit
-        review: '',
-        listenedAt: new Date()
-      });
-
-      // Create a full AlbumReview object for the popup
-      const reviewForPopup: AlbumReview = {
-        id: newReview.id,
-        userId: newReview.userId,
-        albumId: newReview.albumId,
-        rating: newReview.rating,
-        review: newReview.review || '',
-        reviewedAt: newReview.reviewedAt,
-        listenedAt: newReview.listenedAt || null,
-        album: {
-          id: albumData.id,
-          spotifyId: albumData.spotifyId,
-          name: albumData.name,
-          artist: albumData.artist,
-          imageUrl: albumData.imageUrl,
-          releaseYear: albumData.releaseYear,
-          genre: albumData.genre,
-          energyLevel: albumData.energyLevel
-        }
-      };
-
-      // Set the current review and open the popup
-      setCurrentReview(reviewForPopup);
-      setReviewPopupOpen(true);
+      // Set the album and open the details dialog (same as queue page)
+      setSelectedAlbum(albumData);
+      setDetailsDialogOpen(true);
       
     } catch (error) {
-      console.error('Error adding to list:', error);
+      console.error('Error processing album:', error);
       toast({
         title: "Error",
-        description: "Failed to add album to list",
+        description: "Failed to process album",
         variant: "destructive",
       });
     } finally {
@@ -247,65 +218,62 @@ export function NowPlayingWidget() {
     }
   };
 
-  const formatTime = (ms: number) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const handleReviewSave = async (data: {
-    id: number;
+  // Function to handle saving a review (copied from queue page)
+  const handleSaveReview = async (data: {
+    albumId: number;
     rating: number;
-    review: string;
+    review?: string;
     listenedAt?: Date;
     genre?: string;
   }) => {
     try {
-      await updateReview({
-        id: data.id,
+      // Create the review in the database
+      await createReview({
+        albumId: data.albumId,
         rating: data.rating,
-        review: data.review,
+        review: data.review || "",
         listenedAt: data.listenedAt
       });
-
-      if (data.genre && currentReview?.album) {
-        await updateGenre(currentReview.album.id, data.genre);
-      }
-
+      
       toast({
-        title: "Review Updated",
-        description: "Your review has been saved",
+        title: "Review submitted",
+        description: "Album has been added to your list",
       });
       
-      setReviewPopupOpen(false);
-      setCurrentReview(null);
+      setSelectedAlbum(null);
+      setDetailsDialogOpen(false);
     } catch (error) {
-      console.error('Error saving review:', error);
+      console.error("Error submitting review:", error);
       toast({
-        title: "Error",
-        description: "Failed to save review",
-        variant: "destructive",
+        title: "Review failed",
+        description: "There was an error submitting your review",
+        variant: "destructive"
       });
     }
   };
 
-  const handleReviewDelete = async (id: number) => {
+  // Function to handle updating genre (copied from queue page)
+  const handleUpdateGenre = async (albumId: number, genre: string) => {
     try {
-      await deleteReview(id);
+      await updateGenre(albumId, genre);
       toast({
-        title: "Review Deleted",
-        description: "Your review has been deleted",
+        title: "Genre updated",
+        description: "Album genre has been updated",
       });
-      setReviewPopupOpen(false);
-      setCurrentReview(null);
     } catch (error) {
-      console.error('Error deleting review:', error);
+      console.error("Error updating genre:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete review",
-        variant: "destructive",
+        title: "Update failed",
+        description: "There was an error updating the genre",
+        variant: "destructive"
       });
     }
+  };
+
+  const formatTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const progressPercent = (nowPlaying.progressMs / nowPlaying.durationMs) * 100;
@@ -369,18 +337,16 @@ export function NowPlayingWidget() {
       </div>
       </div>
 
-      {/* Review Popup */}
-      <ReviewPopup
-        review={currentReview}
-        isOpen={reviewPopupOpen}
-        onClose={() => {
-          setReviewPopupOpen(false);
-          setCurrentReview(null);
-        }}
-        onSave={handleReviewSave}
-        onDelete={handleReviewDelete}
-        onGenreUpdate={updateGenre}
-      />
+      {/* Album Details Dialog */}
+      {selectedAlbum && (
+        <AlbumDetailsDialog
+          isOpen={detailsDialogOpen}
+          onClose={() => setDetailsDialogOpen(false)}
+          album={selectedAlbum}
+          onSave={handleSaveReview}
+          onUpdateGenre={handleUpdateGenre}
+        />
+      )}
     </>
   );
 }
