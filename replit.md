@@ -108,6 +108,12 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 18, 2025. Enhanced shared page functionality and improved review indicators:
+  - Added read-only review popups to shared no-skips pages with same functionality as main page
+  - Updated review indicators from 📝 emoji to black square with white notebook icon for consistent design
+  - Albums with reviews show visual indicator that matches app's black square design language
+  - Shared pages include Spotify button hover overlay for opening albums in Spotify
+  - Server API now includes no-skips reviews in shared collection data
 - July 18, 2025. Updated top 4 widget design and share page layout:
   - Moved compact top 4 widget from nav bar to top of no-skips page per user preference
   - Increased album cover size to 10x10px with improved spacing and centering

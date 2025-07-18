@@ -7,7 +7,7 @@ import { AlbumGrid } from "@/components/ui/album-grid";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, Plus, DownloadIcon, UploadIcon } from "lucide-react";
+import { SearchIcon, Plus, DownloadIcon, UploadIcon, NotebookPen } from "lucide-react";
 import { EditableGenre } from "@/components/ui/editable-genre";
 import { SimpleReviewPopup } from "@/components/ui/simple-review-popup";
 import { exportAlbumsToCSV, parseCSVToAlbums } from "@/lib/csv-export";
@@ -844,8 +844,8 @@ export default function NoSkipsPage() {
 
                 {/* Review indicator */}
                 {hasReview(album.album.id) && (
-                  <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded-full w-5 h-5 flex items-center justify-center">
-                    <span className="text-xs">📝</span>
+                  <div className="absolute top-2 left-2 bg-black w-5 h-5 flex items-center justify-center">
+                    <NotebookPen className="w-3 h-3 text-white" />
                   </div>
                 )}
                 

@@ -7,7 +7,7 @@ import { AlbumGrid } from "@/components/ui/album-grid";
 import { AlbumArt } from "@/components/ui/album-art";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { SimpleReviewPopup } from "@/components/ui/simple-review-popup";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, NotebookPen } from "lucide-react";
 import { openInSpotify } from "@/lib/spotify";
 import { NoSkipsReviewWithAlbum } from "@/hooks/use-no-skips-reviews";
 
@@ -214,8 +214,8 @@ export default function SharedNoSkipsPage() {
 
                     {/* Review indicator */}
                     {hasReview(album.album.id) && (
-                      <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded-full w-5 h-5 flex items-center justify-center">
-                        <span className="text-xs">📝</span>
+                      <div className="absolute top-2 left-2 bg-black w-5 h-5 flex items-center justify-center">
+                        <NotebookPen className="w-3 h-3 text-white" />
                       </div>
                     )}
 
