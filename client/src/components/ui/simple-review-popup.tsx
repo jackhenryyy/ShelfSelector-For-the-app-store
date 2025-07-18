@@ -18,9 +18,10 @@ interface SimpleReviewPopupProps {
   }) => void;
   onDelete?: (id: number) => void;
   onGenreUpdate?: (albumId: number, genre: string) => void;
+  readOnly?: boolean;
 }
 
-export function SimpleReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenreUpdate }: SimpleReviewPopupProps) {
+export function SimpleReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenreUpdate, readOnly = false }: SimpleReviewPopupProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editReview, setEditReview] = useState("");
   const [editGenre, setEditGenre] = useState("");
@@ -81,7 +82,7 @@ export function SimpleReviewPopup({ review, isOpen, onClose, onSave, onDelete, o
       <DialogContent className="max-w-md">
         <div className="flex items-center justify-between">
           <DialogTitle className="font-mono">Review</DialogTitle>
-          {!isEditing && (
+          {!readOnly && !isEditing && (
             <button 
               onClick={() => setIsEditing(true)}
               className="px-3 py-1 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 mr-8"
@@ -108,7 +109,7 @@ export function SimpleReviewPopup({ review, isOpen, onClose, onSave, onDelete, o
           <div className="flex flex-col gap-1">
             <h3 className="font-mono text-sm font-medium">{review.album.name}</h3>
             <p className="font-mono text-xs text-gray-500">{review.album.artist}</p>
-            {isEditing ? (
+            {!readOnly && isEditing ? (
               <Input
                 value={editGenre}
                 onChange={(e) => setEditGenre(e.target.value)}
@@ -121,7 +122,7 @@ export function SimpleReviewPopup({ review, isOpen, onClose, onSave, onDelete, o
           </div>
         </div>
 
-        {isEditing ? (
+        {!readOnly && isEditing ? (
           /* Edit Mode */
           <>
             {/* Review Text */}
@@ -175,7 +176,7 @@ export function SimpleReviewPopup({ review, isOpen, onClose, onSave, onDelete, o
 
             {/* View Mode Action Buttons */}
             <div className="flex justify-between mt-6">
-              {onDelete && (
+              {!readOnly && onDelete && (
                 <button 
                   onClick={handleDelete}
                   className="px-3 py-2 border border-red-500 bg-white text-red-500 font-mono text-sm hover:bg-red-50 flex items-center gap-2"

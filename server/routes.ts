@@ -524,15 +524,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'User not found' });
       }
       
-      // Get the user's no-skips albums and top four
+      // Get the user's no-skips albums, top four, and reviews
       const noSkipsAlbums = await storage.getNoSkipsAlbums(userId);
       const topFourAlbums = await storage.getTopFourAlbums(userId);
+      const noSkipsReviews = await storage.getNoSkipsReviews(userId);
       
-      // Return both collections along with the username (but not email or other private info)
+      // Return collections along with the username (but not email or other private info)
       res.json({
         username: user.username,
         noSkipsAlbums,
-        topFourAlbums
+        topFourAlbums,
+        noSkipsReviews
       });
     } catch (error) {
       console.error('Get shared no skips error:', error);

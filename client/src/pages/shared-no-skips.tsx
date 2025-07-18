@@ -6,8 +6,10 @@ import { Layout } from "@/components/ui/layout";
 import { AlbumGrid } from "@/components/ui/album-grid";
 import { AlbumArt } from "@/components/ui/album-art";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
+import { SimpleReviewPopup } from "@/components/ui/simple-review-popup";
 import { ArrowLeft } from "lucide-react";
 import { openInSpotify } from "@/lib/spotify";
+import { NoSkipsReviewWithAlbum } from "@/hooks/use-no-skips-reviews";
 
 interface SharedNoSkipsData {
   username: string;
@@ -45,12 +47,29 @@ interface SharedNoSkipsData {
       genre: string | null;
     };
   }[];
+  noSkipsReviews: {
+    id: number;
+    userId: number;
+    albumId: number;
+    review: string;
+    reviewedAt: string;
+    album: {
+      id: number;
+      spotifyId: string;
+      name: string;
+      artist: string;
+      imageUrl: string;
+      releaseYear: number | null;
+      genre: string | null;
+    };
+  }[];
 }
 
 export default function SharedNoSkipsPage() {
   const { userId } = useParams<{ userId: string }>();
   const { toast } = useToast();
   const [gridScale, setGridScale] = useState(4);
+  const [activeReview, setActiveReview] = useState<NoSkipsReviewWithAlbum | null>(null);
   
   // Fetch the shared collection data
   const { data, isLoading, error } = useQuery<SharedNoSkipsData>({
@@ -62,6 +81,28 @@ export default function SharedNoSkipsPage() {
   // Handle opening album in Spotify
   const handleOpenAlbumInSpotify = (spotifyId: string) => {
     openInSpotify(spotifyId);
+  };
+
+  // Handle opening album review
+  const handleOpenReview = (albumId: number) => {
+    if (!data?.noSkipsReviews) return;
+    
+    // Find existing review for this album
+    const existingReview = data.noSkipsReviews.find(r => r.albumId === albumId);
+    
+    if (existingReview) {
+      setActiveReview(existingReview as NoSkipsReviewWithAlbum);
+    }
+  };
+
+  // Handle closing review popup
+  const handleCloseReview = () => {
+    setActiveReview(null);
+  };
+
+  // Check if an album has a review
+  const hasReview = (albumId: number): boolean => {
+    return data?.noSkipsReviews?.some(review => review.albumId === albumId) || false;
   };
   
   useEffect(() => {
@@ -129,7 +170,7 @@ export default function SharedNoSkipsPage() {
                         .map((album) => (
                           <button
                             key={album.id}
-                            onClick={() => handleOpenAlbumInSpotify(album.album.spotifyId)}
+                            onClick={() => handleOpenReview(album.album.id)}
                             className="hover:opacity-80 transition-opacity"
                             title={`${album.album.name} by ${album.album.artist}`}
                           >
@@ -159,32 +200,63 @@ export default function SharedNoSkipsPage() {
             <AlbumGrid columns={gridScale}>
               {sortedNoSkipsAlbums.map((album) => (
                 <div key={album.id} className="mb-2">
-                  <a 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleOpenAlbumInSpotify(album.album.spotifyId);
-                    }}
-                  >
-                    <AlbumArt
-                      src={album.album.imageUrl}
-                      alt={album.album.name}
-                    />
-                    {gridScale < 5 && (
-                      <>
-                        <div className="mt-1 text-xs truncate">{album.album.name}</div>
-                        <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
-                        {album.album.genre && (
-                          <div className="mt-1 text-xs text-gray-400 truncate">{album.album.genre}</div>
-                        )}
-                      </>
+                  {/* Album art container with review indicator */}
+                  <div className="relative group">
+                    <div 
+                      onClick={() => handleOpenReview(album.album.id)}
+                      className="block cursor-pointer"
+                    >
+                      <AlbumArt
+                        src={album.album.imageUrl}
+                        alt={album.album.name}
+                      />
+                    </div>
+
+                    {/* Review indicator */}
+                    {hasReview(album.album.id) && (
+                      <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded-full w-5 h-5 flex items-center justify-center">
+                        <span className="text-xs">📝</span>
+                      </div>
                     )}
-                  </a>
+
+                    {/* Spotify button in top right corner */}
+                    <button 
+                      className="absolute top-2 right-2 bg-black bg-opacity-75 w-6 h-6 flex items-center justify-center text-white hover:bg-opacity-90 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleOpenAlbumInSpotify(album.album.spotifyId);
+                      }}
+                      title="Open in Spotify"
+                    >
+                      ♪
+                    </button>
+                  </div>
+                  
+                  {/* Album details */}
+                  {gridScale < 5 && (
+                    <>
+                      <div className="mt-1 text-xs truncate">{album.album.name}</div>
+                      <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
+                      {album.album.genre && (
+                        <div className="mt-1 text-xs text-gray-400 truncate">{album.album.genre}</div>
+                      )}
+                    </>
+                  )}
                 </div>
               ))}
             </AlbumGrid>
           </>
         )}
+
+        {/* Read-only Review Popup */}
+        <SimpleReviewPopup
+          review={activeReview}
+          isOpen={!!activeReview}
+          onClose={handleCloseReview}
+          onSave={() => {}} // No-op for read-only
+          readOnly={true} // Add read-only prop
+        />
       </div>
     </Layout>
   );
