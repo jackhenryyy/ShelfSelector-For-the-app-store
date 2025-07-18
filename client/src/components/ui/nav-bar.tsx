@@ -24,6 +24,8 @@ const navItems = [
 export function NavBar() {
   const [location] = useLocation();
 
+  console.log("NavBar current location:", location);
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black/20 z-50">
       {/* Show compact Spotify widget only on the shelf page */}
