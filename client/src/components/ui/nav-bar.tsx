@@ -28,10 +28,8 @@ export function NavBar() {
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black/20 z-50">
       {/* Show compact Spotify widget only on the home page */}
       {location === "/" && (
-        <div className="flex justify-center">
-          <div className="w-1/2">
-            <CompactNowPlayingWidget />
-          </div>
+        <div className="w-1/2 mx-auto">
+          <CompactNowPlayingWidget />
         </div>
       )}
       

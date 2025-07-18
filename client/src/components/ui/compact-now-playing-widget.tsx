@@ -185,7 +185,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
 
   return (
     <>
-      <div className={`bg-white border-t border-black p-2 ${className}`}>
+      <div className={`bg-white border border-black p-2 ${className}`}>
         <div className="flex items-center justify-between mb-1">
           <h3 className="font-mono text-xs font-medium">
             {nowPlaying.isPlaying ? "Now Playing" : "Paused"}
