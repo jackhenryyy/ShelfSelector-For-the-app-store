@@ -29,7 +29,7 @@ export function Layout({
         <BlurredBackground imageUrl={backgroundImage} />
       )}
       
-      <div className="absolute top-0 right-0 p-1 sm:p-2 z-10">
+      <div className="absolute top-0 right-0 p-1 sm:p-2 z-50">
         {user && (
           <button 
             onClick={() => logoutMutation.mutate()}
