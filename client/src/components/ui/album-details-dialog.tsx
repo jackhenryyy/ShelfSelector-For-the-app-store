@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X, Edit2, Calendar } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";
-import { Textarea } from "./textarea";
+import { RichTextEditor } from "./rich-text-editor";
 import { StarRating } from "./star-rating";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -207,11 +207,11 @@ export function AlbumDetailsDialog({
             <label className="block text-sm font-bold font-mono mb-2">
               Review (optional)
             </label>
-            <Textarea
+            <RichTextEditor
               value={review}
-              onChange={(e) => setReview(e.target.value)}
-              placeholder="What did you think of this album?"
-              className="font-mono min-h-[120px] resize-none"
+              onChange={setReview}
+              placeholder="What did you think of this album? Use **bold**, *italic*, or [links](URL)"
+              rows={3}
             />
           </div>
 

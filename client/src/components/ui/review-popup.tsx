@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
+import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { AlbumReview } from "@/hooks/use-albums";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { Calendar } from "@/components/ui/calendar";
@@ -173,11 +174,10 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
             {/* Review Text */}
             <div className="mt-6">
               <label className="block font-mono text-sm mb-2">Review</label>
-              <textarea
+              <RichTextEditor
                 value={editReview}
-                onChange={(e) => setEditReview(e.target.value)}
-                placeholder="What makes this special to you?"
-                className="w-full p-3 border border-black font-mono text-sm resize-none"
+                onChange={setEditReview}
+                placeholder="What makes this special to you? Use **bold**, *italic*, or [links](URL)"
                 rows={4}
               />
             </div>
@@ -233,7 +233,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
             {review.review && (
               <div className="mt-6">
                 <h4 className="font-mono text-sm mb-2">Review</h4>
-                <p className="font-mono text-sm leading-relaxed">{review.review}</p>
+                <RichTextDisplay content={review.review} className="leading-relaxed" />
               </div>
             )}
 

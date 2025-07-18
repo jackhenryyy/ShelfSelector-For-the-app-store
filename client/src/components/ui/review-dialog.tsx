@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { AlbumArt } from "@/components/ui/album-art";
 import { Album } from "@shared/schema";
 import { StarRating } from "./star-rating";
@@ -132,17 +132,12 @@ export function ReviewDialog({ album, open, onOpenChange, onSubmit }: ReviewDial
         {/* Review Section */}
         <div className="py-2">
           <label className="font-mono text-sm block mb-2">Review (optional)</label>
-          <Textarea
-            placeholder="What did you think of this album?"
-            className="font-mono text-sm border-black rounded-none resize-none"
+          <RichTextEditor
             value={review}
-            onChange={(e) => setReview(e.target.value)}
-            maxLength={200}
+            onChange={setReview}
+            placeholder="What did you think of this album? Use **bold**, *italic*, or [links](URL)"
             rows={3}
           />
-          <p className="font-mono text-xs text-black/60 mt-1">
-            {review.length}/200 characters
-          </p>
         </div>
         
         {/* Listen Date Section */}
