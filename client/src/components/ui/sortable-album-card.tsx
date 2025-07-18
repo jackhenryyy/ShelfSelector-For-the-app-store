@@ -14,6 +14,9 @@ interface SortableAlbumCardProps {
   onReview?: () => void;
   hasReview?: boolean;
   isDragMode?: boolean;
+  isEditingTopFour?: boolean;
+  isSelectedForTopFour?: boolean;
+  onSelectForTopFour?: () => void;
 }
 
 export function SortableAlbumCard({ 
@@ -23,7 +26,10 @@ export function SortableAlbumCard({
   onRemove, 
   onReview, 
   hasReview = false,
-  isDragMode = false
+  isDragMode = false,
+  isEditingTopFour = false,
+  isSelectedForTopFour = false,
+  onSelectForTopFour
 }: SortableAlbumCardProps) {
   const {
     attributes,
@@ -89,64 +95,67 @@ export function SortableAlbumCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group ${sizeClasses[gridScale as keyof typeof sizeClasses]} ${isDragMode ? 'cursor-grab' : ''}`}
+      className="mb-2"
       {...(isDragMode ? { ...attributes, ...listeners } : {})}
     >
-      <div className="relative w-full h-full">
-        <AlbumArt 
-          src={album.imageUrl} 
-          alt={`${album.name} by ${album.artist}`}
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Spotify overlay */}
+      {/* Album art container with overlay */}
+      <div className="relative group">
         <div 
-          className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
-          onClick={() => openInSpotify(album.spotifyId, 'album')}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isEditingTopFour) {
+              onSelectForTopFour?.();
+            } else {
+              onReview?.();
+            }
+          }}
+          className={`block cursor-pointer ${isDragMode ? 'cursor-grab' : ''}`}
         >
-          <svg className="w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.6 0-.36.24-.66.54-.781 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.242 1.022zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
-          </svg>
+          <AlbumArt
+            src={album.imageUrl}
+            alt={album.name}
+            className={isEditingTopFour && isSelectedForTopFour 
+              ? "border-2 border-green-500" 
+              : ""}
+          />
         </div>
-
-        {/* Remove button */}
-        {onRemove && !isDragMode && (
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            variant="outline"
-            size="sm"
-            className={`absolute -top-1 -right-1 bg-black text-white border-black hover:bg-gray-800 ${buttonSizeClasses[gridScale as keyof typeof buttonSizeClasses]} p-0 flex items-center justify-center`}
-          >
-            ×
-          </Button>
-        )}
 
         {/* Review indicator */}
         {hasReview && (
-          <div 
-            className="absolute top-1 left-1 bg-black text-white p-1 cursor-pointer hover:bg-gray-800 transition-colors"
+          <div className="absolute top-2 left-2 bg-black w-5 h-5 flex items-center justify-center">
+            <NotebookPen className="w-3 h-3 text-white" />
+          </div>
+        )}
+        
+        {/* Remove button in top right corner - square overlay */}
+        {onRemove && !isDragMode && !isEditingTopFour && (
+          <button 
+            className="absolute top-2 right-2 bg-black bg-opacity-75 w-6 h-6 flex items-center justify-center text-white hover:bg-opacity-90 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
             onClick={(e) => {
               e.stopPropagation();
-              onReview?.();
+              e.preventDefault();
+              onRemove();
             }}
+            title="Remove from No Skips"
           >
-            <NotebookPen className={`${gridScale <= 4 ? 'w-2 h-2' : gridScale <= 8 ? 'w-3 h-3' : 'w-4 h-4'}`} />
-          </div>
+            ✕
+          </button>
         )}
       </div>
       
-      {/* Album title and artist - only show if not dragging */}
-      {!isDragging && (
-        <div className={`mt-1 ${textSizeClasses[gridScale as keyof typeof textSizeClasses]} leading-tight`}>
-          <div className="font-semibold truncate" title={album.name}>
-            {album.name}
-          </div>
-          <div className="text-gray-600 truncate" title={album.artist}>
-            {album.artist}
-          </div>
+      {/* Album details outside the overlay area */}
+      {gridScale < 5 && !isDragging && (
+        <>
+          <div className="mt-1 text-xs truncate">{album.name}</div>
+          <div className="text-xs text-gray-500 truncate">{album.artist}</div>
+        </>
+      )}
+      
+      {/* Genre display (non-editable) */}
+      {gridScale < 5 && !isDragging && (
+        <div className="mt-1 text-xs text-gray-500">
+          {album.genre || "no genre"}
         </div>
       )}
     </div>

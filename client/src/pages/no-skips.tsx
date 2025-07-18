@@ -872,12 +872,7 @@ export default function NoSkipsPage() {
               items={sortedNoSkipsAlbums.map(album => album.id.toString())}
               strategy={rectSortingStrategy}
             >
-              <div 
-                className={`grid gap-4 mb-4`}
-                style={{
-                  gridTemplateColumns: `repeat(${gridScale}, minmax(0, 1fr))`
-                }}
-              >
+              <AlbumGrid columns={gridScale}>
                 {sortedNoSkipsAlbums.map((album) => (
                   <SortableAlbumCard
                     key={album.id}
@@ -888,9 +883,12 @@ export default function NoSkipsPage() {
                     hasReview={hasReview(album.album.id)}
                     onRemove={() => handleRemoveFromNoSkips(album.albumId)}
                     onReview={() => handleOpenReview(album.album.id)}
+                    isEditingTopFour={isEditingTopFour}
+                    isSelectedForTopFour={selectedForTopFour.some(item => item.albumId === album.albumId)}
+                    onSelectForTopFour={() => handleSelectForTopFour(album.albumId)}
                   />
                 ))}
-              </div>
+              </AlbumGrid>
             </SortableContext>
           </DndContext>
         ) : (
