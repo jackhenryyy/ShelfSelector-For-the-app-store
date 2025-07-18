@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...restBody,
         userId,
         reviewedAt: new Date(),
-        listenedAt: listenedAt || null
+        listenedAt: listenedAt || new Date() // Default to current date if not provided
       });
       
       const review = await storage.createAlbumReview(data);
@@ -722,15 +722,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }),
         review: z.string().optional(),
         listenedAt: z.string().optional().transform(val => {
-          if (!val) return null;
+          if (!val) return undefined; // Keep undefined to preserve existing date
           try {
             const date = new Date(val);
             // Check if the date is valid
-            if (isNaN(date.getTime())) return null;
+            if (isNaN(date.getTime())) return undefined;
             return date;
           } catch (error) {
             console.error('Invalid date format:', val);
-            return null;
+            return undefined;
           }
         })
       });

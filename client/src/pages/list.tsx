@@ -113,10 +113,10 @@ export default function ListPage() {
     : { "search results": filteredReviews };
     
   // Helper function to get day from date string
-  // Prioritize listenedAt (when user actually listened), fallback to reviewedAt (when review was created)
+  // Use listenedAt if available, otherwise fall back to reviewedAt
   const getDay = (review: AlbumReview) => {
     try {
-      // First try to use listenedAt if it exists (user-selected date)
+      // Use listenedAt if it exists, otherwise fall back to reviewedAt
       const dateStr = review.listenedAt || review.reviewedAt;
       const date = new Date(dateStr);
       

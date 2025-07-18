@@ -281,9 +281,9 @@ export function groupAlbumsByMonth<T extends { reviewedAt?: string, listenedAt?:
   
   albums.forEach(album => {
     try {
-      // Use reviewedAt as primary date (the date the review was created)
-      // Fall back to listenedAt (when user listened to album) or addedAt for other collections
-      let dateStr = album.reviewedAt || album.listenedAt || album.addedAt || '';
+      // Use listenedAt as primary date (when user listened to album)
+      // Fall back to reviewedAt (when review was created) or addedAt for other collections
+      let dateStr = album.listenedAt || album.reviewedAt || album.addedAt || '';
       
       // If it's already a valid ISO string, use it directly
       let date: Date;
