@@ -185,8 +185,8 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
 
   return (
     <>
-      <div className={`bg-white border border-black p-2 ${className}`}>
-        <div className="flex items-center justify-between mb-1">
+      <div className={`bg-white border border-black px-0 py-2 ${className}`}>
+        <div className="flex items-center justify-between mb-1 px-2">
           <h3 className="font-mono text-xs font-medium">
             {nowPlaying.isPlaying ? "Now Playing" : "Paused"}
           </h3>
@@ -196,14 +196,14 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         </div>
         
         {/* Progress bar */}
-        <div className="w-full bg-gray-200 h-0.5 mb-2">
+        <div className="w-full bg-gray-200 h-0.5 mb-2 mx-2">
           <div 
             className="bg-black h-0.5 transition-all duration-1000"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-2">
           <AlbumArt
             src={nowPlaying.track.album.imageUrl}
             alt={nowPlaying.track.album.name}
