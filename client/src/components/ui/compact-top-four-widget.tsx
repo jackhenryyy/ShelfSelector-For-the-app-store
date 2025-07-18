@@ -18,10 +18,10 @@ export function CompactTopFourWidget({ className = "", onAlbumClick }: CompactTo
     .slice(0, 4);
 
   return (
-    <div className={`bg-white border border-black p-2 ${className}`}>
-      <div className="flex items-center gap-2">
+    <div className={`bg-white border border-black ${className}`}>
+      <div className="flex items-center justify-center gap-3 px-3 py-2">
         <span className="font-mono text-xs text-black/70 whitespace-nowrap">top 4</span>
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           {sortedTopFour.map((album) => (
             <button
               key={album.id}
@@ -32,8 +32,8 @@ export function CompactTopFourWidget({ className = "", onAlbumClick }: CompactTo
               <AlbumArt
                 src={album.album.imageUrl}
                 alt={album.album.name}
-                size="tiny"
-                className="w-6 h-6 rounded"
+                size="smaller"
+                className="w-8 h-8 rounded"
               />
             </button>
           ))}
@@ -41,7 +41,7 @@ export function CompactTopFourWidget({ className = "", onAlbumClick }: CompactTo
           {Array.from({ length: 4 - sortedTopFour.length }).map((_, index) => (
             <div 
               key={`empty-${index}`} 
-              className="w-6 h-6 bg-gray-100 rounded border border-gray-200"
+              className="w-8 h-8 bg-gray-100 rounded border border-gray-200"
             />
           ))}
         </div>
