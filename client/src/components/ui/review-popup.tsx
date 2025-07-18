@@ -141,8 +141,8 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
             <div className="mt-6">
               <label className="block font-mono text-sm mb-2">Rating</label>
               <StarRating 
-                rating={editRating} 
-                onRatingChange={setEditRating}
+                value={editRating} 
+                onChange={setEditRating}
                 readonly={false}
               />
             </div>
@@ -217,7 +217,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
               {/* Star Rating Display */}
               <div>
                 <h4 className="font-mono text-sm mb-2">Rating</h4>
-                <StarRating rating={review.rating || 0} readonly />
+                <StarRating value={parseFloat(review.rating.toString()) || 0} readonly />
               </div>
               
               {/* Listen Date Display */}
