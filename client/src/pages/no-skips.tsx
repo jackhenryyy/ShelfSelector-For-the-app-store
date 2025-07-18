@@ -23,7 +23,8 @@ import {
   AlbumFilterSort, 
   SortOption, 
   FilterOption, 
-  filterAlbums
+  filterAlbums,
+  sortAlbums
 } from "@/components/ui/album-filter-sort";
 import {
   DndContext,
