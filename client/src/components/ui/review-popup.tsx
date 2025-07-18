@@ -2,8 +2,13 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { AlbumArt } from "@/components/ui/album-art";
+import { StarRating } from "@/components/ui/star-rating";
 import { AlbumReview } from "@/hooks/use-albums";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 
 interface ReviewPopupProps {
   review: AlbumReview | null;
@@ -24,6 +29,8 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
   const [isEditing, setIsEditing] = useState(false);
   const [editReview, setEditReview] = useState("");
   const [editGenre, setEditGenre] = useState("");
+  const [editRating, setEditRating] = useState(0);
+  const [editListenedAt, setEditListenedAt] = useState<Date | undefined>(undefined);
   const { updateGenre, isUpdating } = useAlbumGenre();
 
   // Update local state when review changes
@@ -31,6 +38,8 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
     if (review) {
       setEditReview(review.review || "");
       setEditGenre(review.album?.genre || "");
+      setEditRating(review.rating || 0);
+      setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
     }
   }, [review]);
 
@@ -52,9 +61,9 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
     
     onSave({
       id: review.id,
-      rating: 5, // Set a default rating since backend expects it
+      rating: editRating,
       review: editReview,
-      listenedAt: undefined, // Remove date requirement
+      listenedAt: editListenedAt,
       genre: editGenre
     });
     
@@ -65,6 +74,8 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
     if (review) {
       setEditReview(review.review || "");
       setEditGenre(review.album?.genre || "");
+      setEditRating(review.rating || 0);
+      setEditListenedAt(review.listenedAt ? new Date(review.listenedAt) : undefined);
     }
     setIsEditing(false);
   };
@@ -126,6 +137,39 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
         {isEditing ? (
           /* Edit Mode */
           <>
+            {/* Rating Edit */}
+            <div className="mt-6">
+              <label className="block font-mono text-sm mb-2">Rating</label>
+              <StarRating 
+                rating={editRating} 
+                onRatingChange={setEditRating}
+                readonly={false}
+              />
+            </div>
+
+            {/* Listen Date Edit */}
+            <div className="mt-6">
+              <label className="block font-mono text-sm mb-2">Listened On</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="w-full flex items-center gap-2 px-3 py-2 border border-black bg-white text-left font-mono text-sm hover:bg-gray-50"
+                  >
+                    <CalendarIcon className="w-4 h-4" />
+                    {editListenedAt ? format(editListenedAt, "PPP") : "Select date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={editListenedAt}
+                    onSelect={setEditListenedAt}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             {/* Review Text */}
             <div className="mt-6">
               <label className="block font-mono text-sm mb-2">Review</label>
@@ -139,24 +183,52 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
             </div>
 
             {/* Edit Action Buttons */}
-            <div className="flex justify-end gap-2 mt-6">
-              <button 
-                onClick={handleCancel}
-                className="px-4 py-2 border border-black bg-white text-black font-mono text-sm hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleSave}
-                className="px-4 py-2 border border-black bg-black text-white font-mono text-sm hover:bg-gray-800"
-              >
-                Save Changes
-              </button>
+            <div className="flex justify-between gap-2 mt-6">
+              {onDelete && (
+                <button 
+                  onClick={handleDelete}
+                  className="px-3 py-2 border border-red-500 bg-white text-red-500 font-mono text-sm hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <button 
+                  onClick={handleCancel}
+                  className="px-4 py-2 border border-black bg-white text-black font-mono text-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSave}
+                  className="px-4 py-2 border border-black bg-black text-white font-mono text-sm hover:bg-gray-800"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </>
         ) : (
           /* View Mode */
           <>
+            {/* Rating and Date Display */}
+            <div className="mt-6 flex flex-col gap-4">
+              {/* Star Rating Display */}
+              <div>
+                <h4 className="font-mono text-sm mb-2">Rating</h4>
+                <StarRating rating={review.rating || 0} readonly />
+              </div>
+              
+              {/* Listen Date Display */}
+              {review.listenedAt && (
+                <div>
+                  <h4 className="font-mono text-sm mb-2">Listened On</h4>
+                  <p className="font-mono text-sm">{format(new Date(review.listenedAt), "PPP")}</p>
+                </div>
+              )}
+            </div>
+
             {/* Review Text Display */}
             {review.review && (
               <div className="mt-6">
@@ -165,10 +237,19 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
               </div>
             )}
 
-            {/* View Mode Close Button */}
-            <div className="flex justify-end mt-6">
+            {/* View Mode Action Buttons */}
+            <div className="flex justify-between mt-6">
+              {onDelete && (
+                <button 
+                  onClick={handleDelete}
+                  className="px-3 py-2 border border-red-500 bg-white text-red-500 font-mono text-sm hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              )}
               <DialogClose asChild>
-                <button className="px-4 py-2 border border-black bg-white text-black font-mono text-sm hover:bg-gray-50">
+                <button className="px-4 py-2 border border-black bg-white text-black font-mono text-sm hover:bg-gray-50 ml-auto">
                   Close
                 </button>
               </DialogClose>

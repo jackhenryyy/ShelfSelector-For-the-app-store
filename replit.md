@@ -108,6 +108,13 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 18, 2025. Enhanced "The List" review popup functionality:
+  - Added star rating display and editing capability in review popup
+  - Added "Listened On" date display and editing with calendar picker
+  - Restored delete button functionality in both view and edit modes of popup
+  - Updated popup to show comprehensive review information (rating, date, review text)
+  - Maintained existing genre editing and album information display
+  - Date and day boxes on main list page now reflect "listened to date" when available
 - July 18, 2025. Enhanced shelf page UI and Spotify integration:
   - Fixed logout button layering issue on shelf page by increasing z-index to z-50
   - Added compact Spotify widget to bottom navigation bar on shelf page only
