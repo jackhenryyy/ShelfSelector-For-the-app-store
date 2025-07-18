@@ -321,5 +321,14 @@ export function groupAlbumsByMonth<T extends { reviewedAt?: string, listenedAt?:
     }
   });
   
+  // Sort albums within each month by date (most recent first)
+  Object.keys(grouped).forEach(monthYear => {
+    grouped[monthYear].sort((a, b) => {
+      const dateA = new Date(a.listenedAt || a.reviewedAt || a.addedAt || '');
+      const dateB = new Date(b.listenedAt || b.reviewedAt || b.addedAt || '');
+      return dateB.getTime() - dateA.getTime(); // Most recent first
+    });
+  });
+  
   return grouped;
 }
