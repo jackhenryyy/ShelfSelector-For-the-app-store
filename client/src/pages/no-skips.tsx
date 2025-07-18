@@ -98,7 +98,11 @@ export default function NoSkipsPage() {
   
   // Drag and drop sensors
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -156,11 +160,15 @@ export default function NoSkipsPage() {
 
   // Drag and drop handler
   const handleDragEnd = (event: DragEndEvent) => {
+    console.log('handleDragEnd triggered', event);
     const { active, over } = event;
 
     if (active.id !== over?.id) {
+      console.log('Drag detected - moving from', active.id, 'to', over?.id);
       const oldIndex = sortedNoSkipsAlbums.findIndex((album) => album.id.toString() === active.id);
       const newIndex = sortedNoSkipsAlbums.findIndex((album) => album.id.toString() === over?.id);
+
+      console.log('Old index:', oldIndex, 'New index:', newIndex);
 
       if (oldIndex !== -1 && newIndex !== -1) {
         // Create new array with moved item
@@ -172,10 +180,15 @@ export default function NoSkipsPage() {
           customOrder: index
         }));
 
+        console.log('Updating custom order:', albumOrders);
         // Update the custom order
         updateCustomOrderMutation.mutate(albumOrders);
       }
     }
+  };
+  
+  const handleDragStart = (event: any) => {
+    console.log('Drag started:', event.active.id);
   };
   
   // Function to handle opening album in Spotify
@@ -866,6 +879,7 @@ export default function NoSkipsPage() {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
             <SortableContext
