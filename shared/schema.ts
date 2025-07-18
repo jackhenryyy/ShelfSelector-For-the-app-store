@@ -88,6 +88,19 @@ export const insertAlbumReviewSchema = createInsertSchema(albumReviews).omit({
   }),
 });
 
+// Separate table for No Skips reviews (not part of "The List")
+export const noSkipsReviews = pgTable("no_skips_reviews", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  albumId: integer("album_id").notNull(),
+  review: text("review"),
+  reviewedAt: timestamp("reviewed_at").notNull().defaultNow(),
+});
+
+export const insertNoSkipsReviewSchema = createInsertSchema(noSkipsReviews).omit({
+  id: true,
+});
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -103,3 +116,6 @@ export type InsertNoSkipsAlbum = z.infer<typeof insertNoSkipsAlbumSchema>;
 
 export type AlbumReview = typeof albumReviews.$inferSelect;
 export type InsertAlbumReview = z.infer<typeof insertAlbumReviewSchema>;
+
+export type NoSkipsReview = typeof noSkipsReviews.$inferSelect;
+export type InsertNoSkipsReview = z.infer<typeof insertNoSkipsReviewSchema>;

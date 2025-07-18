@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNoSkipsAlbums, useAlbumReviews } from "@/hooks/use-albums";
+import { useNoSkipsAlbums } from "@/hooks/use-albums";
+import { useNoSkipsReviews, useCreateNoSkipsReview, useUpdateNoSkipsReview, useDeleteNoSkipsReview, NoSkipsReviewWithAlbum } from "@/hooks/use-no-skips-reviews";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
@@ -23,14 +24,16 @@ import {
   FilterOption, 
   filterAlbums
 } from "@/components/ui/album-filter-sort";
-import { AlbumReview } from "@/hooks/use-albums";
+
 
 export default function NoSkipsPage() {
   // Hooks with contexts first
   const { user } = useAuth(); // Use the proper authentication hook
   const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips, removeFromNoSkips } = useNoSkipsAlbums();
   const { searchAlbums, searchResults, isSearching } = useSpotifyAlbums();
-  const { getAlbumReview, updateReview, deleteReview, createReview } = useAlbumReviews();
+  const { mutateAsync: createNoSkipsReview } = useCreateNoSkipsReview();
+  const { mutateAsync: updateNoSkipsReview } = useUpdateNoSkipsReview();
+  const { mutateAsync: deleteNoSkipsReview } = useDeleteNoSkipsReview();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -48,7 +51,7 @@ export default function NoSkipsPage() {
   const [topFourDialogOpen, setTopFourDialogOpen] = useState(false);
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   const [gridScale, setGridScale] = useState<number>(3);
-  const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
+  const [activeReview, setActiveReview] = useState<NoSkipsReviewWithAlbum | null>(null);
   
   // Function to handle sorting and filtering
   const handleSortChange = (sort: SortOption) => {
@@ -105,50 +108,27 @@ export default function NoSkipsPage() {
     openInSpotify(spotifyId);
   };
 
-  // Review popup handlers
+  // Review popup handlers for No Skips reviews (separate from The List)
   const handleOpenReview = async (albumId: number) => {
     console.log('handleOpenReview called with albumId:', albumId);
     try {
-      const existingReview = await getAlbumReview(albumId);
-      if (existingReview) {
-        console.log('Found existing review:', existingReview);
-        setActiveReview(existingReview);
-      } else {
-        console.log('No existing review found, creating new one');
-        // Find the album data to create a new review
-        const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
-        if (albumData) {
-          const newReview: AlbumReview = {
-            id: 0, // Will be set by the backend
-            userId: user?.id || 0,
-            albumId: albumId,
-            rating: 0,
-            review: '',
-            reviewedAt: new Date().toISOString(),
-            listenedAt: null,
-            album: albumData.album
-          };
-          console.log('Setting new review:', newReview);
-          setActiveReview(newReview);
-        }
+      // This is now using the no skips reviews API (separate from The List)
+      // For simplicity, we'll create a new review placeholder for the UI
+      const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
+      if (albumData) {
+        const newReview: NoSkipsReviewWithAlbum = {
+          id: 0, // Will be set by the backend when saved
+          userId: user?.id || 0,
+          albumId: albumId,
+          review: '',
+          reviewedAt: new Date(),
+          album: albumData.album
+        };
+        console.log('Setting new no skips review:', newReview);
+        setActiveReview(newReview);
       }
     } catch (error) {
       console.error('Error loading review:', error);
-      // Don't show error toast for missing reviews, just create a new one
-      const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
-      if (albumData) {
-        const newReview: AlbumReview = {
-          id: 0,
-          userId: user?.id || 0,
-          albumId: albumId,
-          rating: 0,
-          review: '',
-          reviewedAt: new Date().toISOString(),
-          listenedAt: null,
-          album: albumData.album
-        };
-        setActiveReview(newReview);
-      }
     }
   };
 
@@ -159,27 +139,23 @@ export default function NoSkipsPage() {
   const handleSaveReview = async (data: { id: number; review: string; genre?: string }) => {
     try {
       if (data.id === 0) {
-        // Create new review (no rating required for no skips)
-        await createReview({
+        // Create new no skips review (separate from The List reviews)
+        await createNoSkipsReview({
           albumId: activeReview?.albumId || 0,
-          rating: 5.0, // Default to 5 stars for no skips albums
-          review: data.review,
-          listenedAt: new Date() // Set current date
+          review: data.review
         });
       } else {
-        // Update existing review (only review text, keep original rating and date)
-        await updateReview({
+        // Update existing no skips review
+        await updateNoSkipsReview({
           id: data.id,
-          rating: activeReview?.rating || 5.0, // Keep existing rating
-          review: data.review,
-          listenedAt: activeReview?.listenedAt ? new Date(activeReview.listenedAt) : undefined
+          review: data.review
         });
       }
       
       setActiveReview(null);
       toast({
         title: "Review saved",
-        description: "Your album review has been saved successfully"
+        description: "Your No Skips review has been saved successfully"
       });
     } catch (error) {
       console.error('Error saving review:', error);

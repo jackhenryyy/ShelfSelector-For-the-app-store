@@ -3,12 +3,12 @@ import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { AlbumArt } from "@/components/ui/album-art";
 import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
-import { AlbumReview } from "@/hooks/use-albums";
+import { NoSkipsReviewWithAlbum } from "@/hooks/use-no-skips-reviews";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { Trash2 } from "lucide-react";
 
 interface SimpleReviewPopupProps {
-  review: AlbumReview | null;
+  review: NoSkipsReviewWithAlbum | null;
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: {

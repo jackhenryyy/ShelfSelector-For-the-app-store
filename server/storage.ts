@@ -3,12 +3,13 @@ import { db } from "./db";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
 import {
-  users, albums, queueAlbums, noSkipsAlbums, albumReviews,
+  users, albums, queueAlbums, noSkipsAlbums, albumReviews, noSkipsReviews,
   User, InsertUser,
   Album, InsertAlbum,
   QueueAlbum, InsertQueueAlbum,
   NoSkipsAlbum, InsertNoSkipsAlbum,
-  AlbumReview, InsertAlbumReview
+  AlbumReview, InsertAlbumReview,
+  NoSkipsReview, InsertNoSkipsReview
 } from "@shared/schema";
 
 export interface IStorage {
@@ -41,13 +42,20 @@ export interface IStorage {
   removeFromNoSkips(userId: number, albumId: number): Promise<void>;
   updateTopFour(userId: number, topFourAlbums: {albumId: number, position: number}[]): Promise<void>;
 
-  // Album reviews operations
+  // Album reviews operations (The List)
   getAlbumReviews(userId: number): Promise<(AlbumReview & { album: Album })[]>;
   getAlbumReview(userId: number, albumId: number): Promise<(AlbumReview & { album: Album }) | undefined>;
   createAlbumReview(review: InsertAlbumReview): Promise<AlbumReview>;
   updateAlbumReview(id: number, rating: number, review: string, listenedAt?: Date | null): Promise<AlbumReview | undefined>;
   deleteAlbumReview(id: number): Promise<void>;
   searchAlbumReviews(userId: number, query: string): Promise<(AlbumReview & { album: Album })[]>;
+
+  // No Skips reviews operations (separate from The List)
+  getNoSkipsReviews(userId: number): Promise<(NoSkipsReview & { album: Album })[]>;
+  getNoSkipsReview(userId: number, albumId: number): Promise<(NoSkipsReview & { album: Album }) | undefined>;
+  createNoSkipsReview(review: InsertNoSkipsReview): Promise<NoSkipsReview>;
+  updateNoSkipsReview(id: number, review: string): Promise<NoSkipsReview | undefined>;
+  deleteNoSkipsReview(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -652,6 +660,69 @@ export class DatabaseStorage implements IStorage {
       ...item.albumReview,
       album: item.album
     }));
+  }
+
+  // No Skips reviews operations (separate from The List)
+  async getNoSkipsReviews(userId: number): Promise<(NoSkipsReview & { album: Album })[]> {
+    const result = await db
+      .select({
+        noSkipsReview: noSkipsReviews,
+        album: albums
+      })
+      .from(noSkipsReviews)
+      .innerJoin(albums, eq(noSkipsReviews.albumId, albums.id))
+      .where(eq(noSkipsReviews.userId, userId));
+
+    return result.map(item => ({
+      ...item.noSkipsReview,
+      album: item.album
+    }));
+  }
+
+  async getNoSkipsReview(userId: number, albumId: number): Promise<(NoSkipsReview & { album: Album }) | undefined> {
+    const [result] = await db
+      .select({
+        noSkipsReview: noSkipsReviews,
+        album: albums
+      })
+      .from(noSkipsReviews)
+      .innerJoin(albums, eq(noSkipsReviews.albumId, albums.id))
+      .where(
+        and(
+          eq(noSkipsReviews.userId, userId),
+          eq(noSkipsReviews.albumId, albumId)
+        )
+      );
+
+    if (!result) return undefined;
+
+    return {
+      ...result.noSkipsReview,
+      album: result.album
+    };
+  }
+
+  async createNoSkipsReview(review: InsertNoSkipsReview): Promise<NoSkipsReview> {
+    const [newReview] = await db
+      .insert(noSkipsReviews)
+      .values(review)
+      .returning();
+    return newReview;
+  }
+
+  async updateNoSkipsReview(id: number, review: string): Promise<NoSkipsReview | undefined> {
+    const [updatedReview] = await db
+      .update(noSkipsReviews)
+      .set({ review })
+      .where(eq(noSkipsReviews.id, id))
+      .returning();
+    return updatedReview;
+  }
+
+  async deleteNoSkipsReview(id: number): Promise<void> {
+    await db
+      .delete(noSkipsReviews)
+      .where(eq(noSkipsReviews.id, id));
   }
 }
 

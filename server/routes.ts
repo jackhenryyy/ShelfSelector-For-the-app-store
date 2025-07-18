@@ -13,7 +13,8 @@ import {
 import { 
   insertQueueAlbumSchema, 
   insertNoSkipsAlbumSchema, 
-  insertAlbumReviewSchema 
+  insertAlbumReviewSchema,
+  insertNoSkipsReviewSchema 
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
@@ -770,6 +771,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // No Skips reviews routes (separate from The List)
+  app.get('/api/no-skips-reviews', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const reviews = await storage.getNoSkipsReviews(userId);
+      res.json(reviews);
+    } catch (error) {
+      console.error('Get no skips reviews error:', error);
+      res.status(500).json({ message: 'Failed to fetch no skips reviews' });
+    }
+  });
+  
+  app.get('/api/no-skips-reviews/:albumId', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const albumId = parseInt(req.params.albumId);
+      
+      if (isNaN(albumId)) {
+        return res.status(400).json({ message: 'Invalid album ID' });
+      }
+      
+      const review = await storage.getNoSkipsReview(userId, albumId);
+      
+      if (!review) {
+        return res.status(404).json({ message: 'No skips review not found' });
+      }
+      
+      res.json(review);
+    } catch (error) {
+      console.error('Get no skips review error:', error);
+      res.status(500).json({ message: 'Failed to fetch no skips review' });
+    }
+  });
+  
+  app.post('/api/no-skips-reviews', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      const data = insertNoSkipsReviewSchema.parse({
+        ...req.body,
+        userId,
+        reviewedAt: new Date()
+      });
+      
+      const review = await storage.createNoSkipsReview(data);
+      res.json(review);
+    } catch (error) {
+      console.error('Create no skips review error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: 'Invalid request data', 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: 'Failed to create no skips review' });
+    }
+  });
+  
+  app.put('/api/no-skips-reviews/:id', requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { review } = req.body;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid review ID' });
+      }
+      
+      if (typeof review !== 'string') {
+        return res.status(400).json({ message: 'Review text is required' });
+      }
+      
+      const updatedReview = await storage.updateNoSkipsReview(id, review);
+      
+      if (!updatedReview) {
+        return res.status(404).json({ message: 'No skips review not found' });
+      }
+      
+      res.json(updatedReview);
+    } catch (error) {
+      console.error('Update no skips review error:', error);
+      res.status(500).json({ message: 'Failed to update no skips review' });
+    }
+  });
+  
+  app.delete('/api/no-skips-reviews/:id', requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid review ID' });
+      }
+      
+      await storage.deleteNoSkipsReview(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete no skips review error:', error);
+      res.status(500).json({ message: 'Failed to delete no skips review' });
+    }
+  });
+
   // Get shared user's No Skips collection (GET /api/shared/no-skips/:userId)
   app.get('/api/shared/no-skips/:userId', async (req, res) => {
     try {
