@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { AlbumArt } from "@/components/ui/album-art";
 import { useQueueAlbums, useAlbumReviews, AlbumReview } from "@/hooks/use-albums";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,6 +31,7 @@ interface CurrentlyPlayingData {
 export function NowPlayingWidget() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const { addToQueue } = useQueueAlbums();
   const { createReview, updateReview, deleteReview } = useAlbumReviews();
   const { updateGenre } = useAlbumGenre();
@@ -41,7 +43,7 @@ export function NowPlayingWidget() {
   // Query for currently playing track
   const { data: nowPlaying, isError } = useQuery<CurrentlyPlayingData | null>({
     queryKey: ['/api/spotify/currently-playing'],
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 1000, // Refresh every 1 second
     retry: (failureCount, error: any) => {
       // Don't retry if unauthorized (no Spotify token)
       if (error?.response?.status === 401) {
@@ -171,6 +173,9 @@ export function NowPlayingWidget() {
         title: "Added to Queue",
         description: `"${nowPlaying.track.album.name}" has been added to your queue`,
       });
+      
+      // Navigate to the queue page
+      setLocation('/queue');
     } catch (error) {
       console.error('Error adding to queue:', error);
       toast({

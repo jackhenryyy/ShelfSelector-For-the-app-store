@@ -108,6 +108,14 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 18, 2025. Enhanced Spotify player functionality and token management:
+  - Updated now playing widget to refresh every 1 second for real-time updates
+  - Implemented automatic Spotify token refresh to prevent daily re-authentication
+  - Added navigation to queue page when "Add to Queue" button is clicked
+  - Created comprehensive token refresh system that handles expired tokens automatically
+  - Users no longer need to reconnect Spotify every few days
+  - Enhanced error handling for token expiration with automatic refresh attempts
+  - Improved user experience with seamless token management in background
 - July 15, 2025. Fixed Spotify authentication and API route issues:
   - Resolved authentication setup ordering issues that prevented req.isAuthenticated from working
   - Fixed route registration order to ensure API routes work before Vite catch-all

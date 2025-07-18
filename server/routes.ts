@@ -228,7 +228,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Spotify access token not found' });
       }
       
-      const currentlyPlaying = await getCurrentlyPlaying(user.accessToken);
+      // Use the token refresh wrapper for the API call
+      const { makeSpotifyAPICall } = await import('./spotify-token-refresh');
+      
+      const currentlyPlaying = await makeSpotifyAPICall(user, async (accessToken) => {
+        return await getCurrentlyPlaying(accessToken);
+      });
+      
+      if (currentlyPlaying === null) {
+        // Token refresh failed or user needs to re-authenticate
+        return res.status(401).json({ message: 'Spotify authentication required. Please reconnect your account.' });
+      }
+      
       res.json(currentlyPlaying);
     } catch (error) {
       console.error('Currently playing error:', error);
