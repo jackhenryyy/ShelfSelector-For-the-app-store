@@ -178,8 +178,7 @@ export default function HomePage() {
             </div>
           )}
           
-          {/* Compact Now Playing Widget */}
-          <CompactNowPlayingWidget />
+
         </div>
       </div>
     </Layout>

@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { CompactNowPlayingWidget } from "./compact-now-playing-widget";
 
 // Simple nav items without icons, matching the minimal design
 const navItems = [
@@ -25,6 +26,15 @@ export function NavBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-black/20 z-50">
+      {/* Show compact Spotify widget only on the home page */}
+      {location === "/" && (
+        <div className="flex justify-center">
+          <div className="w-1/2">
+            <CompactNowPlayingWidget />
+          </div>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center px-1">
         {navItems.map((item) => {
           const isActive = location === item.path;
