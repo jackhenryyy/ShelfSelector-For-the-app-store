@@ -35,7 +35,7 @@ export function NavBar() {
         </div>
       )}
       
-      <div className="bg-white border-t border-black/20 flex justify-between items-center px-1">
+      <div className="bg-white border border-black flex justify-between items-center px-1">
         {navItems.map((item) => {
           const isActive = location === item.path;
           
