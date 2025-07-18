@@ -167,7 +167,7 @@ export function NowPlayingWidget() {
       });
 
       // Then add to queue
-      await addToQueue({ albumId: albumData.id });
+      await addToQueue(albumData.id);
       
       toast({
         title: "Added to Queue",
