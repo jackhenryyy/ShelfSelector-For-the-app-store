@@ -32,6 +32,7 @@ export default function NoSkipsPage() {
   const { user } = useAuth(); // Use the proper authentication hook
   const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips, removeFromNoSkips } = useNoSkipsAlbums();
   const { searchAlbums, searchResults, isSearching } = useSpotifyAlbums();
+  const { data: noSkipsReviews } = useNoSkipsReviews();
   const { mutateAsync: createNoSkipsReview } = useCreateNoSkipsReview();
   const { mutateAsync: updateNoSkipsReview } = useUpdateNoSkipsReview();
   const { mutateAsync: deleteNoSkipsReview } = useDeleteNoSkipsReview();
@@ -110,27 +111,58 @@ export default function NoSkipsPage() {
     openInSpotify(spotifyId);
   };
 
+  // Helper function to check if an album has a no skips review
+  const hasReview = (albumId: number): boolean => {
+    return noSkipsReviews?.some(review => review.albumId === albumId) || false;
+  };
+
   // Review popup handlers for No Skips reviews (separate from The List)
   const handleOpenReview = async (albumId: number) => {
     console.log('handleOpenReview called with albumId:', albumId);
     try {
-      // This is now using the no skips reviews API (separate from The List)
-      // For simplicity, we'll create a new review placeholder for the UI
+      // First check if there's an existing no skips review
+      const response = await fetch(`/api/no-skips-reviews/${albumId}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        // Existing review found
+        const existingReview = await response.json();
+        console.log('Found existing no skips review:', existingReview);
+        setActiveReview(existingReview);
+      } else if (response.status === 404) {
+        // No existing review, create a new one for the UI
+        const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
+        if (albumData) {
+          const newReview: NoSkipsReviewWithAlbum = {
+            id: 0, // Will be set by the backend when saved
+            userId: user?.id || 0,
+            albumId: albumId,
+            review: '',
+            reviewedAt: new Date(),
+            album: albumData.album
+          };
+          console.log('Setting new no skips review:', newReview);
+          setActiveReview(newReview);
+        }
+      } else {
+        throw new Error(`Failed to check for existing review: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error loading review:', error);
+      // Fallback to creating new review
       const albumData = noSkipsAlbums?.find(a => a.album.id === albumId);
       if (albumData) {
         const newReview: NoSkipsReviewWithAlbum = {
-          id: 0, // Will be set by the backend when saved
+          id: 0,
           userId: user?.id || 0,
           albumId: albumId,
           review: '',
           reviewedAt: new Date(),
           album: albumData.album
         };
-        console.log('Setting new no skips review:', newReview);
         setActiveReview(newReview);
       }
-    } catch (error) {
-      console.error('Error loading review:', error);
     }
   };
 
@@ -810,6 +842,13 @@ export default function NoSkipsPage() {
                       : ""}
                   />
                 </div>
+
+                {/* Review indicator */}
+                {hasReview(album.album.id) && (
+                  <div className="absolute top-2 left-2 bg-white bg-opacity-90 rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="text-xs">📝</span>
+                  </div>
+                )}
                 
                 {/* Remove button in top right corner - square overlay */}
                 <button 
