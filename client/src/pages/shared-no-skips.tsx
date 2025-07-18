@@ -116,39 +116,40 @@ export default function SharedNoSkipsPage() {
           </div>
         ) : (
           <>
-            {/* Top Four Albums Section */}
+            {/* Compact top 4 widget at top of page */}
             {data && data.topFourAlbums.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-sm font-medium mb-2 text-black">top four</h2>
-                <div className="grid grid-cols-4 gap-4">
-                  {data.topFourAlbums
-                    .sort((a, b) => (a.topFourPosition || 999) - (b.topFourPosition || 999))
-                    .map((album) => (
-                      <div key={album.id} className="mb-2">
-                        <a 
-                          href="#" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleOpenAlbumInSpotify(album.album.spotifyId);
-                          }}
-                        >
-                          <AlbumArt
-                            src={album.album.imageUrl}
-                            alt={album.album.name}
-                          />
-                          {gridScale < 5 && (
-                            <>
-                              <div className="mt-1 text-xs truncate">{album.album.name}</div>
-                              <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
-                              {album.album.genre && (
-                                <div className="mt-1 text-xs text-gray-400 truncate">{album.album.genre}</div>
-                              )}
-                            </>
-                          )}
-                        </a>
-                      </div>
-                    ))
-                  }
+              <div className="flex justify-center mb-4">
+                <div className={`bg-white border border-black`}>
+                  <div className="flex items-center justify-center gap-3 px-4 py-3">
+                    <span className="font-mono text-sm text-black/70 whitespace-nowrap">top 4</span>
+                    <div className="flex gap-2">
+                      {data.topFourAlbums
+                        .sort((a, b) => (a.topFourPosition || 999) - (b.topFourPosition || 999))
+                        .slice(0, 4)
+                        .map((album) => (
+                          <button
+                            key={album.id}
+                            onClick={() => handleOpenAlbumInSpotify(album.album.spotifyId)}
+                            className="hover:opacity-80 transition-opacity"
+                            title={`${album.album.name} by ${album.album.artist}`}
+                          >
+                            <AlbumArt
+                              src={album.album.imageUrl}
+                              alt={album.album.name}
+                              size="small"
+                              className="w-10 h-10 rounded"
+                            />
+                          </button>
+                        ))}
+                      {/* Fill empty slots */}
+                      {Array.from({ length: 4 - Math.min(data.topFourAlbums.length, 4) }).map((_, index) => (
+                        <div 
+                          key={`empty-${index}`} 
+                          className="w-10 h-10 bg-gray-100 rounded border border-gray-200"
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

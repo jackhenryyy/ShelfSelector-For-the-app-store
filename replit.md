@@ -108,13 +108,12 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
-- July 18, 2025. Added compact top 4 widget to no-skips page navigation:
-  - Created compact top 4 widget component that displays in nav bar on no-skips page
-  - Widget shows 4 album covers (8x8px) with centered layout and minimal padding
-  - Removed original top 4 section from main page content to avoid duplication
-  - Albums in widget are clickable and open review popups through custom event system
-  - Widget follows same pattern as Spotify widget on home page for consistent UX
-  - Improved page layout by moving top 4 functionality to bottom navigation area
+- July 18, 2025. Updated top 4 widget design and share page layout:
+  - Moved compact top 4 widget from nav bar to top of no-skips page per user preference
+  - Increased album cover size to 10x10px with improved spacing and centering
+  - Updated shared no-skips page to match new compact top 4 widget layout
+  - Share page now reflects current page design with horizontal top 4 bar
+  - Maintained clean minimal design with centered positioning and integrated edit button
 - July 18, 2025. Completed separation of No Skips reviews from The List:
   - Created dedicated noSkipsReviews database table separate from albumReviews
   - Built complete API system for no skips reviews (/api/no-skips-reviews endpoints)
