@@ -177,8 +177,6 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  console.log("CompactNowPlayingWidget - user:", !!user, "nowPlaying:", !!nowPlaying);
-  
   if (!user || !nowPlaying) {
     return null;
   }
