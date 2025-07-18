@@ -60,6 +60,7 @@ export const noSkipsAlbums = pgTable("no_skips_albums", {
   addedAt: timestamp("added_at").notNull(),
   isTopFour: boolean("is_top_four").default(false).notNull(),
   topFourPosition: integer("top_four_position"), // 1-4 if in top four
+  customOrder: integer("custom_order"), // For custom drag-and-drop ordering
 });
 
 export const insertNoSkipsAlbumSchema = createInsertSchema(noSkipsAlbums).omit({

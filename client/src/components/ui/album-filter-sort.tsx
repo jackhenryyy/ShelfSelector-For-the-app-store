@@ -3,6 +3,7 @@ import { Album } from "@shared/schema";
 import { format } from "date-fns";
 
 export type SortOption = 
+  | "custom-order"
   | "date-added-newest" 
   | "date-added-oldest" 
   | "title-asc" 
@@ -81,7 +82,24 @@ export function AlbumFilterSort({
 
   return (
     <div className="relative" ref={filterRef}>
-      <div>
+      <div className="flex gap-2">
+        {/* Sort dropdown */}
+        <select 
+          value={selectedSort}
+          onChange={handleSortChange}
+          className="whitespace-nowrap px-2 sm:px-4 py-1 border border-black bg-white text-black font-mono text-xs sm:text-sm"
+        >
+          <option value="custom-order">custom order</option>
+          <option value="date-added-newest">date added (newest)</option>
+          <option value="date-added-oldest">date added (oldest)</option>
+          <option value="title-asc">title (A-Z)</option>
+          <option value="title-desc">title (Z-A)</option>
+          <option value="artist-asc">artist (A-Z)</option>
+          <option value="artist-desc">artist (Z-A)</option>
+          <option value="year-newest">year (newest)</option>
+          <option value="year-oldest">year (oldest)</option>
+        </select>
+        
         {showFilterOptions && (
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -242,6 +260,19 @@ export function sortAlbums<T extends { album: Album; addedAt: string; rating?: n
         const aEnergy = a.album.energyLevel ? energyMap[a.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
         const bEnergy = b.album.energyLevel ? energyMap[b.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
         return aEnergy - bEnergy;
+      });
+    
+    case "custom-order":
+      // For custom order, sort by customOrder field (lower numbers = higher position)
+      // Then by addedAt as fallback for items without custom order
+      return sortedAlbums.sort((a, b) => {
+        const aOrder = (a as any).customOrder ?? 999999;
+        const bOrder = (b as any).customOrder ?? 999999;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        // Fallback to date added (newest first) for items with same or no custom order
+        return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
       });
     
     default:

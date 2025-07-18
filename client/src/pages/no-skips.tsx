@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNoSkipsAlbums } from "@/hooks/use-albums";
 import { useNoSkipsReviews, useCreateNoSkipsReview, useUpdateNoSkipsReview, useDeleteNoSkipsReview, NoSkipsReviewWithAlbum } from "@/hooks/use-no-skips-reviews";
 import { Layout } from "@/components/ui/layout";
@@ -25,7 +25,28 @@ import {
   FilterOption, 
   filterAlbums
 } from "@/components/ui/album-filter-sort";
-import { useEffect } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { SortableAlbumCard } from '@/components/ui/sortable-album-card';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 
 export default function NoSkipsPage() {
@@ -37,6 +58,23 @@ export default function NoSkipsPage() {
   const { mutateAsync: createNoSkipsReview } = useCreateNoSkipsReview();
   const { mutateAsync: updateNoSkipsReview } = useUpdateNoSkipsReview();
   const { mutateAsync: deleteNoSkipsReview } = useDeleteNoSkipsReview();
+  
+  // Custom order mutation
+  const queryClient = useQueryClient();
+  const updateCustomOrderMutation = useMutation({
+    mutationFn: async (albumOrders: {albumId: number, customOrder: number}[]) => {
+      return apiRequest('/api/no-skips/custom-order', {
+        method: 'POST',
+        body: JSON.stringify(albumOrders),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/no-skips'] });
+    },
+  });
   const { updateGenre: updateAlbumGenre } = useAlbumGenre();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -56,6 +94,14 @@ export default function NoSkipsPage() {
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   const [gridScale, setGridScale] = useState<number>(3);
   const [activeReview, setActiveReview] = useState<NoSkipsReviewWithAlbum | null>(null);
+  
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   // Function to handle sorting and filtering
   const handleSortChange = (sort: SortOption) => {
@@ -104,8 +150,32 @@ export default function NoSkipsPage() {
     
   // Sort after filtering
   const sortedNoSkipsAlbums = filteredNoSkipsAlbums.length > 0
-    ? [...filteredNoSkipsAlbums] as any[]
+    ? sortAlbums(filteredNoSkipsAlbums, sortOption)
     : [];
+
+  // Drag and drop handler
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = sortedNoSkipsAlbums.findIndex((album) => album.id.toString() === active.id);
+      const newIndex = sortedNoSkipsAlbums.findIndex((album) => album.id.toString() === over?.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Create new array with moved item
+        const newAlbums = arrayMove(sortedNoSkipsAlbums, oldIndex, newIndex);
+        
+        // Create custom order data
+        const albumOrders = newAlbums.map((album, index) => ({
+          albumId: album.album.id,
+          customOrder: index
+        }));
+
+        // Update the custom order
+        updateCustomOrderMutation.mutate(albumOrders);
+      }
+    }
+  };
   
   // Function to handle opening album in Spotify
   const handleOpenAlbumInSpotify = (spotifyId: string) => {
@@ -629,33 +699,7 @@ export default function NoSkipsPage() {
                 uniqueYears={uniqueYears}
               />
               
-              <div className="flex flex-col">
-                <button 
-                  className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
-                  onClick={handleShare}
-                  title="Share your collection with others"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                    <circle cx="18" cy="5" r="3"></circle>
-                    <circle cx="6" cy="12" r="3"></circle>
-                    <circle cx="18" cy="19" r="3"></circle>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                  </svg>
-                  share collection
-                </button>
-                
-                {userId && (
-                  <a 
-                    href={`/shared/${userId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-center mt-1 hover:underline"
-                  >
-                    test shared view
-                  </a>
-                )}
-              </div>
+
               
               <label 
                 htmlFor="csv-upload-no-skips"
@@ -815,75 +859,108 @@ export default function NoSkipsPage() {
         </div>
         
         <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>albums</h2>
-        <AlbumGrid columns={gridScale}>
-          {sortedNoSkipsAlbums.map((album) => (
-            <div key={album.id} className="mb-2">
-              {/* Album art container with overlay */}
-              <div className="relative group">
-                <div 
-                  onClick={(e) => {
-                    console.log('Album cover clicked for album:', album.album.id);
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (isEditingTopFour) {
-                      handleSelectForTopFour(album.albumId);
-                    } else {
-                      handleOpenReview(album.album.id);
-                    }
-                  }}
-                  className="block cursor-pointer"
-                >
-                  <AlbumArt
-                    src={album.album.imageUrl}
-                    alt={album.album.name}
-                    className={isEditingTopFour && selectedForTopFour.some(item => item.albumId === album.albumId) 
-                      ? "border-2 border-green-500" 
-                      : ""}
+        
+        {/* Conditional rendering: Draggable for custom order, regular grid for other sorts */}
+        {sortOption === "custom-order" ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sortedNoSkipsAlbums.map(album => album.id.toString())}
+              strategy={rectSortingStrategy}
+            >
+              <div 
+                className={`grid gap-4 mb-4`}
+                style={{
+                  gridTemplateColumns: `repeat(${gridScale}, minmax(0, 1fr))`
+                }}
+              >
+                {sortedNoSkipsAlbums.map((album) => (
+                  <SortableAlbumCard
+                    key={album.id}
+                    id={album.id.toString()}
+                    album={album.album}
+                    gridScale={gridScale}
+                    isDragMode={true}
+                    hasReview={hasReview(album.album.id)}
+                    onRemove={() => handleRemoveFromNoSkips(album.albumId)}
+                    onReview={() => handleOpenReview(album.album.id)}
                   />
-                </div>
-
-                {/* Review indicator */}
-                {hasReview(album.album.id) && (
-                  <div className="absolute top-2 left-2 bg-black w-5 h-5 flex items-center justify-center">
-                    <NotebookPen className="w-3 h-3 text-white" />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <AlbumGrid columns={gridScale}>
+            {sortedNoSkipsAlbums.map((album) => (
+              <div key={album.id} className="mb-2">
+                {/* Album art container with overlay */}
+                <div className="relative group">
+                  <div 
+                    onClick={(e) => {
+                      console.log('Album cover clicked for album:', album.album.id);
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isEditingTopFour) {
+                        handleSelectForTopFour(album.albumId);
+                      } else {
+                        handleOpenReview(album.album.id);
+                      }
+                    }}
+                    className="block cursor-pointer"
+                  >
+                    <AlbumArt
+                      src={album.album.imageUrl}
+                      alt={album.album.name}
+                      className={isEditingTopFour && selectedForTopFour.some(item => item.albumId === album.albumId) 
+                        ? "border-2 border-green-500" 
+                        : ""}
+                    />
                   </div>
+
+                  {/* Review indicator */}
+                  {hasReview(album.album.id) && (
+                    <div className="absolute top-2 left-2 bg-black w-5 h-5 flex items-center justify-center">
+                      <NotebookPen className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  
+                  {/* Remove button in top right corner - square overlay */}
+                  <button 
+                    className="absolute top-2 right-2 bg-black bg-opacity-75 w-6 h-6 flex items-center justify-center text-white hover:bg-opacity-90 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (!isEditingTopFour) {
+                        handleRemoveFromNoSkips(album.albumId);
+                      }
+                    }}
+                    title="Remove from No Skips"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {/* Album details outside the overlay area */}
+                {gridScale < 5 && (
+                  <>
+                    <div className="mt-1 text-xs truncate">{album.album.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
+                  </>
                 )}
                 
-                {/* Remove button in top right corner - square overlay */}
-                <button 
-                  className="absolute top-2 right-2 bg-black bg-opacity-75 w-6 h-6 flex items-center justify-center text-white hover:bg-opacity-90 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (!isEditingTopFour) {
-                      handleRemoveFromNoSkips(album.albumId);
-                    }
-                  }}
-                  title="Remove from No Skips"
-                >
-                  ✕
-                </button>
+                {/* Genre display (non-editable) */}
+                {gridScale < 5 && (
+                  <div className="mt-1 text-xs text-gray-500">
+                    {album.album.genre || "no genre"}
+                  </div>
+                )}
               </div>
-              
-              {/* Album details outside the overlay area */}
-              {gridScale < 5 && (
-                <>
-                  <div className="mt-1 text-xs truncate">{album.album.name}</div>
-                  <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
-                </>
-              )}
-              
-              {/* Genre display (non-editable) */}
-              {gridScale < 5 && (
-                <div className="mt-1 text-xs text-gray-500">
-                  {album.album.genre || "no genre"}
-                </div>
-              )}
-            </div>
-          ))}
-        </AlbumGrid>
-        
-        {/* Share button moved to the top toolbar */}
+            ))}
+          </AlbumGrid>
+        )}
         
         {/* Top Four Dialog */}
         <TopFourDialog

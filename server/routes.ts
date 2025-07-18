@@ -613,6 +613,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to update top four albums' });
     }
   });
+
+  app.post('/api/no-skips/custom-order', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Validate request body
+      const schema = z.array(z.object({
+        albumId: z.number(),
+        customOrder: z.number()
+      }));
+      
+      const albumOrders = schema.parse(req.body);
+      
+      await storage.updateNoSkipsOrder(userId, albumOrders);
+      res.json({ success: true });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
+      }
+      console.error('Update custom order error:', error);
+      res.status(500).json({ message: 'Failed to update custom order' });
+    }
+  });
   
   // Album reviews routes
   app.get('/api/reviews', requireAuth, async (req, res) => {

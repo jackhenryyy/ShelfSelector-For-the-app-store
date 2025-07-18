@@ -530,6 +530,20 @@ export class DatabaseStorage implements IStorage {
     return newNoSkipsAlbum;
   }
 
+  async updateNoSkipsOrder(userId: number, albumOrders: {albumId: number, customOrder: number}[]): Promise<void> {
+    for (const { albumId, customOrder } of albumOrders) {
+      await db
+        .update(noSkipsAlbums)
+        .set({ customOrder })
+        .where(
+          and(
+            eq(noSkipsAlbums.userId, userId),
+            eq(noSkipsAlbums.albumId, albumId)
+          )
+        );
+    }
+  }
+
   async removeFromNoSkips(userId: number, albumId: number): Promise<void> {
     await db
       .delete(noSkipsAlbums)
