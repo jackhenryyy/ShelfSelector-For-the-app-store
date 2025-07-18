@@ -25,6 +25,7 @@ import {
   FilterOption, 
   filterAlbums
 } from "@/components/ui/album-filter-sort";
+import { useEffect } from "react";
 
 
 export default function NoSkipsPage() {
@@ -115,6 +116,20 @@ export default function NoSkipsPage() {
   const hasReview = (albumId: number): boolean => {
     return noSkipsReviews?.some(review => review.albumId === albumId) || false;
   };
+
+  // Listen for top four album clicks from the compact widget
+  useEffect(() => {
+    const handleTopFourReviewEvent = (event: CustomEvent) => {
+      const { albumId } = event.detail;
+      handleOpenReview(albumId);
+    };
+
+    window.addEventListener('openTopFourReview', handleTopFourReviewEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('openTopFourReview', handleTopFourReviewEvent as EventListener);
+    };
+  }, []);
 
   // Review popup handlers for No Skips reviews (separate from The List)
   const handleOpenReview = async (albumId: number) => {
@@ -748,71 +763,31 @@ export default function NoSkipsPage() {
           </div>
         )}
         
-        <div className={`flex items-center gap-2 ${isMobile ? 'mt-3' : 'mt-4'}`}>
-          <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>top 4</h2>
+        {/* Top 4 controls now moved to the nav bar widget */}
+        <div className={`flex items-center justify-between gap-2 ${isMobile ? 'mt-3' : 'mt-4'} mb-4`}>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleShare}
+              className="text-xs text-gray-500 hover:text-black flex items-center gap-1"
+              title="Share your collection with others"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              share collection
+            </button>
+          </div>
           
           <button 
-            onClick={handleShare}
-            className="text-xs text-gray-500 hover:text-black flex items-center gap-1 mb-2"
-            title="Share your collection with others"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-            </svg>
-            share
-          </button>
-          
-          <div className="flex-grow"></div>
-          
-          <button 
-            className="text-xs text-gray-500 hover:text-black mb-2"
+            className="text-xs text-gray-500 hover:text-black"
             onClick={() => setTopFourDialogOpen(true)}
           >
-            edit
+            edit top 4
           </button>
-        </div>
-        
-        <div className={`bg-black/5 ${isMobile ? 'p-2' : 'p-3'} mb-4 rounded`}>
-          <div className="grid grid-cols-4 gap-2">
-            {topFourAlbums && topFourAlbums.length > 0 ? (
-              topFourAlbums
-                .sort((a, b) => (a.topFourPosition || 0) - (b.topFourPosition || 0))
-                .map((album) => (
-                  <div key={album.id}>
-                    <a 
-                      href="#" 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleOpenReview(album.album.id);
-                      }}
-                    >
-                      <AlbumArt
-                        src={album.album.imageUrl}
-                        alt={album.album.name}
-                        size={isMobile ? "smaller" : undefined}
-                      />
-                      {!isMobile && gridScale < 5 && (
-                        <>
-                          <div className="mt-1 text-xs truncate">{album.album.name}</div>
-                          <div className="text-xs text-gray-500 truncate">{album.album.artist}</div>
-                        </>
-                      )}
-                    </a>
-                  </div>
-                ))
-            ) : (
-              // Empty slots for top four
-              Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="bg-gray-100 rounded aspect-square flex items-center justify-center text-gray-400">
-                  {isMobile ? '' : 'Empty'}
-                </div>
-              ))
-            )}
-          </div>
         </div>
         
         <h2 className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium mb-2 text-black`}>albums</h2>

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { CompactNowPlayingWidget } from "./compact-now-playing-widget";
+import { CompactTopFourWidget } from "./compact-top-four-widget";
 
 // Simple nav items without icons, matching the minimal design
 const navItems = [
@@ -24,6 +25,11 @@ const navItems = [
 export function NavBar() {
   const [location] = useLocation();
 
+  const handleTopFourAlbumClick = (albumId: number) => {
+    // Trigger a custom event that the no-skips page can listen to
+    window.dispatchEvent(new CustomEvent('openTopFourReview', { detail: { albumId } }));
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       {/* Show compact Spotify widget only on the home page */}
@@ -31,6 +37,15 @@ export function NavBar() {
         <div className="flex justify-center mb-0">
           <div className="w-1/2">
             <CompactNowPlayingWidget />
+          </div>
+        </div>
+      )}
+      
+      {/* Show compact top 4 widget only on the no-skips page */}
+      {location === "/no-skips" && (
+        <div className="flex justify-center mb-0">
+          <div className="w-1/2">
+            <CompactTopFourWidget onAlbumClick={handleTopFourAlbumClick} />
           </div>
         </div>
       )}
