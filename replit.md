@@ -108,6 +108,14 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 18, 2025. Completed separation of No Skips reviews from The List:
+  - Created dedicated noSkipsReviews database table separate from albumReviews
+  - Built complete API system for no skips reviews (/api/no-skips-reviews endpoints)
+  - Added client-side hooks specifically for no skips review management
+  - Updated No Skips page to use separate review system with proper handlers
+  - Fixed deleteReview error by implementing handleDeleteReview function
+  - No Skips reviews now completely isolated from The List reviews
+  - Users can add reviews to No Skips albums without affecting The List page
 - July 18, 2025. Implemented comprehensive WYSIWYG rich text editing system:
   - Replaced all text input areas with visual rich text editors
   - Users can now bold, italicize, and hyperlink text with immediate visual feedback

@@ -15,6 +15,7 @@ import { openInSpotify, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useAlbumGenre } from "@/hooks/use-album-genre";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TopFourDialog } from "@/components/ui/top-four-dialog";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
@@ -34,6 +35,7 @@ export default function NoSkipsPage() {
   const { mutateAsync: createNoSkipsReview } = useCreateNoSkipsReview();
   const { mutateAsync: updateNoSkipsReview } = useUpdateNoSkipsReview();
   const { mutateAsync: deleteNoSkipsReview } = useDeleteNoSkipsReview();
+  const { updateGenre: updateAlbumGenre } = useAlbumGenre();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
@@ -172,6 +174,30 @@ export default function NoSkipsPage() {
       await updateAlbumGenre(albumId, genre);
     } catch (error) {
       console.error('Error updating genre:', error);
+    }
+  };
+
+  // Handler for deleting a no skips review
+  const handleDeleteReview = async (reviewId: number) => {
+    try {
+      if (!activeReview) return;
+      
+      // Delete the no skips review
+      await deleteNoSkipsReview(reviewId);
+      // Remove from No Skips collection
+      await removeFromNoSkips(activeReview.albumId);
+      setActiveReview(null);
+      toast({
+        title: "Review deleted",
+        description: "Album has been removed from No Skips.",
+      });
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete review",
+        variant: "destructive",
+      });
     }
   };
   
@@ -901,7 +927,7 @@ export default function NoSkipsPage() {
           isOpen={!!activeReview}
           onClose={handleCloseReview}
           onSave={handleSaveReview}
-          onDelete={deleteReview}
+          onDelete={handleDeleteReview}
           onGenreUpdate={handleGenreUpdate}
         />
       </div>
