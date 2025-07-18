@@ -117,19 +117,7 @@ export default function NoSkipsPage() {
     return noSkipsReviews?.some(review => review.albumId === albumId) || false;
   };
 
-  // Listen for top four album clicks from the compact widget
-  useEffect(() => {
-    const handleTopFourReviewEvent = (event: CustomEvent) => {
-      const { albumId } = event.detail;
-      handleOpenReview(albumId);
-    };
 
-    window.addEventListener('openTopFourReview', handleTopFourReviewEvent as EventListener);
-    
-    return () => {
-      window.removeEventListener('openTopFourReview', handleTopFourReviewEvent as EventListener);
-    };
-  }, []);
 
   // Review popup handlers for No Skips reviews (separate from The List)
   const handleOpenReview = async (albumId: number) => {
@@ -763,30 +751,66 @@ export default function NoSkipsPage() {
           </div>
         )}
         
-        {/* Top 4 controls now moved to the nav bar widget */}
-        <div className={`flex items-center justify-between gap-2 ${isMobile ? 'mt-3' : 'mt-4'} mb-4`}>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={handleShare}
-              className="text-xs text-gray-500 hover:text-black flex items-center gap-1"
-              title="Share your collection with others"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                <circle cx="18" cy="5" r="3"></circle>
-                <circle cx="6" cy="12" r="3"></circle>
-                <circle cx="18" cy="19" r="3"></circle>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-              </svg>
-              share collection
-            </button>
+        {/* Compact top 4 widget at top of page */}
+        <div className="flex justify-center mb-4">
+          <div className={`bg-white border border-black`}>
+            <div className="flex items-center justify-center gap-3 px-4 py-3">
+              <span className="font-mono text-sm text-black/70 whitespace-nowrap">top 4</span>
+              <div className="flex gap-2">
+                {topFourAlbums && topFourAlbums.length > 0 ? (
+                  topFourAlbums
+                    .sort((a, b) => (a.topFourPosition || 0) - (b.topFourPosition || 0))
+                    .slice(0, 4)
+                    .map((album) => (
+                      <button
+                        key={album.id}
+                        onClick={() => handleOpenReview(album.album.id)}
+                        className="hover:opacity-80 transition-opacity"
+                        title={`${album.album.name} by ${album.album.artist}`}
+                      >
+                        <AlbumArt
+                          src={album.album.imageUrl}
+                          alt={album.album.name}
+                          size="small"
+                          className="w-10 h-10 rounded"
+                        />
+                      </button>
+                    ))
+                ) : null}
+                {/* Fill empty slots */}
+                {topFourAlbums && Array.from({ length: 4 - Math.min(topFourAlbums.length, 4) }).map((_, index) => (
+                  <div 
+                    key={`empty-${index}`} 
+                    className="w-10 h-10 bg-gray-100 rounded border border-gray-200"
+                  />
+                ))}
+              </div>
+              <button 
+                className="text-xs text-gray-500 hover:text-black ml-2"
+                onClick={() => setTopFourDialogOpen(true)}
+                title="Edit top 4"
+              >
+                edit
+              </button>
+            </div>
           </div>
-          
+        </div>
+
+        {/* Share controls */}
+        <div className={`flex items-center justify-center gap-2 ${isMobile ? 'mt-3' : 'mt-4'} mb-4`}>
           <button 
-            className="text-xs text-gray-500 hover:text-black"
-            onClick={() => setTopFourDialogOpen(true)}
+            onClick={handleShare}
+            className="text-xs text-gray-500 hover:text-black flex items-center gap-1"
+            title="Share your collection with others"
           >
-            edit top 4
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            share collection
           </button>
         </div>
         
