@@ -34,7 +34,8 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { addToQueue } = useQueueAlbums();
+  const { addToQueue, isAddingToQueue: hookIsAddingToQueue } = useQueueAlbums();
+  console.log('CompactNowPlayingWidget - addToQueue function:', addToQueue);
   const { createReview } = useAlbumReviews();
   const { updateGenre } = useAlbumGenre();
   const [isAddingToQueue, setIsAddingToQueue] = useState(false);
@@ -226,7 +227,10 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
           
           <div className="flex gap-1 flex-shrink-0">
             <button
-              onClick={handleAddToQueue}
+              onClick={(e) => {
+                console.log('Queue button clicked!', e);
+                handleAddToQueue();
+              }}
               disabled={isAddingToQueue}
               className="px-1.5 py-0.5 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 disabled:opacity-50"
             >
