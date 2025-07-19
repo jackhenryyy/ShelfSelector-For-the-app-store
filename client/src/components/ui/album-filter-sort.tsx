@@ -2,20 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Album } from "@shared/schema";
 import { format } from "date-fns";
 
-export type SortOption = 
-  | "custom-order"
-  | "date-added-newest" 
-  | "date-added-oldest" 
-  | "title-asc" 
-  | "title-desc" 
-  | "artist-asc" 
-  | "artist-desc"
-  | "year-newest"
-  | "year-oldest"
-  | "rating-highest"
-  | "rating-lowest"
-  | "energy-highest"
-  | "energy-lowest";
+export type SortOption = "date-added" | "alphabetical" | "custom-order";
 
 export type FilterOption = {
   artist?: string;
@@ -38,7 +25,7 @@ interface AlbumFilterSortProps {
 export function AlbumFilterSort({
   onSortChange,
   onFilterChange,
-  selectedSort = "date-added-newest",
+  selectedSort = "date-added",
   showFilterOptions = false,
   showGenreOnly = false,
   totalCount,
@@ -87,17 +74,12 @@ export function AlbumFilterSort({
         <select 
           value={selectedSort}
           onChange={handleSortChange}
-          className="whitespace-nowrap px-2 sm:px-4 py-1 border border-black bg-white text-black font-mono text-xs sm:text-sm"
+          className="whitespace-nowrap px-3 py-2 border border-black bg-white text-black font-mono text-xs appearance-none rounded-none"
+          style={{ borderRadius: 0 }}
         >
+          <option value="date-added">date added</option>
+          <option value="alphabetical">a-z</option>
           <option value="custom-order">custom order</option>
-          <option value="date-added-newest">date added (newest)</option>
-          <option value="date-added-oldest">date added (oldest)</option>
-          <option value="title-asc">title (A-Z)</option>
-          <option value="title-desc">title (Z-A)</option>
-          <option value="artist-asc">artist (A-Z)</option>
-          <option value="artist-desc">artist (Z-A)</option>
-          <option value="year-newest">year (newest)</option>
-          <option value="year-oldest">year (oldest)</option>
         </select>
         
         {showFilterOptions && (
@@ -216,51 +198,11 @@ export function sortAlbums<T extends { album: Album; addedAt: string; rating?: n
   const sortedAlbums = [...albums];
   
   switch (sortOption) {
-    case "date-added-newest":
+    case "date-added":
       return sortedAlbums.sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime());
     
-    case "date-added-oldest":
-      return sortedAlbums.sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime());
-    
-    case "title-asc":
+    case "alphabetical":
       return sortedAlbums.sort((a, b) => a.album.name.localeCompare(b.album.name));
-    
-    case "title-desc":
-      return sortedAlbums.sort((a, b) => b.album.name.localeCompare(a.album.name));
-    
-    case "artist-asc":
-      return sortedAlbums.sort((a, b) => a.album.artist.localeCompare(b.album.artist));
-    
-    case "artist-desc":
-      return sortedAlbums.sort((a, b) => b.album.artist.localeCompare(a.album.artist));
-    
-    case "year-newest":
-      return sortedAlbums.sort((a, b) => (b.album.releaseYear || 0) - (a.album.releaseYear || 0));
-    
-    case "year-oldest":
-      return sortedAlbums.sort((a, b) => (a.album.releaseYear || 0) - (b.album.releaseYear || 0));
-    
-    case "rating-highest":
-      return sortedAlbums.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    
-    case "rating-lowest":
-      return sortedAlbums.sort((a, b) => (a.rating || 0) - (b.rating || 0));
-    
-    case "energy-highest":
-      return sortedAlbums.sort((a, b) => {
-        const energyMap = { 'high': 3, 'medium': 2, 'low': 1 };
-        const aEnergy = a.album.energyLevel ? energyMap[a.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
-        const bEnergy = b.album.energyLevel ? energyMap[b.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
-        return bEnergy - aEnergy;
-      });
-    
-    case "energy-lowest":
-      return sortedAlbums.sort((a, b) => {
-        const energyMap = { 'high': 3, 'medium': 2, 'low': 1 };
-        const aEnergy = a.album.energyLevel ? energyMap[a.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
-        const bEnergy = b.album.energyLevel ? energyMap[b.album.energyLevel as 'high' | 'medium' | 'low'] || 0 : 0;
-        return aEnergy - bEnergy;
-      });
     
     case "custom-order":
       // For custom order, sort by customOrder field (lower numbers = higher position)

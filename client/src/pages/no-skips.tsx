@@ -85,7 +85,7 @@ export default function NoSkipsPage() {
   console.log("User from useAuth:", user);
   
   // All useState hooks together
-  const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
+  const [sortOption, setSortOption] = useState<SortOption>("date-added");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
   const [isEditingTopFour, setIsEditingTopFour] = useState(false);
   const [selectedForTopFour, setSelectedForTopFour] = useState<{albumId: number, position: number}[]>([]);
