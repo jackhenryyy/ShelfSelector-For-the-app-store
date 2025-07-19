@@ -62,10 +62,12 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   }, [refetch, user]);
 
   const handleAddToQueue = async () => {
+    console.log('handleAddToQueue clicked', { nowPlaying, isAddingToQueue });
     if (!nowPlaying || isAddingToQueue) return;
     
     setIsAddingToQueue(true);
     try {
+      console.log('Processing album:', nowPlaying.track.album);
       const albumData = await processAndSaveAlbum({
         id: nowPlaying.track.album.spotifyId,
         name: nowPlaying.track.album.name,
@@ -74,7 +76,9 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         release_date: nowPlaying.track.album.releaseYear?.toString()
       });
 
+      console.log('Album processed, adding to queue:', albumData.id);
       await addToQueue(albumData.id);
+      console.log('Successfully added to queue');
       
       toast({
         title: "Added to queue",
