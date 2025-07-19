@@ -74,7 +74,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         release_date: nowPlaying.track.album.releaseYear?.toString()
       });
 
-      await addToQueue({ albumId: albumData.id });
+      await addToQueue(albumData.id);
       
       toast({
         title: "Added to queue",

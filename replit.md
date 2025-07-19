@@ -117,6 +117,10 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
   - Maintains identical visual format (album titles, artists, genres) while enabling drag-and-drop reordering
   - Real-time database updates with automatic cache invalidation for immediate UI reflection
   - Simplified sort dropdown to flat, square design with only essential three sorting options
+- July 18, 2025. Fixed Spotify widget "Add to Queue" functionality:
+  - Corrected API call in CompactNowPlayingWidget to pass albumId directly instead of as object
+  - Add to Queue button now works properly on deployed version
+  - Fixed parameter mismatch between widget implementation and useQueueAlbums hook
 - July 18, 2025. Enhanced shared page functionality and improved review indicators:
   - Added read-only review popups to shared no-skips pages with same functionality as main page
   - Updated review indicators from 📝 emoji to black square with white notebook icon for consistent design
