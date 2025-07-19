@@ -23,10 +23,19 @@ export function useQueueAlbums() {
   // Add album to queue
   const addToQueueMutation = useMutation({
     mutationFn: async (albumId: number) => {
-      const response = await apiRequest('POST', '/api/queue', { albumId });
+      console.log('addToQueueMutation called with albumId:', albumId);
+      const response = await apiRequest('/api/queue', {
+        method: 'POST',
+        body: JSON.stringify({ albumId }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Queue API response:', response);
       return response.json();
     },
     onSuccess: () => {
+      console.log('Queue mutation success, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['/api/queue'] });
     }
   });
@@ -34,7 +43,9 @@ export function useQueueAlbums() {
   // Remove album from queue
   const removeFromQueueMutation = useMutation({
     mutationFn: async (albumId: number) => {
-      await apiRequest('DELETE', `/api/queue/${albumId}`);
+      await apiRequest(`/api/queue/${albumId}`, {
+        method: 'DELETE',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/queue'] });
