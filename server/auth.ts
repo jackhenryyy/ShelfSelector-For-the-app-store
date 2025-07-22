@@ -56,27 +56,13 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        console.log('Authentication attempt for username:', username);
         const user = await storage.getUserByUsername(username);
-        console.log('User found:', user ? user.username : 'not found');
-        
-        if (!user) {
-          console.log('User not found');
+        if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false);
+        } else {
+          return done(null, user);
         }
-        
-        const passwordMatch = await comparePasswords(password, user.password);
-        console.log('Password match:', passwordMatch);
-        
-        if (!passwordMatch) {
-          console.log('Password does not match');
-          return done(null, false);
-        }
-        
-        console.log('Authentication successful for:', user.username);
-        return done(null, user);
       } catch (err) {
-        console.log('Authentication error:', err);
         return done(err);
       }
     })
@@ -125,33 +111,10 @@ export function setupAuth(app: Express) {
   });
 
   // Login endpoint
-  app.post("/api/login", (req, res, next) => {
-    console.log('Login endpoint hit with body:', req.body);
-    passport.authenticate("local", (err: any, user: any, info: any) => {
-      console.log('Passport authenticate callback:', { err, user: user?.username, info });
-      
-      if (err) {
-        console.log('Authentication error:', err);
-        return next(err);
-      }
-      
-      if (!user) {
-        console.log('No user returned from authentication');
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      req.logIn(user, (err) => {
-        if (err) {
-          console.log('Login error:', err);
-          return next(err);
-        }
-        
-        console.log('User logged in successfully:', user.username);
-        // Return user without password
-        const { password, ...userWithoutPassword } = user as UserType;
-        res.status(200).json(userWithoutPassword);
-      });
-    })(req, res, next);
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    // Return user without password
+    const { password, ...userWithoutPassword } = req.user as UserType;
+    res.status(200).json(userWithoutPassword);
   });
 
   // Logout endpoint
