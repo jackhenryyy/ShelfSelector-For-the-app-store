@@ -2,8 +2,7 @@ import { ReactNode } from "react";
 import { NavBar } from "./nav-bar";
 import { BlurredBackground } from "./blurred-background";
 import { useAuth } from "@/hooks/use-auth";
-import { PasswordResetDialog } from "./password-reset-dialog";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 interface LayoutProps {
   children: ReactNode;
@@ -32,22 +31,13 @@ export function Layout({
       
       <div className="absolute top-0 right-0 p-1 sm:p-2 z-50">
         {user && (
-          <div className="flex items-center gap-2">
-            <PasswordResetDialog 
-              trigger={
-                <button className="text-[10px] sm:text-xs flex items-center gap-0.5 sm:gap-1 text-black/80 hover:text-black">
-                  <Settings className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                </button>
-              }
-            />
-            <button 
-              onClick={() => logoutMutation.mutate()}
-              className="text-[10px] sm:text-xs flex items-center gap-0.5 sm:gap-1 text-black/80 hover:text-black"
-            >
-              <span>logout</span>
-              <LogOut className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-            </button>
-          </div>
+          <button 
+            onClick={() => logoutMutation.mutate()}
+            className="text-[10px] sm:text-xs flex items-center gap-0.5 sm:gap-1 text-black/80 hover:text-black"
+          >
+            <span>logout</span>
+            <LogOut className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+          </button>
         )}
       </div>
       
