@@ -43,7 +43,6 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden p-4 sm:p-0">
       <RotatingBackground 
         images={albumCovers}
-        interval={5000}
       />
       
       <div className="relative z-10 w-full max-w-md">
