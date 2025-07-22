@@ -97,18 +97,30 @@ export function useNoSkipsAlbums() {
   // Add album to no skips
   const addToNoSkipsMutation = useMutation({
     mutationFn: async (data: { albumId: number; isTopFour?: boolean }) => {
-      const response = await apiRequest('POST', '/api/no-skips', data);
+      console.log('addToNoSkipsMutation called with data:', data);
+      const response = await apiRequest('/api/no-skips', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('No skips API response:', response);
       return response.json();
     },
     onSuccess: () => {
+      console.log('No skips mutation success, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['/api/no-skips'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/no-skips/top-four'] });
     }
   });
 
   // Remove album from no skips
   const removeFromNoSkipsMutation = useMutation({
     mutationFn: async (albumId: number) => {
-      await apiRequest('DELETE', `/api/no-skips/${albumId}`);
+      await apiRequest(`/api/no-skips/${albumId}`, {
+        method: 'DELETE',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/no-skips'] });
@@ -119,7 +131,13 @@ export function useNoSkipsAlbums() {
   // Update top four albums
   const updateTopFourMutation = useMutation({
     mutationFn: async (topFour: {albumId: number, position: number}[]) => {
-      await apiRequest('POST', '/api/no-skips/top-four', topFour);
+      await apiRequest('/api/no-skips/top-four', {
+        method: 'POST',
+        body: JSON.stringify(topFour),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/no-skips'] });
@@ -171,7 +189,7 @@ export function useAlbumReviews() {
   // Get review for specific album (async function)
   const getAlbumReview = async (albumId: number): Promise<AlbumReview | null> => {
     try {
-      const response = await apiRequest('GET', `/api/reviews/${albumId}`);
+      const response = await apiRequest(`/api/reviews/${albumId}`);
       if (response.ok) {
         return await response.json();
       } else if (response.status === 404) {
@@ -189,7 +207,7 @@ export function useAlbumReviews() {
   const searchReviews = async (query: string): Promise<AlbumReview[]> => {
     if (!query.trim()) return albumReviews || [];
     
-    const response = await apiRequest('GET', `/api/reviews/search?query=${encodeURIComponent(query)}`);
+    const response = await apiRequest(`/api/reviews/search?query=${encodeURIComponent(query)}`);
     return response.json();
   };
 
@@ -202,7 +220,13 @@ export function useAlbumReviews() {
         listenedAt: data.listenedAt ? data.listenedAt.toISOString() : undefined
       };
       
-      const response = await apiRequest('POST', '/api/reviews', formattedData);
+      const response = await apiRequest('/api/reviews', {
+        method: 'POST',
+        body: JSON.stringify(formattedData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -221,7 +245,13 @@ export function useAlbumReviews() {
         listenedAt: rest.listenedAt ? rest.listenedAt.toISOString() : undefined
       };
       
-      const response = await apiRequest('PUT', `/api/reviews/${id}`, formattedData);
+      const response = await apiRequest(`/api/reviews/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(formattedData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       return response.json();
     },
     onSuccess: (_, variables) => {
@@ -233,7 +263,9 @@ export function useAlbumReviews() {
   // Delete review
   const deleteReviewMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/reviews/${id}`);
+      const response = await apiRequest(`/api/reviews/${id}`, {
+        method: 'DELETE',
+      });
       return response.json();
     },
     onSuccess: () => {
