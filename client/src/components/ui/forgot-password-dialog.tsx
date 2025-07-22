@@ -30,7 +30,7 @@ interface ForgotPasswordDialogProps {
 
 export function ForgotPasswordDialog({ trigger }: ForgotPasswordDialogProps) {
   const [open, setOpen] = useState(false);
-  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
   const { requestResetMutation } = useForgotPassword();
 
   const form = useForm<ForgotPasswordFormData>({
@@ -42,11 +42,8 @@ export function ForgotPasswordDialog({ trigger }: ForgotPasswordDialogProps) {
 
   const onSubmit = (data: ForgotPasswordFormData) => {
     requestResetMutation.mutate(data, {
-      onSuccess: (response) => {
-        // In demo mode, we get the token back
-        if (response.resetToken) {
-          setResetToken(response.resetToken);
-        }
+      onSuccess: () => {
+        setResetSent(true);
         form.reset();
       },
     });
@@ -66,21 +63,18 @@ export function ForgotPasswordDialog({ trigger }: ForgotPasswordDialogProps) {
           <DialogTitle className="font-mono">Reset Password</DialogTitle>
         </DialogHeader>
         
-        {resetToken ? (
+        {resetSent ? (
           <div className="space-y-4">
             <p className="text-sm font-mono text-green-600">
-              Reset token generated (demo mode only):
+              Reset request sent successfully!
             </p>
-            <div className="p-3 bg-gray-100 rounded border font-mono text-xs break-all">
-              {resetToken}
-            </div>
             <p className="text-xs font-mono text-gray-600">
-              Copy this token and use it in the reset password form. In a real app, this would be sent via email.
+              Check the server logs for your reset token and URL, then visit the reset password page.
             </p>
             <Button
               onClick={() => {
                 setOpen(false);
-                setResetToken(null);
+                setResetSent(false);
               }}
               className="w-full font-mono"
             >

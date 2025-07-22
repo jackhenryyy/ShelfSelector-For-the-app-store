@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { passwordResetSchema } from "@shared/schema";
 import { z } from "zod";
 import { useForgotPassword } from "@/hooks/use-forgot-password";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useEffect } from "react";
 import { RotatingBackground } from "@/components/ui/rotating-background";
 import { albumCovers } from "@/lib/album-covers";
@@ -12,12 +12,17 @@ type ResetPasswordFormData = z.infer<typeof passwordResetSchema>;
 
 export default function ResetPasswordPage() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const { resetPasswordMutation } = useForgotPassword();
+
+  // Extract token from URL if present
+  const urlParams = new URLSearchParams(search);
+  const tokenFromUrl = urlParams.get('token') || '';
 
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(passwordResetSchema),
     defaultValues: {
-      token: "",
+      token: tokenFromUrl,
       newPassword: "",
       confirmPassword: "",
     },

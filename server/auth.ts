@@ -162,13 +162,12 @@ export function setupAuth(app: Express) {
       });
 
       // In a real app, you would send an email here
-      // For demo purposes, we'll return the token (DON'T DO THIS IN PRODUCTION)
+      // For now, we'll log the token so you can test in production
       console.log(`Password reset token for ${email}: ${resetToken}`);
+      console.log(`Reset URL: ${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`);
       
       res.json({ 
-        message: "If an account with that email exists, a reset link has been sent",
-        // Remove this in production - only for demo
-        resetToken: resetToken 
+        message: "If an account with that email exists, a reset link has been sent"
       });
     } catch (error) {
       console.error("Password reset request error:", error);
