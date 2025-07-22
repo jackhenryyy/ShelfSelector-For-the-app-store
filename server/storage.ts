@@ -22,6 +22,7 @@ export interface IStorage {
   getUserBySpotifyId(spotifyId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserTokens(id: number, accessToken: string, refreshToken: string, tokenExpiry: Date): Promise<User | undefined>;
+  updateUserPassword(id: number, hashedPassword: string): Promise<User | undefined>;
 
   // Album operations
   getAlbum(id: number): Promise<Album | undefined>;
@@ -126,6 +127,19 @@ export class MemStorage implements IStorage {
       accessToken, 
       refreshToken, 
       tokenExpiry 
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async updateUserPassword(id: number, hashedPassword: string): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    
+    const updatedUser: User = { 
+      ...user, 
+      password: hashedPassword
     };
     
     this.users.set(id, updatedUser);
@@ -404,6 +418,15 @@ export class DatabaseStorage implements IStorage {
     const [updatedUser] = await db
       .update(users)
       .set({ accessToken, refreshToken, tokenExpiry })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async updateUserPassword(id: number, hashedPassword: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ password: hashedPassword })
       .where(eq(users.id, id))
       .returning();
     return updatedUser;

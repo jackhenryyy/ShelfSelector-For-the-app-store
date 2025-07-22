@@ -144,6 +144,10 @@ export default function AuthPage() {
             >
               {loginMutation.isPending ? "logging in..." : "login"}
             </button>
+            
+            <p className="text-xs text-center text-black/60 font-mono">
+              Forgot your password? Change it after logging in using the settings button in the top-right corner.
+            </p>
           </form>
         ) : (
           <form

@@ -7,6 +7,14 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as UserType } from "@shared/schema";
 
+// Middleware to check if user is authenticated
+function requireAuth(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+}
+
 declare global {
   namespace Express {
     interface User extends UserType {}
@@ -123,6 +131,36 @@ export function setupAuth(app: Express) {
       if (err) return next(err);
       res.sendStatus(200);
     });
+  });
+
+  // Password reset endpoint
+  app.post("/api/reset-password", requireAuth, async (req, res, next) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+
+      const user = req.user as UserType;
+      
+      // Verify current password
+      const isCurrentPasswordValid = await comparePasswords(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedNewPassword = await hashPassword(newPassword);
+      
+      // Update password in storage
+      await storage.updateUserPassword(user.id, hashedNewPassword);
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
   });
 
   // Get current user endpoint
