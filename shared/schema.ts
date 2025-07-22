@@ -24,43 +24,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
   tokenExpiry: true,
 });
 
-// Password reset tokens table
-export const passwordResetTokens = pgTable("password_reset_tokens", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull(),
-  token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  used: boolean("used").default(false).notNull(),
-});
-
-export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
-  id: true,
-});
-
-// Password reset schemas
-export const passwordResetRequestSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
-
-export const passwordResetSchema = z.object({
-  token: z.string().min(1, "Reset token is required"),
-  newPassword: z.string().min(6, "New password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-// Change password schema (for logged-in users)
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(6, "New password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
 // Album model
 export const albums = pgTable("albums", {
   id: serial("id").primaryKey(),
@@ -157,6 +120,3 @@ export type InsertAlbumReview = z.infer<typeof insertAlbumReviewSchema>;
 
 export type NoSkipsReview = typeof noSkipsReviews.$inferSelect;
 export type InsertNoSkipsReview = z.infer<typeof insertNoSkipsReviewSchema>;
-
-export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
-export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;

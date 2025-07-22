@@ -7,7 +7,6 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { RotatingBackground } from "@/components/ui/rotating-background";
 import { albumCovers } from "@/lib/album-covers";
-import { ForgotPasswordDialog } from "@/components/ui/forgot-password-dialog";
 
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -145,10 +144,6 @@ export default function AuthPage() {
             >
               {loginMutation.isPending ? "logging in..." : "login"}
             </button>
-            
-            <div className="text-xs text-center text-black/60 font-mono">
-              <ForgotPasswordDialog />
-            </div>
           </form>
         ) : (
           <form

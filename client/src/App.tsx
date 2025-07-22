@@ -11,7 +11,6 @@ import NoSkipsPage from "@/pages/no-skips";
 import ListPage from "@/pages/list";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import ResetPasswordPage from "@/pages/reset-password";
 import SharedNoSkipsPage from "@/pages/shared-no-skips";
 
 function Router() {
@@ -22,7 +21,6 @@ function Router() {
       <ProtectedRoute path="/no-skips" component={NoSkipsPage} />
       <ProtectedRoute path="/list" component={ListPage} />
       <Route path="/auth" component={AuthPage} />
-      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/shared/:userId" component={SharedNoSkipsPage} />
       <Route component={NotFound} />
     </Switch>
