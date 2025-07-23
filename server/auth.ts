@@ -111,10 +111,26 @@ export function setupAuth(app: Express) {
   });
 
   // Login endpoint
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    // Return user without password
-    const { password, ...userWithoutPassword } = req.user as UserType;
-    res.status(200).json(userWithoutPassword);
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return next(err);
+      }
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        
+        // Return user without password
+        const { password, ...userWithoutPassword } = user as UserType;
+        res.status(200).json(userWithoutPassword);
+      });
+    })(req, res, next);
   });
 
   // Logout endpoint
