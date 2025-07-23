@@ -37,10 +37,7 @@ export function useSpotifyAlbums() {
   
   // Get saved albums from Spotify
   const { data: savedAlbums, isLoading: isLoadingSaved } = useQuery<SpotifyAlbum[]>({
-    queryKey: ['/api/spotify/albums/saved'],
-    onError: (error) => {
-      console.error('Error fetching saved albums:', error);
-    }
+    queryKey: ['/api/spotify/albums/saved']
   });
 
   // Search albums
@@ -49,7 +46,9 @@ export function useSpotifyAlbums() {
     
     try {
       setIsSearching(true);
-      const response = await apiRequest('GET', `/api/spotify/albums/search?query=${encodeURIComponent(query)}`);
+      const response = await apiRequest(`/api/spotify/albums/search?query=${encodeURIComponent(query)}`, {
+        method: "GET",
+      });
       const data = await response.json();
       setSearchResults(data);
       return data;
@@ -64,7 +63,9 @@ export function useSpotifyAlbums() {
 
   // Get album details
   const getAlbumDetails = async (spotifyId: string): Promise<SpotifyAlbum> => {
-    const response = await apiRequest('GET', `/api/spotify/albums/${spotifyId}`);
+    const response = await apiRequest(`/api/spotify/albums/${spotifyId}`, {
+      method: "GET",
+    });
     return response.json();
   };
 
