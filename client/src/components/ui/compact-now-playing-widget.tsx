@@ -44,11 +44,17 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
 
   // Query for currently playing track
-  const { data: nowPlaying, refetch } = useQuery<NowPlayingData>({
+  const { data: nowPlaying, refetch, isError } = useQuery<NowPlayingData>({
     queryKey: ["/api/spotify/currently-playing"],
     enabled: !!user,
     refetchInterval: 1000, // Refresh every 1 second for real-time updates
-    retry: false,
+    retry: (failureCount, error: any) => {
+      // Don't retry if unauthorized (no Spotify token)
+      if (error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   // Auto-refetch every second
@@ -182,7 +188,83 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  if (!user || !nowPlaying) {
+  // Don't show anything if user is not logged in
+  if (!user) {
+    return null;
+  }
+
+  // Show Spotify login button if user doesn't have Spotify connected
+  if (isError || !user?.accessToken) {
+    return (
+      <div className={`bg-white border border-black px-2 py-2 text-center ${className}`}>
+        <p className="font-mono text-xs text-gray-500 mb-2">Connect Spotify</p>
+        <button 
+          onClick={() => {
+            console.log('Compact Spotify login button clicked - opening popup');
+            
+            // Open Spotify authentication in a popup
+            const popup = window.open(
+              '/api/spotify/auth',
+              'spotify-auth',
+              'width=500,height=600,left=' + (window.screen.width / 2 - 250) + ',top=' + (window.screen.height / 2 - 300)
+            );
+            
+            if (!popup) {
+              console.log('Popup blocked, falling back to redirect');
+              window.location.href = '/api/spotify/auth';
+              return;
+            }
+
+            // Listen for messages from the popup
+            const messageHandler = (event: MessageEvent) => {
+              if (event.data?.type === 'SPOTIFY_AUTH_SUCCESS') {
+                console.log('Received authentication success message from popup');
+                window.removeEventListener('message', messageHandler);
+                clearInterval(checkClosed);
+                clearTimeout(timeout);
+                
+                // Refresh the page to show the now playing widget
+                setTimeout(() => {
+                  window.location.reload();
+                }, 500);
+              }
+            };
+            
+            window.addEventListener('message', messageHandler);
+
+            // Listen for popup completion (fallback)
+            const checkClosed = setInterval(() => {
+              if (popup.closed) {
+                clearInterval(checkClosed);
+                window.removeEventListener('message', messageHandler);
+                console.log('Popup closed, checking authentication status');
+                
+                // Refresh the page to check if authentication succeeded
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1000);
+              }
+            }, 1000);
+
+            // Close popup after 5 minutes if still open
+            const timeout = setTimeout(() => {
+              if (!popup.closed) {
+                popup.close();
+              }
+              clearInterval(checkClosed);
+              window.removeEventListener('message', messageHandler);
+            }, 5 * 60 * 1000);
+          }}
+          className="px-2 py-1 border border-black bg-black text-white font-mono text-xs hover:bg-gray-800"
+        >
+          Connect
+        </button>
+      </div>
+    );
+  }
+
+  // Don't show anything if no currently playing data
+  if (!nowPlaying) {
     return null;
   }
 

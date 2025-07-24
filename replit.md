@@ -108,6 +108,12 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 23, 2025. Fixed compact Spotify widget to show "Connect to Spotify" button:
+  - Added Spotify connection detection to compact now playing widget
+  - Users without Spotify connection now see a "Connect" button in the compact widget
+  - Button opens authentication popup matching the main widget functionality
+  - Ensures new users can easily connect Spotify from any page with the compact widget
+  - Fixed missing connection prompt that was replaced when compact widget was added
 - July 18, 2025. Implemented complete custom drag-and-drop sorting system:
   - Added custom order option to sort dropdown with three sorting modes: date added, a-z, and custom order
   - Created SortableAlbumCard component using @dnd-kit libraries for seamless drag-and-drop functionality
