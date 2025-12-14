@@ -131,34 +131,41 @@ export default function EmbedListPage() {
 
             <div className="space-y-4">
               {reviews.map((review, index) => (
-                <div key={`${review.album.spotifyId}-${index}`} className="flex gap-3" data-testid={`embed-review-${index}`}>
-                  <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
-                    <div className="font-mono text-sm">{getDay(review)}</div>
-                  </div>
+                <div key={`${review.album.spotifyId}-${index}`} className="border-b border-gray-100 pb-4" data-testid={`embed-review-${index}`}>
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 min-w-[40px] flex items-center justify-center border border-black aspect-square">
+                      <div className="font-mono text-sm">{getDay(review)}</div>
+                    </div>
 
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      openInSpotify(review.album.spotifyId);
-                    }}
-                    data-testid={`link-spotify-${index}`}
-                  >
-                    <AlbumArt
-                      src={review.album.imageUrl}
-                      alt={review.album.name}
-                      size="small"
-                    />
-                  </a>
+                    <a
+                      href={`https://open.spotify.com/album/${review.album.spotifyId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cursor-pointer"
+                      data-testid={`link-spotify-${index}`}
+                    >
+                      <AlbumArt
+                        src={review.album.imageUrl}
+                        alt={review.album.name}
+                        size="small"
+                      />
+                    </a>
 
-                  <div className="flex-grow">
-                    <h3 className="font-mono text-sm">{review.album.name}</h3>
-                    <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
-                  </div>
+                    <div className="flex-grow">
+                      <h3 className="font-mono text-sm">{review.album.name}</h3>
+                      <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
+                    </div>
 
-                  <div className="flex items-center">
-                    <StarRating value={parseFloat(review.rating)} size="medium" readonly />
+                    <div className="flex items-center">
+                      <StarRating value={parseFloat(review.rating)} size="medium" readonly />
+                    </div>
                   </div>
+                  
+                  {review.review && (
+                    <div className="mt-2 ml-[52px] font-mono text-sm text-black/80">
+                      <p dangerouslySetInnerHTML={{ __html: review.review }} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
