@@ -59,6 +59,10 @@ export function useQueueAlbums() {
     return queueAlbums[randomIndex];
   }, [queueAlbums]);
 
+  const isAlbumInQueue = useCallback((albumId: number) => {
+    return queueAlbums?.some(qa => qa.albumId === albumId) ?? false;
+  }, [queueAlbums]);
+
   return {
     queueAlbums,
     isLoading,
@@ -66,7 +70,8 @@ export function useQueueAlbums() {
     removeFromQueue: (albumId: number) => removeFromQueueMutation.mutate(albumId),
     isAddingToQueue: addToQueueMutation.isPending,
     isRemovingFromQueue: removeFromQueueMutation.isPending,
-    getRandomQueueAlbum
+    getRandomQueueAlbum,
+    isAlbumInQueue
   };
 }
 
@@ -152,6 +157,10 @@ export function useNoSkipsAlbums() {
     return noSkipsAlbums[randomIndex];
   }, [noSkipsAlbums]);
 
+  const isAlbumInNoSkips = useCallback((albumId: number) => {
+    return noSkipsAlbums?.some(nsa => nsa.albumId === albumId) ?? false;
+  }, [noSkipsAlbums]);
+
   return {
     noSkipsAlbums,
     topFourAlbums,
@@ -162,7 +171,8 @@ export function useNoSkipsAlbums() {
     isAddingToNoSkips: addToNoSkipsMutation.isPending,
     isRemovingFromNoSkips: removeFromNoSkipsMutation.isPending,
     isUpdatingTopFour: updateTopFourMutation.isPending,
-    getRandomNoSkipsAlbum
+    getRandomNoSkipsAlbum,
+    isAlbumInNoSkips
   };
 }
 
@@ -273,6 +283,10 @@ export function useAlbumReviews() {
     }
   });
 
+  const isAlbumInReviews = useCallback((albumId: number) => {
+    return albumReviews?.some(ar => ar.albumId === albumId) ?? false;
+  }, [albumReviews]);
+
   return {
     albumReviews,
     isLoading,
@@ -286,5 +300,6 @@ export function useAlbumReviews() {
     isCreatingReview: createReviewMutation.isPending,
     isUpdatingReview: updateReviewMutation.isPending,
     isDeletingReview: deleteReviewMutation.isPending,
+    isAlbumInReviews
   };
 }

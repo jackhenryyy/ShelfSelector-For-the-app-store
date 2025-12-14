@@ -108,6 +108,13 @@ The Shelf is a minimalistic music curation app that helps users decide what to l
 - Icon assets for different platforms
 
 ## Changelog
+- July 23, 2025. Added duplicate album detection feature:
+  - App now detects when you try to add an album that's already in your collection
+  - Popup asks if you want to add the duplicate anyway
+  - Works on Queue page, No Skips page, and compact Spotify widget
+  - Prevents accidental duplicates while still allowing intentional ones
+- July 23, 2025. Fixed genre editing - corrected API call format that was causing save failures
+- July 23, 2025. Fixed review popup scrolling - reviews no longer cut off on mobile/web
 - July 23, 2025. Fixed compact Spotify widget to show "Connect to Spotify" button:
   - Added Spotify connection detection to compact now playing widget
   - Users without Spotify connection now see a "Connect" button in the compact widget

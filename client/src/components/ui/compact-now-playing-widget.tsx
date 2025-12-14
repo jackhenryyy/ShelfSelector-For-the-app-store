@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { processAndSaveAlbum } from "@/lib/spotify";
 import { AlbumDetailsDialog } from "@/components/ui/album-details-dialog";
+import { DuplicateAlbumDialog } from "@/components/ui/duplicate-album-dialog";
 import { useAlbumGenre } from "@/hooks/use-album-genre";
 
 interface NowPlayingData {
@@ -34,7 +35,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { addToQueue, isAddingToQueue: hookIsAddingToQueue } = useQueueAlbums();
+  const { addToQueue, isAddingToQueue: hookIsAddingToQueue, isAlbumInQueue } = useQueueAlbums();
   console.log('CompactNowPlayingWidget - addToQueue function:', addToQueue);
   const { createReview } = useAlbumReviews();
   const { updateGenre } = useAlbumGenre();
@@ -42,6 +43,8 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   const [isAddingToList, setIsAddingToList] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [pendingDuplicateAlbum, setPendingDuplicateAlbum] = useState<{id: number, name: string} | null>(null);
 
   // Query for currently playing track
   const { data: nowPlaying, refetch, isError } = useQuery<NowPlayingData>({
@@ -83,6 +86,14 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         release_date: nowPlaying.track.album.releaseYear?.toString()
       });
 
+      // Check for duplicate
+      if (isAlbumInQueue(albumData.id)) {
+        setPendingDuplicateAlbum({ id: albumData.id, name: albumData.name });
+        setDuplicateDialogOpen(true);
+        setIsAddingToQueue(false);
+        return;
+      }
+
       console.log('Album processed, adding to queue:', albumData.id);
       await addToQueue(albumData.id);
       console.log('Successfully added to queue');
@@ -102,6 +113,18 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
       });
     } finally {
       setIsAddingToQueue(false);
+    }
+  };
+  
+  const handleConfirmDuplicate = async () => {
+    if (pendingDuplicateAlbum) {
+      await addToQueue(pendingDuplicateAlbum.id);
+      toast({
+        title: "Added to queue",
+        description: "Album has been added to your queue",
+      });
+      setPendingDuplicateAlbum(null);
+      setLocation("/queue");
     }
   };
 
@@ -339,6 +362,18 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
           onUpdateGenre={handleUpdateGenre}
         />
       )}
+      
+      {/* Duplicate Album Dialog */}
+      <DuplicateAlbumDialog
+        isOpen={duplicateDialogOpen}
+        onClose={() => {
+          setDuplicateDialogOpen(false);
+          setPendingDuplicateAlbum(null);
+        }}
+        onConfirm={handleConfirmDuplicate}
+        albumName={pendingDuplicateAlbum?.name || ""}
+        sectionName="Queue"
+      />
     </>
   );
 }

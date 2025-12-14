@@ -46,6 +46,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableAlbumCard } from '@/components/ui/sortable-album-card';
+import { DuplicateAlbumDialog } from '@/components/ui/duplicate-album-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -53,7 +54,7 @@ import { apiRequest } from '@/lib/queryClient';
 export default function NoSkipsPage() {
   // Hooks with contexts first
   const { user } = useAuth(); // Use the proper authentication hook
-  const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips, removeFromNoSkips } = useNoSkipsAlbums();
+  const { noSkipsAlbums, topFourAlbums, updateTopFour, addToNoSkips, removeFromNoSkips, isAlbumInNoSkips } = useNoSkipsAlbums();
   const { searchAlbums, searchResults, isSearching } = useSpotifyAlbums();
   const { data: noSkipsReviews } = useNoSkipsReviews();
   const { mutateAsync: createNoSkipsReview } = useCreateNoSkipsReview();
@@ -95,6 +96,8 @@ export default function NoSkipsPage() {
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   const [gridScale, setGridScale] = useState<number>(3);
   const [activeReview, setActiveReview] = useState<NoSkipsReviewWithAlbum | null>(null);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [pendingDuplicateAlbum, setPendingDuplicateAlbum] = useState<{id: number, name: string} | null>(null);
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -477,8 +480,16 @@ export default function NoSkipsPage() {
     }
   };
   
-  // Function to add album to No Skips
-  const handleAddToNoSkips = (albumId: number) => {
+  // Function to add album to No Skips with duplicate detection
+  const handleAddToNoSkips = (albumId: number, albumName?: string) => {
+    // Check if album already exists in No Skips
+    if (isAlbumInNoSkips(albumId)) {
+      const album = searchResults.find(a => a.id === albumId);
+      setPendingDuplicateAlbum({ id: albumId, name: albumName || album?.name || "This album" });
+      setDuplicateDialogOpen(true);
+      return;
+    }
+    
     addToNoSkips({ 
       albumId, 
       isTopFour: false 
@@ -492,6 +503,23 @@ export default function NoSkipsPage() {
     // Close search after adding
     setShowSearch(false);
     setSearchQuery("");
+  };
+  
+  // Confirm adding duplicate to No Skips
+  const handleConfirmDuplicate = () => {
+    if (pendingDuplicateAlbum) {
+      addToNoSkips({ 
+        albumId: pendingDuplicateAlbum.id, 
+        isTopFour: false 
+      });
+      toast({
+        title: "Album added",
+        description: "Album has been added to your No Skips collection",
+      });
+      setPendingDuplicateAlbum(null);
+      setShowSearch(false);
+      setSearchQuery("");
+    }
   };
   
   // Function to remove album from No Skips
@@ -1057,6 +1085,18 @@ export default function NoSkipsPage() {
           onSave={handleSaveReview}
           onDelete={handleDeleteReview}
           onGenreUpdate={handleGenreUpdate}
+        />
+        
+        {/* Duplicate Album Dialog */}
+        <DuplicateAlbumDialog
+          isOpen={duplicateDialogOpen}
+          onClose={() => {
+            setDuplicateDialogOpen(false);
+            setPendingDuplicateAlbum(null);
+          }}
+          onConfirm={handleConfirmDuplicate}
+          albumName={pendingDuplicateAlbum?.name || ""}
+          sectionName="No Skips"
         />
       </div>
     </Layout>

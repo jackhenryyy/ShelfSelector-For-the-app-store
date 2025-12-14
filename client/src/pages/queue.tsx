@@ -15,6 +15,7 @@ import { AlbumDetailsDialog } from "@/components/ui/album-details-dialog";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SearchDialog } from "@/components/ui/search-dialog";
+import { DuplicateAlbumDialog } from "@/components/ui/duplicate-album-dialog";
 import { 
   AlbumFilterSort, 
   SortOption, 
@@ -89,7 +90,7 @@ function filterQueueAlbums(albums: any[], filter: FilterOption, searchQuery?: st
 }
 
 export default function QueuePage() {
-  const { queueAlbums, addToQueue, removeFromQueue } = useQueueAlbums();
+  const { queueAlbums, addToQueue, removeFromQueue, isAlbumInQueue } = useQueueAlbums();
   const { addToNoSkips } = useNoSkipsAlbums();
   const { createReview } = useAlbumReviews();
   const { searchAlbums } = useSpotifyAlbums();
@@ -109,6 +110,8 @@ export default function QueuePage() {
   const [filteredQueueAlbums, setFilteredQueueAlbums] = useState<any[]>([]);
   const [isCsvUploading, setIsCsvUploading] = useState(false);
   const [gridScale, setGridScale] = useState<number>(3);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [pendingDuplicateAlbum, setPendingDuplicateAlbum] = useState<{id: number, name: string} | null>(null);
   
   // Update filtered queue albums when sorting or filtering changes
   useEffect(() => {
@@ -219,13 +222,33 @@ export default function QueuePage() {
     }
   };
   
-  // Function to add album to queue
-  const handleAddToQueue = (albumId: number) => {
+  // Function to add album to queue with duplicate detection
+  const handleAddToQueue = (albumId: number, albumName?: string) => {
+    // Check if album already exists in queue
+    if (isAlbumInQueue(albumId)) {
+      const album = searchResults.find(a => a.id === albumId);
+      setPendingDuplicateAlbum({ id: albumId, name: albumName || album?.name || "This album" });
+      setDuplicateDialogOpen(true);
+      return;
+    }
+    
     addToQueue(albumId);
     toast({
       title: "Added to Queue",
       description: "Album has been added to your Queue",
     });
+  };
+  
+  // Confirm adding duplicate
+  const handleConfirmDuplicate = () => {
+    if (pendingDuplicateAlbum) {
+      addToQueue(pendingDuplicateAlbum.id);
+      toast({
+        title: "Added to Queue",
+        description: "Album has been added to your Queue",
+      });
+      setPendingDuplicateAlbum(null);
+    }
   };
   
   // Function to handle CSV upload
@@ -614,6 +637,18 @@ export default function QueuePage() {
         dialogTitle="Add an album to Queue"
         addButtonText="Add"
         mobile={true}
+      />
+
+      {/* Duplicate Album Dialog */}
+      <DuplicateAlbumDialog
+        isOpen={duplicateDialogOpen}
+        onClose={() => {
+          setDuplicateDialogOpen(false);
+          setPendingDuplicateAlbum(null);
+        }}
+        onConfirm={handleConfirmDuplicate}
+        albumName={pendingDuplicateAlbum?.name || ""}
+        sectionName="Queue"
       />
     </Layout>
   );
