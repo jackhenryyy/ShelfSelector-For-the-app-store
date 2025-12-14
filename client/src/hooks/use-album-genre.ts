@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Album } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,7 +9,12 @@ export function useAlbumGenre() {
   const updateGenreMutation = useMutation({
     mutationFn: async ({ albumId, genre }: { albumId: number; genre: string | null }) => {
       console.log('Updating genre for album', albumId, 'to:', genre);
-      const res = await apiRequest("PATCH", `/api/albums/${albumId}/genre`, { genre });
+      const res = await fetch(`/api/albums/${albumId}/genre`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ genre }),
+        credentials: 'include'
+      });
       if (!res.ok) {
         const errorText = await res.text();
         console.error('Genre update failed:', res.status, errorText);
