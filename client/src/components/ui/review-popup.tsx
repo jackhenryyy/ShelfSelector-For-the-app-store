@@ -92,7 +92,7 @@ export function ReviewPopup({ review, isOpen, onClose, onSave, onDelete, onGenre
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <DialogTitle className="font-mono">Review</DialogTitle>
           {!isEditing && (
