@@ -1,6 +1,34 @@
-node_modules
-dist
-.DS_Store
+# Dependencies (this is the big one!)
+node_modules/
+
+# Build outputs
+dist/
+build/
 server/public
+
+# Vite
 vite.config.ts.*
+
+# Environment and secrets
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archives
 *.tar.gz
+*.zip
+
+# Logs
+*.log
+
+# Replit specific (don't need these on GitHub)
+.replit
+replit.nix
+.cache/
+.config/
+.local/
+.upm/
+attached_assets/
