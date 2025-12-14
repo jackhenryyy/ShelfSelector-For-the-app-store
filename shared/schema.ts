@@ -102,6 +102,18 @@ export const insertNoSkipsReviewSchema = createInsertSchema(noSkipsReviews).omit
   id: true,
 });
 
+// List share tokens for embedding
+export const listShareTokens = pgTable("list_share_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertListShareTokenSchema = createInsertSchema(listShareTokens).omit({
+  id: true,
+});
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -120,3 +132,6 @@ export type InsertAlbumReview = z.infer<typeof insertAlbumReviewSchema>;
 
 export type NoSkipsReview = typeof noSkipsReviews.$inferSelect;
 export type InsertNoSkipsReview = z.infer<typeof insertNoSkipsReviewSchema>;
+
+export type ListShareToken = typeof listShareTokens.$inferSelect;
+export type InsertListShareToken = z.infer<typeof insertListShareTokenSchema>;
