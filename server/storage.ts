@@ -3,13 +3,14 @@ import { db } from "./db";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
 import {
-  users, albums, queueAlbums, noSkipsAlbums, albumReviews, noSkipsReviews,
+  users, albums, queueAlbums, noSkipsAlbums, albumReviews, noSkipsReviews, listShareTokens,
   User, InsertUser,
   Album, InsertAlbum,
   QueueAlbum, InsertQueueAlbum,
   NoSkipsAlbum, InsertNoSkipsAlbum,
   AlbumReview, InsertAlbumReview,
-  NoSkipsReview, InsertNoSkipsReview
+  NoSkipsReview, InsertNoSkipsReview,
+  ListShareToken, InsertListShareToken
 } from "@shared/schema";
 
 export interface IStorage {
@@ -56,6 +57,12 @@ export interface IStorage {
   createNoSkipsReview(review: InsertNoSkipsReview): Promise<NoSkipsReview>;
   updateNoSkipsReview(id: number, review: string): Promise<NoSkipsReview | undefined>;
   deleteNoSkipsReview(id: number): Promise<void>;
+
+  // List share token operations
+  createListShareToken(userId: number): Promise<ListShareToken>;
+  getListShareToken(userId: number): Promise<ListShareToken | undefined>;
+  getListShareDataByToken(token: string): Promise<{ username: string; reviews: { rating: string; review: string | null; reviewedAt: Date; listenedAt: Date | null; album: { name: string; artist: string; imageUrl: string; spotifyId: string; genre: string | null } }[] } | undefined>;
+  deleteListShareToken(userId: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -359,6 +366,44 @@ export class MemStorage implements IStorage {
     }
 
     return result;
+  }
+
+  // No Skips reviews operations (stub - not implemented for MemStorage)
+  async getNoSkipsReviews(userId: number): Promise<(NoSkipsReview & { album: Album })[]> {
+    return [];
+  }
+
+  async getNoSkipsReview(userId: number, albumId: number): Promise<(NoSkipsReview & { album: Album }) | undefined> {
+    return undefined;
+  }
+
+  async createNoSkipsReview(review: InsertNoSkipsReview): Promise<NoSkipsReview> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async updateNoSkipsReview(id: number, review: string): Promise<NoSkipsReview | undefined> {
+    return undefined;
+  }
+
+  async deleteNoSkipsReview(id: number): Promise<void> {
+    // Not implemented
+  }
+
+  // List share token operations (stub - not implemented for MemStorage)
+  async createListShareToken(userId: number): Promise<ListShareToken> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async getListShareToken(userId: number): Promise<ListShareToken | undefined> {
+    return undefined;
+  }
+
+  async getListShareDataByToken(token: string): Promise<{ username: string; reviews: { rating: string; review: string | null; reviewedAt: Date; listenedAt: Date | null; album: { name: string; artist: string; imageUrl: string; spotifyId: string; genre: string | null } }[] } | undefined> {
+    return undefined;
+  }
+
+  async deleteListShareToken(userId: number): Promise<void> {
+    // Not implemented
   }
 }
 
@@ -737,6 +782,75 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(noSkipsReviews)
       .where(eq(noSkipsReviews.id, id));
+  }
+
+  // List share token operations
+  async createListShareToken(userId: number): Promise<ListShareToken> {
+    const token = crypto.randomUUID();
+    const [newToken] = await db
+      .insert(listShareTokens)
+      .values({ userId, token, createdAt: new Date() })
+      .onConflictDoUpdate({
+        target: listShareTokens.userId,
+        set: { token, createdAt: new Date() }
+      })
+      .returning();
+    return newToken;
+  }
+
+  async getListShareToken(userId: number): Promise<ListShareToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(listShareTokens)
+      .where(eq(listShareTokens.userId, userId));
+    return token;
+  }
+
+  async getListShareDataByToken(token: string): Promise<{ username: string; reviews: { rating: string; review: string | null; reviewedAt: Date; listenedAt: Date | null; album: { name: string; artist: string; imageUrl: string; spotifyId: string; genre: string | null } }[] } | undefined> {
+    const [shareToken] = await db
+      .select()
+      .from(listShareTokens)
+      .where(eq(listShareTokens.token, token));
+    
+    if (!shareToken) return undefined;
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, shareToken.userId));
+    
+    if (!user) return undefined;
+
+    const result = await db
+      .select({
+        albumReview: albumReviews,
+        album: albums
+      })
+      .from(albumReviews)
+      .innerJoin(albums, eq(albumReviews.albumId, albums.id))
+      .where(eq(albumReviews.userId, shareToken.userId));
+
+    const reviews = result.map(item => ({
+      rating: item.albumReview.rating,
+      review: item.albumReview.review,
+      reviewedAt: item.albumReview.reviewedAt,
+      listenedAt: item.albumReview.listenedAt,
+      album: {
+        name: item.album.name,
+        artist: item.album.artist,
+        imageUrl: item.album.imageUrl,
+        spotifyId: item.album.spotifyId,
+        genre: item.album.genre
+      }
+    }));
+
+    return { username: user.username, reviews };
+  }
+
+  async deleteListShareToken(userId: number): Promise<void> {
+    await db
+      .delete(listShareTokens)
+      .where(eq(listShareTokens.userId, userId));
   }
 }
 

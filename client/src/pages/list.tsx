@@ -4,6 +4,7 @@ import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
 import { ReviewPopup } from "@/components/ui/review-popup";
+import { ListShareDialog } from "@/components/ui/list-share-dialog";
 import { openInSpotify } from "@/lib/spotify";
 import { MenuIcon, DownloadIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
@@ -189,15 +190,19 @@ export default function ListPage() {
             uniqueYears={uniqueYears}
           />
           
-          {/* Export Button */}
-          <button 
-            onClick={() => exportAlbumsToCSV(filteredReviews, 'the-shelf-export.csv', true)}
-            className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
-            title="Export to CSV"
-          >
-            <DownloadIcon className="h-4 w-4" />
-            export csv
-          </button>
+          {/* Share and Export Buttons */}
+          <div className="flex gap-2">
+            <ListShareDialog />
+            <button 
+              onClick={() => exportAlbumsToCSV(filteredReviews, 'the-shelf-export.csv', true)}
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+              title="Export to CSV"
+              data-testid="button-export-csv"
+            >
+              <DownloadIcon className="h-4 w-4" />
+              export csv
+            </button>
+          </div>
         </div>
         
         <div className="space-y-6">

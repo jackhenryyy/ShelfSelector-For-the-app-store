@@ -930,6 +930,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // List share token routes
+  app.post('/api/list/share', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const token = await storage.createListShareToken(userId);
+      res.json(token);
+    } catch (error) {
+      console.error('Create list share token error:', error);
+      res.status(500).json({ message: 'Failed to create share token' });
+    }
+  });
+
+  app.get('/api/list/share', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const token = await storage.getListShareToken(userId);
+      if (!token) {
+        return res.status(404).json({ message: 'No share token found' });
+      }
+      res.json(token);
+    } catch (error) {
+      console.error('Get list share token error:', error);
+      res.status(500).json({ message: 'Failed to get share token' });
+    }
+  });
+
+  app.delete('/api/list/share', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      await storage.deleteListShareToken(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete list share token error:', error);
+      res.status(500).json({ message: 'Failed to delete share token' });
+    }
+  });
+
+  // Public endpoint to get shared list data
+  app.get('/api/shared/list/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const data = await storage.getListShareDataByToken(token);
+      
+      if (!data) {
+        return res.status(404).json({ message: 'Shared list not found' });
+      }
+      
+      // Add CORS headers for embedding
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.json(data);
+    } catch (error) {
+      console.error('Get shared list error:', error);
+      res.status(500).json({ message: 'Failed to get shared list' });
+    }
+  });
+
   // Catch-all routes at the end (after all specific routes are registered)
   app.get('/callback', (req, res) => {
     console.log('===== ROOT CALLBACK RECEIVED =====');
