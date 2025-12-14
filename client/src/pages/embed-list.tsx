@@ -201,14 +201,18 @@ export default function EmbedListPage() {
                       <p className="font-mono text-xs text-black/60 mt-0.5">{review.album.artist}</p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-shrink-0">
                       <StarRating value={parseFloat(review.rating)} size="medium" readonly />
                       <button 
-                        className="text-black/60 hover:text-black"
-                        onClick={() => setActiveReview(review)}
+                        type="button"
+                        className="text-black/60 hover:text-black p-2 cursor-pointer relative z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveReview(review);
+                        }}
                         data-testid={`button-view-review-${index}`}
                       >
-                        <MenuIcon className="w-4 h-4" />
+                        <MenuIcon className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
