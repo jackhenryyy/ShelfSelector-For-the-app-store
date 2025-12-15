@@ -62,6 +62,11 @@ export function AlbumDetailsDialog({
   if (!isOpen) return null;
 
   const handleSave = () => {
+    if (rating < 0.5) {
+      alert("Please select a rating (at least 0.5 stars)");
+      return;
+    }
+    
     if (existingReview && onUpdate) {
       onUpdate({
         id: existingReview.id,
