@@ -15,6 +15,7 @@ const loginSchema = z.object({
 
 const registerSchema = loginSchema.extend({
   email: z.string().email("Please enter a valid email address"),
+  musicService: z.enum(["spotify", "apple_music"]),
 });
 
 type LoginData = z.infer<typeof loginSchema>;
@@ -39,6 +40,7 @@ export default function AuthPage() {
       username: "",
       email: "",
       password: "",
+      musicService: "spotify",
     },
   });
 
@@ -193,6 +195,51 @@ export default function AuthPage() {
               {registerForm.formState.errors.password && (
                 <p className="text-xs text-red-500">
                   {registerForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs sm:text-sm font-mono">
+                music service
+              </label>
+              <div className="flex gap-2">
+                <label 
+                  className={`flex-1 p-3 border cursor-pointer text-center transition-colors ${
+                    registerForm.watch("musicService") === "spotify" 
+                      ? "border-black bg-[#1DB954] text-white" 
+                      : "border-gray-300 hover:border-black"
+                  }`}
+                  data-testid="radio-spotify"
+                >
+                  <input
+                    {...registerForm.register("musicService")}
+                    type="radio"
+                    value="spotify"
+                    className="sr-only"
+                  />
+                  <span className="font-mono text-sm sm:text-base">Spotify</span>
+                </label>
+                <label 
+                  className={`flex-1 p-3 border cursor-pointer text-center transition-colors ${
+                    registerForm.watch("musicService") === "apple_music" 
+                      ? "border-black bg-gradient-to-r from-[#FC3C44] to-[#FA2D55] text-white" 
+                      : "border-gray-300 hover:border-black"
+                  }`}
+                  data-testid="radio-apple-music"
+                >
+                  <input
+                    {...registerForm.register("musicService")}
+                    type="radio"
+                    value="apple_music"
+                    className="sr-only"
+                  />
+                  <span className="font-mono text-sm sm:text-base">Apple Music</span>
+                </label>
+              </div>
+              {registerForm.formState.errors.musicService && (
+                <p className="text-xs text-red-500">
+                  {registerForm.formState.errors.musicService.message}
                 </p>
               )}
             </div>

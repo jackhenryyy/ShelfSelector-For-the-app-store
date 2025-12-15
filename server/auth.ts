@@ -89,13 +89,10 @@ export function setupAuth(app: Express) {
 
       // Create the user with hashed password
       const user = await storage.createUser({
-        ...req.body,
+        username: req.body.username,
+        email: req.body.email,
         password: await hashPassword(req.body.password),
-        createdAt: new Date(),
-        spotifyId: null,
-        accessToken: null,
-        refreshToken: null,
-        tokenExpiry: null
+        musicService: req.body.musicService || "spotify",
       });
 
       // Auto-login after registration

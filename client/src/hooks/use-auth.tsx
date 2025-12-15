@@ -24,6 +24,7 @@ type LoginData = {
 
 type RegisterData = LoginData & {
   email: string;
+  musicService: "spotify" | "apple_music";
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
