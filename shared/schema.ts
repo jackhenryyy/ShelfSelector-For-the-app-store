@@ -9,10 +9,14 @@ export const users = pgTable("users", {
   email: text("email").unique(),
   password: text("password").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  musicService: text("music_service").default("spotify"), // 'spotify' or 'apple_music'
   spotifyId: text("spotify_id").unique(),
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
   tokenExpiry: timestamp("token_expiry"),
+  // Apple Music specific fields
+  appleMusicToken: text("apple_music_token"),
+  appleMusicTokenExpiry: timestamp("apple_music_token_expiry"),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -22,12 +26,15 @@ export const insertUserSchema = createInsertSchema(users).omit({
   accessToken: true,
   refreshToken: true,
   tokenExpiry: true,
+  appleMusicToken: true,
+  appleMusicTokenExpiry: true,
 });
 
-// Album model
+// Album model - supports both Spotify and Apple Music
 export const albums = pgTable("albums", {
   id: serial("id").primaryKey(),
-  spotifyId: text("spotify_id").notNull().unique(),
+  spotifyId: text("spotify_id").unique(), // Made nullable for Apple Music albums
+  appleMusicId: text("apple_music_id").unique(), // Apple Music catalog ID
   name: text("name").notNull(),
   artist: text("artist").notNull(),
   imageUrl: text("image_url").notNull(),
