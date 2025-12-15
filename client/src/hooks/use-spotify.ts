@@ -22,7 +22,8 @@ export function useSpotifyAuth() {
 
 export interface SpotifyAlbum {
   id: number;
-  spotifyId: string;
+  spotifyId?: string | null;
+  appleMusicId?: string | null;
   name: string;
   artist: string;
   imageUrl: string;
@@ -30,23 +31,36 @@ export interface SpotifyAlbum {
   genre?: string;
 }
 
+export interface MusicConfig {
+  musicService: 'spotify' | 'apple_music';
+  spotifyConnected: boolean;
+  appleMusicConnected: boolean;
+  appleMusicAvailable: boolean;
+}
+
+export function useMusicConfig() {
+  return useQuery<MusicConfig>({
+    queryKey: ['/api/music/config']
+  });
+}
+
 export function useSpotifyAlbums() {
   const queryClient = useQueryClient();
   const [searchResults, setSearchResults] = useState<SpotifyAlbum[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  // Get saved albums from Spotify
+  // Get featured albums based on user's preferred music service
   const { data: savedAlbums, isLoading: isLoadingSaved } = useQuery<SpotifyAlbum[]>({
-    queryKey: ['/api/spotify/albums/saved']
+    queryKey: ['/api/music/albums/featured']
   });
 
-  // Search albums
+  // Search albums using the unified endpoint (automatically uses user's preferred service)
   const searchAlbums = async (query: string): Promise<SpotifyAlbum[]> => {
     if (!query.trim()) return [];
     
     try {
       setIsSearching(true);
-      const response = await apiRequest(`/api/spotify/albums/search?query=${encodeURIComponent(query)}`, {
+      const response = await apiRequest(`/api/music/albums/search?query=${encodeURIComponent(query)}`, {
         method: "GET",
       });
       const data = await response.json();
@@ -61,8 +75,16 @@ export function useSpotifyAlbums() {
     }
   };
 
-  // Get album details
-  const getAlbumDetails = async (spotifyId: string): Promise<SpotifyAlbum> => {
+  // Get album details by database ID
+  const getAlbumDetails = async (albumId: number): Promise<SpotifyAlbum> => {
+    const response = await apiRequest(`/api/albums/${albumId}`, {
+      method: "GET",
+    });
+    return response.json();
+  };
+  
+  // Get album details by Spotify ID (backward compatibility)
+  const getAlbumBySpotifyId = async (spotifyId: string): Promise<SpotifyAlbum> => {
     const response = await apiRequest(`/api/spotify/albums/${spotifyId}`, {
       method: "GET",
     });
@@ -74,7 +96,39 @@ export function useSpotifyAlbums() {
     isLoadingSaved,
     searchAlbums,
     getAlbumDetails,
+    getAlbumBySpotifyId,
     searchResults,
     isSearching
+  };
+}
+
+// Hook for Apple Music specific functionality (MusicKit JS integration)
+export function useAppleMusic() {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Get developer token for initializing MusicKit
+  const { data: tokenData } = useQuery<{ developerToken: string }>({
+    queryKey: ['/api/apple-music/developer-token'],
+    enabled: false // Only fetch when needed
+  });
+  
+  // Save user token mutation
+  const saveUserToken = useMutation({
+    mutationFn: async (userToken: string) => {
+      const response = await apiRequest('/api/apple-music/user-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userToken })
+      });
+      return response.json();
+    }
+  });
+  
+  return {
+    isAuthorized,
+    isInitialized,
+    developerToken: tokenData?.developerToken,
+    saveUserToken: saveUserToken.mutate
   };
 }

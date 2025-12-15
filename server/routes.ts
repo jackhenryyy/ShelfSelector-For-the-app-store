@@ -10,6 +10,15 @@ import {
   getSpotifyLoginUrl,
   handleSpotifyAuth
 } from "./spotify";
+import {
+  searchAppleMusicAlbums,
+  getAppleMusicAlbumDetails,
+  processAndSaveAppleMusicAlbum,
+  getAppleMusicNewReleases,
+  getCurrentlyPlayingAppleMusic,
+  hasAppleMusicCredentials,
+  getDeveloperToken
+} from "./apple-music";
 import { 
   insertQueueAlbumSchema, 
   insertNoSkipsAlbumSchema, 
@@ -378,6 +387,275 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Callback error:', error.message);
       res.redirect('/?error=callback_failed');
     }
+  });
+
+  // ============= APPLE MUSIC ROUTES =============
+  
+  // Apple Music album search
+  app.get('/api/apple-music/albums/search', requireAuth, async (req, res) => {
+    const { query } = req.query;
+    
+    if (typeof query !== 'string' || !query.trim()) {
+      return res.status(400).json({ message: 'Invalid search query' });
+    }
+    
+    try {
+      if (!hasAppleMusicCredentials()) {
+        return res.status(503).json({ message: 'Apple Music is not configured' });
+      }
+      
+      const results = await searchAppleMusicAlbums(query);
+      
+      const albums = [];
+      if (results.results?.albums?.data) {
+        for (const item of results.results.albums.data) {
+          const album = await processAndSaveAppleMusicAlbum(item);
+          albums.push(album);
+        }
+      }
+      
+      res.json(albums);
+    } catch (error) {
+      console.error('Apple Music album search error:', error);
+      res.status(500).json({ message: 'Failed to search albums' });
+    }
+  });
+  
+  // Get Apple Music album details
+  app.get('/api/apple-music/albums/:appleMusicId', requireAuth, async (req, res) => {
+    const { appleMusicId } = req.params;
+    
+    if (!appleMusicId) {
+      return res.status(400).json({ message: 'Invalid album ID' });
+    }
+    
+    try {
+      let album = await storage.getAlbumByAppleMusicId(appleMusicId);
+      
+      if (!album) {
+        if (!hasAppleMusicCredentials()) {
+          return res.status(503).json({ message: 'Apple Music is not configured' });
+        }
+        
+        const albumData = await getAppleMusicAlbumDetails(appleMusicId);
+        if (albumData.data && albumData.data.length > 0) {
+          album = await processAndSaveAppleMusicAlbum(albumData.data[0]);
+        } else {
+          return res.status(404).json({ message: 'Album not found' });
+        }
+      }
+      
+      res.json(album);
+    } catch (error) {
+      console.error('Apple Music album details error:', error);
+      res.status(500).json({ message: 'Failed to fetch album details' });
+    }
+  });
+  
+  // Get Apple Music new releases/chart albums
+  app.get('/api/apple-music/albums/saved', requireAuth, async (req, res) => {
+    try {
+      if (!hasAppleMusicCredentials()) {
+        const existingAlbums = await storage.searchAlbums("");
+        return res.json(existingAlbums.slice(0, 20));
+      }
+      
+      const chartAlbums = await getAppleMusicNewReleases();
+      
+      const albums = [];
+      for (const item of chartAlbums) {
+        try {
+          const album = await processAndSaveAppleMusicAlbum(item);
+          albums.push(album);
+        } catch (albumError) {
+          console.error(`Error processing Apple Music album ${item.id}:`, albumError);
+        }
+      }
+      
+      res.json(albums);
+    } catch (error) {
+      console.error('Get Apple Music albums error:', error);
+      res.status(500).json({ message: 'Failed to fetch albums' });
+    }
+  });
+  
+  // Get currently playing from Apple Music
+  app.get('/api/apple-music/currently-playing', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      
+      if (!user.appleMusicToken) {
+        return res.status(401).json({ message: 'Apple Music user token not found' });
+      }
+      
+      const currentlyPlaying = await getCurrentlyPlayingAppleMusic(user.appleMusicToken);
+      
+      if (currentlyPlaying === null) {
+        return res.status(401).json({ message: 'Apple Music authentication required.' });
+      }
+      
+      res.json(currentlyPlaying);
+    } catch (error) {
+      console.error('Apple Music currently playing error:', error);
+      res.status(500).json({ message: 'Failed to get currently playing track' });
+    }
+  });
+  
+  // Get developer token for frontend MusicKit JS
+  app.get('/api/apple-music/developer-token', requireAuth, async (req, res) => {
+    try {
+      if (!hasAppleMusicCredentials()) {
+        return res.status(503).json({ message: 'Apple Music is not configured' });
+      }
+      
+      const token = getDeveloperToken();
+      res.json({ developerToken: token });
+    } catch (error) {
+      console.error('Get developer token error:', error);
+      res.status(500).json({ message: 'Failed to get developer token' });
+    }
+  });
+  
+  // Save Apple Music user token (received from MusicKit JS on frontend)
+  app.post('/api/apple-music/user-token', requireAuth, async (req, res) => {
+    try {
+      const { userToken } = req.body;
+      
+      if (!userToken) {
+        return res.status(400).json({ message: 'User token is required' });
+      }
+      
+      const userId = req.user!.id;
+      const expiryDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 180 days
+      
+      await storage.updateUserAppleMusicToken(userId, userToken, expiryDate);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Save Apple Music user token error:', error);
+      res.status(500).json({ message: 'Failed to save user token' });
+    }
+  });
+
+  // ============= UNIFIED ALBUM SEARCH =============
+  // This endpoint automatically uses the user's preferred music service
+  app.get('/api/music/albums/search', requireAuth, async (req, res) => {
+    const { query } = req.query;
+    const user = req.user!;
+    
+    if (typeof query !== 'string' || !query.trim()) {
+      return res.status(400).json({ message: 'Invalid search query' });
+    }
+    
+    try {
+      const musicService = user.musicService || 'spotify';
+      
+      if (musicService === 'apple_music') {
+        if (!hasAppleMusicCredentials()) {
+          return res.status(503).json({ message: 'Apple Music is not configured' });
+        }
+        
+        const results = await searchAppleMusicAlbums(query);
+        
+        const albums = [];
+        if (results.results?.albums?.data) {
+          for (const item of results.results.albums.data) {
+            const album = await processAndSaveAppleMusicAlbum(item);
+            albums.push(album);
+          }
+        }
+        
+        res.json(albums);
+      } else {
+        // Default to Spotify
+        const accessToken = await getClientCredentialsToken();
+        const results = await searchSpotifyAlbums(accessToken, query);
+        
+        const albums = [];
+        for (const item of results.albums.items) {
+          const album = await processAndSaveAlbum(item, accessToken);
+          albums.push(album);
+        }
+        
+        res.json(albums);
+      }
+    } catch (error) {
+      console.error('Unified album search error:', error);
+      res.status(500).json({ message: 'Failed to search albums' });
+    }
+  });
+  
+  // Unified endpoint to get featured/new albums based on user's music service
+  app.get('/api/music/albums/featured', requireAuth, async (req, res) => {
+    const user = req.user!;
+    
+    try {
+      const musicService = user.musicService || 'spotify';
+      
+      if (musicService === 'apple_music') {
+        if (!hasAppleMusicCredentials()) {
+          const existingAlbums = await storage.searchAlbums("");
+          return res.json(existingAlbums.slice(0, 20));
+        }
+        
+        const chartAlbums = await getAppleMusicNewReleases();
+        
+        const albums = [];
+        for (const item of chartAlbums) {
+          try {
+            const album = await processAndSaveAppleMusicAlbum(item);
+            albums.push(album);
+          } catch (albumError) {
+            console.error(`Error processing Apple Music album:`, albumError);
+          }
+        }
+        
+        res.json(albums);
+      } else {
+        // Default to Spotify
+        const accessToken = await getClientCredentialsToken();
+        
+        const response = await fetch('https://api.spotify.com/v1/browse/new-releases?limit=20', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch new releases: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        const albums = [];
+        for (const item of data.albums.items) {
+          try {
+            const album = await processAndSaveAlbum(item, accessToken);
+            albums.push(album);
+          } catch (albumError) {
+            console.error(`Error processing Spotify album:`, albumError);
+          }
+        }
+        
+        res.json(albums);
+      }
+    } catch (error) {
+      console.error('Get featured albums error:', error);
+      const existingAlbums = await storage.searchAlbums("");
+      res.json(existingAlbums.slice(0, 20));
+    }
+  });
+  
+  // Get user's music service configuration
+  app.get('/api/music/config', requireAuth, async (req, res) => {
+    const user = req.user!;
+    
+    res.json({
+      musicService: user.musicService || 'spotify',
+      spotifyConnected: !!user.accessToken,
+      appleMusicConnected: !!user.appleMusicToken,
+      appleMusicAvailable: hasAppleMusicCredentials()
+    });
   });
   
   app.get('/api/albums', requireAuth, async (req, res) => {

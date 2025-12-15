@@ -16,7 +16,8 @@ interface AlbumDetailsDialogProps {
     artist: string;
     imageUrl: string;
     genre?: string;
-    spotifyId: string;
+    spotifyId?: string | null;
+    appleMusicId?: string | null;
   };
   existingReview?: {
     id: number;
@@ -92,8 +93,12 @@ export function AlbumDetailsDialog({
     setIsEditingGenre(false);
   };
 
-  const handleSpotifyPlay = () => {
-    window.open(`https://open.spotify.com/album/${album.spotifyId}`, '_blank');
+  const handlePlayInService = () => {
+    if (album.spotifyId) {
+      window.open(`https://open.spotify.com/album/${album.spotifyId}`, '_blank');
+    } else if (album.appleMusicId) {
+      window.open(`https://music.apple.com/album/${album.appleMusicId}`, '_blank');
+    }
   };
 
   return (
@@ -217,12 +222,14 @@ export function AlbumDetailsDialog({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button
-              onClick={handleSpotifyPlay}
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white font-mono"
-            >
-              Play on Spotify
-            </Button>
+            {(album.spotifyId || album.appleMusicId) && (
+              <Button
+                onClick={handlePlayInService}
+                className={`flex-1 ${album.spotifyId ? 'bg-green-500 hover:bg-green-600' : 'bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600'} text-white font-mono`}
+              >
+                {album.spotifyId ? 'Play on Spotify' : 'Play on Apple Music'}
+              </Button>
+            )}
             <Button
               onClick={handleSave}
               className="flex-1 bg-green-400 hover:bg-green-500 text-white font-mono"
