@@ -27,9 +27,14 @@ export interface IStorage {
   // Album operations
   getAlbum(id: number): Promise<Album | undefined>;
   getAlbumBySpotifyId(spotifyId: string): Promise<Album | undefined>;
+  getAlbumByAppleMusicId(appleMusicId: string): Promise<Album | undefined>;
   createAlbum(album: InsertAlbum): Promise<Album>;
   updateAlbum(id: number, genre: string | null): Promise<Album | undefined>;
   searchAlbums(query: string): Promise<Album[]>;
+  
+  // User music service operations
+  updateUserMusicService(id: number, musicService: string): Promise<User | undefined>;
+  updateUserAppleMusicToken(id: number, token: string, expiry: Date): Promise<User | undefined>;
 
   // Queue operations
   getQueueAlbums(userId: number): Promise<(QueueAlbum & { album: Album })[]>;
@@ -148,6 +153,28 @@ export class MemStorage implements IStorage {
     return Array.from(this.albums.values()).find(
       (album) => album.spotifyId === spotifyId
     );
+  }
+
+  async getAlbumByAppleMusicId(appleMusicId: string): Promise<Album | undefined> {
+    return Array.from(this.albums.values()).find(
+      (album) => album.appleMusicId === appleMusicId
+    );
+  }
+
+  async updateUserMusicService(id: number, musicService: string): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    const updatedUser: User = { ...user, musicService };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async updateUserAppleMusicToken(id: number, token: string, expiry: Date): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    const updatedUser: User = { ...user, appleMusicToken: token, appleMusicTokenExpiry: expiry };
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 
   async createAlbum(insertAlbum: InsertAlbum): Promise<Album> {
@@ -464,6 +491,30 @@ export class DatabaseStorage implements IStorage {
     if (!spotifyId) return undefined;
     const [album] = await db.select().from(albums).where(eq(albums.spotifyId, spotifyId));
     return album;
+  }
+
+  async getAlbumByAppleMusicId(appleMusicId: string): Promise<Album | undefined> {
+    if (!appleMusicId) return undefined;
+    const [album] = await db.select().from(albums).where(eq(albums.appleMusicId, appleMusicId));
+    return album;
+  }
+
+  async updateUserMusicService(id: number, musicService: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ musicService })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async updateUserAppleMusicToken(id: number, token: string, expiry: Date): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ appleMusicToken: token, appleMusicTokenExpiry: expiry })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
   }
 
   async createAlbum(album: InsertAlbum): Promise<Album> {
