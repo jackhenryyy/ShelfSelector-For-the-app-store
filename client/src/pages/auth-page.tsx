@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { RotatingBackground } from "@/components/ui/rotating-background";
 import { albumCovers } from "@/lib/album-covers";
+import { AppleMusicConnect } from "@/components/ui/apple-music-connect";
 
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -73,13 +74,15 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
+  const musicService = registerForm.watch("musicService");
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden p-4 sm:p-0">
       {/* Random album background (changes on page refresh) */}
       <div className="absolute inset-0 z-0">
         <RotatingBackground images={albumCovers} intensity="medium" />
       </div>
-      
+
       {/* Content overlay with slight transparency */}
       <div className="relative z-10 w-full max-w-md px-4 py-6 sm:py-8 bg-white/95 rounded shadow-lg">
         <h1 className="text-center text-2xl sm:text-3xl tracking-widest mb-8 sm:mb-12 font-mono">
@@ -253,7 +256,7 @@ export default function AuthPage() {
             </button>
           </form>
         )}
-        
+
         {/* Info blurb */}
         <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200 text-center">
           <p className="text-xs sm:text-sm text-gray-600 px-2 sm:px-4 font-mono leading-relaxed">
