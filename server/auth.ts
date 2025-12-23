@@ -36,17 +36,18 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 
 export function setupAuth(app: Express) {
   // Configure session middleware
-  // Configure session with proxy support for Replit's reverse proxy
+  // Configure session - use minimal cookie settings for maximum compatibility
   const sessionSettings: session.SessionOptions = {
+    name: 'shelf.sid',  // Explicit cookie name
     secret: process.env.SESSION_SECRET || 'superdupersecretkey',
     resave: false,
-    saveUninitialized: false,
-    proxy: true,  // Trust the reverse proxy
+    saveUninitialized: true,  // Create session even before login
+    proxy: true,
     cookie: {
-      secure: 'auto',  // Automatically match connection security
+      path: '/',
       httpOnly: true,
-      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+      // Remove secure and sameSite to let browser defaults work
     },
     store: storage.sessionStore
   };
