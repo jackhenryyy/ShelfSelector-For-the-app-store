@@ -36,15 +36,15 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 
 export function setupAuth(app: Express) {
   // Configure session middleware
-  const isProduction = process.env.NODE_ENV === "production";
+  // Always use secure cookies since Replit uses HTTPS
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'superdupersecretkey',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: isProduction,
+      secure: true,
       httpOnly: true,
-      sameSite: isProduction ? 'none' : 'lax',
+      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
     },
     store: storage.sessionStore
