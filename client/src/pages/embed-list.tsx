@@ -138,11 +138,13 @@ export default function EmbedListPage() {
                     </div>
 
                     <a
-                      href={`https://open.spotify.com/album/${review.album.spotifyId}`}
+                      href={review.album.appleMusicId 
+                        ? `https://music.apple.com/album/${review.album.appleMusicId}`
+                        : `https://open.spotify.com/album/${review.album.spotifyId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="cursor-pointer"
-                      data-testid={`link-spotify-${index}`}
+                      data-testid={`link-music-service-${index}`}
                     >
                       <AlbumArt
                         src={review.album.imageUrl}

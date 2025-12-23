@@ -95,7 +95,9 @@ export function SimpleReviewPopup({ review, isOpen, onClose, onSave, onDelete, o
         {/* Album Info */}
         <div className="flex items-center gap-3 mt-4">
           <a 
-            href={`https://open.spotify.com/album/${review.album.spotifyId}`}
+            href={review.album.appleMusicId 
+              ? `https://music.apple.com/album/${review.album.appleMusicId}`
+              : `https://open.spotify.com/album/${review.album.spotifyId}`}
             target="_blank"
             rel="noopener noreferrer"
             className="block hover:opacity-80 transition-opacity"

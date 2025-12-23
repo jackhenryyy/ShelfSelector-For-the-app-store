@@ -99,10 +99,10 @@ export function AlbumDetailsDialog({
   };
 
   const handlePlayInService = () => {
-    if (album.spotifyId) {
-      window.open(`https://open.spotify.com/album/${album.spotifyId}`, '_blank');
-    } else if (album.appleMusicId) {
+    if (album.appleMusicId) {
       window.open(`https://music.apple.com/album/${album.appleMusicId}`, '_blank');
+    } else if (album.spotifyId) {
+      window.open(`https://open.spotify.com/album/${album.spotifyId}`, '_blank');
     }
   };
 
