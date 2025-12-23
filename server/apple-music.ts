@@ -17,9 +17,22 @@ function getAppleMusicCredentials() {
 export function generateDeveloperToken(): string {
   const { teamId, keyId, privateKey } = getAppleMusicCredentials();
   
-  const formattedKey = privateKey.includes('-----BEGIN PRIVATE KEY-----') 
-    ? privateKey 
-    : `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----`;
+  let formattedKey = privateKey;
+  
+  // Handle escaped newlines from environment variable
+  if (formattedKey.includes('\\n')) {
+    formattedKey = formattedKey.replace(/\\n/g, '\n');
+  }
+  
+  // Ensure proper PEM format
+  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    formattedKey = `-----BEGIN PRIVATE KEY-----\n${formattedKey}\n-----END PRIVATE KEY-----`;
+  }
+  
+  // Normalize whitespace in the key - ensure newlines after header and before footer
+  formattedKey = formattedKey
+    .replace(/-----BEGIN PRIVATE KEY-----\s*/, '-----BEGIN PRIVATE KEY-----\n')
+    .replace(/\s*-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
   
   const token = jwt.sign({}, formattedKey, {
     algorithm: 'ES256',
