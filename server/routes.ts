@@ -41,6 +41,14 @@ declare global {
 
 // Middleware to check if user is authenticated
 function requireAuth(req: Request, res: Response, next: Function) {
+  console.log('Auth check:', {
+    path: req.path,
+    hasSession: !!req.session,
+    sessionId: req.session?.id,
+    hasPassport: !!(req.session as any)?.passport,
+    isAuthenticated: req.isAuthenticated?.(),
+    cookies: req.headers.cookie ? 'present' : 'missing'
+  });
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }
