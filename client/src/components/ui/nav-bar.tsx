@@ -1,6 +1,5 @@
 import { Link, useLocation } from "wouter";
 import { CompactNowPlayingWidget } from "./compact-now-playing-widget";
-import { Home, ListMusic, ListChecks, Star, Menu, X, Settings } from "lucide-react";
 
 // Simple nav items without icons, matching the minimal design
 const navItems = [
@@ -20,11 +19,6 @@ const navItems = [
     path: "/list",
     label: "the list",
   },
-  {
-    path: "/settings",
-    label: "Settings",
-    icon: Settings
-  }
 ];
 
 export function NavBar() {
@@ -42,13 +36,13 @@ export function NavBar() {
           </div>
         </div>
       )}
+      
 
-
-
+      
       <div className="bg-white border border-black flex justify-between items-center px-1">
         {navItems.map((item) => {
           const isActive = location === item.path;
-
+          
           return (
             <Link key={item.path} href={item.path} className="flex-1 text-center">
               <span className={`font-mono text-xs ${isActive ? 'text-black' : 'text-black/50'} block py-3`}>

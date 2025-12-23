@@ -41,14 +41,6 @@ declare global {
 
 // Middleware to check if user is authenticated
 function requireAuth(req: Request, res: Response, next: Function) {
-  console.log('Auth check:', {
-    path: req.path,
-    hasSession: !!req.session,
-    sessionId: req.session?.id,
-    hasPassport: !!(req.session as any)?.passport,
-    isAuthenticated: req.isAuthenticated?.(),
-    cookies: req.headers.cookie ? 'present' : 'missing'
-  });
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -557,28 +549,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const musicService = user.musicService || 'spotify';
-      console.log(`Unified search: User ${user.username} using ${musicService}, query: "${query}"`);
       
       if (musicService === 'apple_music') {
-        console.log('Using Apple Music for search...');
         if (!hasAppleMusicCredentials()) {
-          console.log('Apple Music credentials not available!');
           return res.status(503).json({ message: 'Apple Music is not configured' });
         }
         
-        console.log('Apple Music credentials verified, searching...');
         const results = await searchAppleMusicAlbums(query);
-        console.log('Apple Music search completed, processing results...');
         
         const albums = [];
         if (results.results?.albums?.data) {
-          console.log(`Found ${results.results.albums.data.length} albums`);
           for (const item of results.results.albums.data) {
             const album = await processAndSaveAppleMusicAlbum(item);
             albums.push(album);
           }
-        } else {
-          console.log('No albums found in results:', JSON.stringify(results).slice(0, 500));
         }
         
         res.json(albums);

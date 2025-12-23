@@ -106,13 +106,11 @@ export function useSpotifyAlbums() {
 export function useAppleMusic() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [musicKit, setMusicKit] = useState<any>(null);
-  const queryClient = useQueryClient();
   
   // Get developer token for initializing MusicKit
-  const { data: tokenData, refetch: fetchDeveloperToken } = useQuery<{ developerToken: string }>({
+  const { data: tokenData } = useQuery<{ developerToken: string }>({
     queryKey: ['/api/apple-music/developer-token'],
-    enabled: false
+    enabled: false // Only fetch when needed
   });
   
   // Save user token mutation
@@ -124,92 +122,12 @@ export function useAppleMusic() {
         body: JSON.stringify({ userToken })
       });
       return response.json();
-    },
-    onSuccess: () => {
-      setIsAuthorized(true);
-      queryClient.invalidateQueries({ queryKey: ['/api/music/config'] });
     }
   });
-  
-  // Initialize MusicKit
-  const initialize = useCallback(async () => {
-    if (isInitialized || !window.MusicKit) {
-      return;
-    }
-    
-    try {
-      // Fetch developer token
-      const { data } = await fetchDeveloperToken();
-      if (!data?.developerToken) {
-        console.error('No developer token available');
-        return;
-      }
-      
-      // Configure and initialize MusicKit
-      await window.MusicKit.configure({
-        developerToken: data.developerToken,
-        app: {
-          name: 'the shelf',
-          build: '1.0.0'
-        }
-      });
-      
-      const music = window.MusicKit.getInstance();
-      setMusicKit(music);
-      setIsInitialized(true);
-      
-      // Check if already authorized
-      if (music.isAuthorized) {
-        setIsAuthorized(true);
-        // Save the user token to backend
-        const userToken = music.musicUserToken;
-        if (userToken) {
-          saveUserToken.mutate(userToken);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to initialize MusicKit:', error);
-    }
-  }, [isInitialized, fetchDeveloperToken, saveUserToken]);
-  
-  // Authorize user
-  const authorize = useCallback(async () => {
-    if (!musicKit) {
-      console.error('MusicKit not initialized');
-      return;
-    }
-    
-    try {
-      const userToken = await musicKit.authorize();
-      if (userToken) {
-        saveUserToken.mutate(userToken);
-      }
-    } catch (error) {
-      console.error('Authorization failed:', error);
-    }
-  }, [musicKit, saveUserToken]);
-  
-  // Unauthorize user
-  const unauthorize = useCallback(async () => {
-    if (!musicKit) {
-      return;
-    }
-    
-    try {
-      await musicKit.unauthorize();
-      setIsAuthorized(false);
-    } catch (error) {
-      console.error('Unauthorization failed:', error);
-    }
-  }, [musicKit]);
   
   return {
     isAuthorized,
     isInitialized,
-    musicKit,
-    initialize,
-    authorize,
-    unauthorize,
     developerToken: tokenData?.developerToken,
     saveUserToken: saveUserToken.mutate
   };

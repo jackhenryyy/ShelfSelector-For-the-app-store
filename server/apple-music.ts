@@ -17,34 +17,21 @@ function getAppleMusicCredentials() {
 export function generateDeveloperToken(): string {
   const { teamId, keyId, privateKey } = getAppleMusicCredentials();
   
-  // Handle private key formatting - env vars often have literal \n instead of actual newlines
-  let formattedKey = privateKey.replace(/\\n/g, '\n');
+  const formattedKey = privateKey.includes('-----BEGIN PRIVATE KEY-----') 
+    ? privateKey 
+    : `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----`;
   
-  // Ensure the key has proper PEM headers
-  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----')) {
-    formattedKey = `-----BEGIN PRIVATE KEY-----\n${formattedKey}\n-----END PRIVATE KEY-----`;
-  }
+  const token = jwt.sign({}, formattedKey, {
+    algorithm: 'ES256',
+    expiresIn: '180d',
+    issuer: teamId,
+    header: {
+      alg: 'ES256',
+      kid: keyId
+    }
+  });
   
-  console.log('Apple Music: Generating developer token with Team ID:', teamId, 'Key ID:', keyId);
-  console.log('Apple Music: Private key length:', formattedKey.length, 'Has proper headers:', formattedKey.includes('-----BEGIN PRIVATE KEY-----'));
-  
-  try {
-    const token = jwt.sign({}, formattedKey, {
-      algorithm: 'ES256',
-      expiresIn: '180d',
-      issuer: teamId,
-      header: {
-        alg: 'ES256',
-        kid: keyId
-      }
-    });
-    
-    console.log('Apple Music: Developer token generated successfully');
-    return token;
-  } catch (error) {
-    console.error('Apple Music: Failed to generate developer token:', error);
-    throw error;
-  }
+  return token;
 }
 
 let cachedDeveloperToken: string | null = null;
