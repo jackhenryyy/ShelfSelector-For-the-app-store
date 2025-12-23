@@ -549,20 +549,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const musicService = user.musicService || 'spotify';
+      console.log(`Unified search: User ${user.username} using ${musicService}, query: "${query}"`);
       
       if (musicService === 'apple_music') {
+        console.log('Using Apple Music for search...');
         if (!hasAppleMusicCredentials()) {
+          console.log('Apple Music credentials not available!');
           return res.status(503).json({ message: 'Apple Music is not configured' });
         }
         
+        console.log('Apple Music credentials verified, searching...');
         const results = await searchAppleMusicAlbums(query);
+        console.log('Apple Music search completed, processing results...');
         
         const albums = [];
         if (results.results?.albums?.data) {
+          console.log(`Found ${results.results.albums.data.length} albums`);
           for (const item of results.results.albums.data) {
             const album = await processAndSaveAppleMusicAlbum(item);
             albums.push(album);
           }
+        } else {
+          console.log('No albums found in results:', JSON.stringify(results).slice(0, 500));
         }
         
         res.json(albums);
