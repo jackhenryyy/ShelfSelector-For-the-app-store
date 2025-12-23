@@ -36,13 +36,14 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 
 export function setupAuth(app: Express) {
   // Configure session middleware
-  // Always use secure cookies since Replit uses HTTPS
+  // Configure session with proxy support for Replit's reverse proxy
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'superdupersecretkey',
     resave: false,
     saveUninitialized: false,
+    proxy: true,  // Trust the reverse proxy
     cookie: {
-      secure: true,
+      secure: 'auto',  // Automatically match connection security
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
