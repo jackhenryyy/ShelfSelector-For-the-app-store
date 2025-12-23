@@ -101,9 +101,17 @@ export function setupAuth(app: Express) {
       // Auto-login after registration
       req.login(user, (err) => {
         if (err) return next(err);
-        // Return user without password
-        const { password, ...userWithoutPassword } = user;
-        res.status(201).json(userWithoutPassword);
+        // Explicitly save session before responding
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+            return next(saveErr);
+          }
+          console.log('Registration: Session saved successfully for user:', user.username, 'Session ID:', req.session.id);
+          // Return user without password
+          const { password, ...userWithoutPassword } = user;
+          res.status(201).json(userWithoutPassword);
+        });
       });
     } catch (err) {
       next(err);
