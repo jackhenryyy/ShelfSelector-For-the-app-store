@@ -136,9 +136,17 @@ export function setupAuth(app: Express) {
           return next(err);
         }
         
-        // Return user without password
-        const { password, ...userWithoutPassword } = user as UserType;
-        res.status(200).json(userWithoutPassword);
+        // Explicitly save session before responding
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Login session save error:', saveErr);
+            return next(saveErr);
+          }
+          console.log('Login: Session saved for user:', user.username, 'Session ID:', req.session.id);
+          // Return user without password
+          const { password, ...userWithoutPassword } = user as UserType;
+          res.status(200).json(userWithoutPassword);
+        });
       });
     })(req, res, next);
   });
