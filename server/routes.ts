@@ -537,28 +537,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Connect Apple Music - stores user's MusicKit JS token
-  // This is the endpoint requested for App Store compatibility
-  app.post('/api/apple-music/connect', requireAuth, async (req, res) => {
-    try {
-      const { musicUserToken } = req.body;
-      
-      if (!musicUserToken) {
-        return res.status(400).json({ message: 'musicUserToken is required' });
-      }
-      
-      const userId = req.user!.id;
-      const expiryDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // 180 days
-      
-      await storage.updateUserAppleMusicToken(userId, musicUserToken, expiryDate);
-      
-      res.json({ success: true, message: 'Apple Music connected successfully' });
-    } catch (error) {
-      console.error('Apple Music connect error:', error);
-      res.status(500).json({ message: 'Failed to connect Apple Music' });
-    }
-  });
-
   // ============= UNIFIED ALBUM SEARCH =============
   // This endpoint automatically uses the user's preferred music service
   app.get('/api/music/albums/search', requireAuth, async (req, res) => {

@@ -6,8 +6,6 @@ import { RichTextEditor } from "./rich-text-editor";
 import { StarRating } from "./star-rating";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
-import { getAlbumExternalUrl } from "@shared/music-utils";
 
 interface AlbumDetailsDialogProps {
   isOpen: boolean;
@@ -52,7 +50,6 @@ export function AlbumDetailsDialog({
   onUpdate,
   onUpdateGenre,
 }: AlbumDetailsDialogProps) {
-  const { user } = useAuth();
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [review, setReview] = useState(existingReview?.review || "");
   const [listenDate, setListenDate] = useState(
@@ -102,13 +99,12 @@ export function AlbumDetailsDialog({
   };
 
   const handlePlayInService = () => {
-    const url = getAlbumExternalUrl(album, { musicService: user?.musicService });
-    if (url) {
-      window.open(url, '_blank');
+    if (album.spotifyId) {
+      window.open(`https://open.spotify.com/album/${album.spotifyId}`, '_blank');
+    } else if (album.appleMusicId) {
+      window.open(`https://music.apple.com/album/${album.appleMusicId}`, '_blank');
     }
   };
-
-  const isAppleMusicUser = user?.musicService === 'apple_music';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-4">
@@ -234,9 +230,9 @@ export function AlbumDetailsDialog({
             {(album.spotifyId || album.appleMusicId) && (
               <Button
                 onClick={handlePlayInService}
-                className={`flex-1 ${isAppleMusicUser ? 'bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600' : 'bg-green-500 hover:bg-green-600'} text-white font-mono`}
+                className={`flex-1 ${album.spotifyId ? 'bg-green-500 hover:bg-green-600' : 'bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600'} text-white font-mono`}
               >
-                {isAppleMusicUser ? 'Play on Apple Music' : 'Play on Spotify'}
+                {album.spotifyId ? 'Play on Spotify' : 'Play on Apple Music'}
               </Button>
             )}
             <Button
