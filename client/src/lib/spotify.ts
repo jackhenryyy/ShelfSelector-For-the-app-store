@@ -5,6 +5,19 @@ export function openInSpotify(spotifyId: string) {
   window.open(url, '_blank');
 }
 
+export function openInAppleMusic(appleMusicId: string) {
+  const url = `https://music.apple.com/album/${appleMusicId}`;
+  window.open(url, '_blank');
+}
+
+export function openInMusicService(album: { spotifyId?: string | null; appleMusicId?: string | null }) {
+  if (album.appleMusicId) {
+    openInAppleMusic(album.appleMusicId);
+  } else if (album.spotifyId) {
+    openInSpotify(album.spotifyId);
+  }
+}
+
 export async function processAndSaveAlbum(albumData: any) {
   const response = await fetch('/api/spotify/albums/process', {
     method: 'POST',

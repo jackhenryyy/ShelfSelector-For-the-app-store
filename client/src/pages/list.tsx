@@ -5,7 +5,7 @@ import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
 import { ReviewPopup } from "@/components/ui/review-popup";
 import { ListShareDialog } from "@/components/ui/list-share-dialog";
-import { openInSpotify } from "@/lib/spotify";
+import { openInMusicService } from "@/lib/spotify";
 import { MenuIcon, DownloadIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
 import { exportAlbumsToCSV } from "@/lib/csv-export";
@@ -70,9 +70,9 @@ export default function ListPage() {
     }
   };
   
-  // Function to open album in Spotify
-  const handleOpenAlbumInSpotify = (spotifyId: string) => {
-    openInSpotify(spotifyId);
+  // Function to open album in music service
+  const handleOpenAlbumInMusicService = (album: { spotifyId?: string | null; appleMusicId?: string | null }) => {
+    openInMusicService(album);
   };
   
   // Function to open review popup
@@ -234,7 +234,7 @@ export default function ListPage() {
                         href="#" 
                         onClick={(e) => {
                           e.preventDefault();
-                          handleOpenAlbumInSpotify(review.album.spotifyId);
+                          handleOpenAlbumInMusicService(review.album);
                         }}
                       >
                         <AlbumArt

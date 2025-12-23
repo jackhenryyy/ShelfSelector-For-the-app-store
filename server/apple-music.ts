@@ -17,12 +17,6 @@ function getAppleMusicCredentials() {
 export function generateDeveloperToken(): string {
   const { teamId, keyId, privateKey } = getAppleMusicCredentials();
   
-  console.log('Apple Music credentials check:');
-  console.log('  Team ID:', teamId);
-  console.log('  Key ID:', keyId);
-  console.log('  Private key length:', privateKey.length);
-  console.log('  Private key starts with:', privateKey.substring(0, 50));
-  
   let formattedKey = privateKey;
   
   // Handle escaped newlines from environment variable
@@ -40,8 +34,6 @@ export function generateDeveloperToken(): string {
     .replace(/-----BEGIN PRIVATE KEY-----\s*/, '-----BEGIN PRIVATE KEY-----\n')
     .replace(/\s*-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
   
-  console.log('Formatted key preview:', formattedKey.substring(0, 100));
-  
   const token = jwt.sign({}, formattedKey, {
     algorithm: 'ES256',
     expiresIn: '180d',
@@ -52,8 +44,6 @@ export function generateDeveloperToken(): string {
     }
   });
   
-  console.log('Generated token (first 50 chars):', token.substring(0, 50));
-  
   return token;
 }
 
@@ -61,7 +51,10 @@ let cachedDeveloperToken: string | null = null;
 let tokenExpiry: Date | null = null;
 
 export function getDeveloperToken(): string {
-  // Always regenerate for debugging
+  if (cachedDeveloperToken && tokenExpiry && tokenExpiry > new Date()) {
+    return cachedDeveloperToken;
+  }
+  
   cachedDeveloperToken = generateDeveloperToken();
   tokenExpiry = new Date(Date.now() + 170 * 24 * 60 * 60 * 1000);
   

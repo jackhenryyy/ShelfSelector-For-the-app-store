@@ -11,7 +11,7 @@ import { SearchIcon, Plus, DownloadIcon, UploadIcon, NotebookPen } from "lucide-
 import { EditableGenre } from "@/components/ui/editable-genre";
 import { SimpleReviewPopup } from "@/components/ui/simple-review-popup";
 import { exportAlbumsToCSV, parseCSVToAlbums } from "@/lib/csv-export";
-import { openInSpotify, generateShareableLink } from "@/lib/spotify";
+import { openInMusicService, generateShareableLink } from "@/lib/spotify";
 import { useSpotifyAlbums } from "@/hooks/use-spotify";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -194,9 +194,9 @@ export default function NoSkipsPage() {
     console.log('Drag started:', event.active.id);
   };
   
-  // Function to handle opening album in Spotify
-  const handleOpenAlbumInSpotify = (spotifyId: string) => {
-    openInSpotify(spotifyId);
+  // Function to handle opening album in music service
+  const handleOpenAlbumInMusicService = (album: { spotifyId?: string | null; appleMusicId?: string | null }) => {
+    openInMusicService(album);
   };
 
   // Helper function to check if an album has a no skips review

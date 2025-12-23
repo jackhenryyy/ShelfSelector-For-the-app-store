@@ -8,7 +8,7 @@ import { AlbumArt } from "@/components/ui/album-art";
 import { GridScaleSlider } from "@/components/ui/grid-scale-slider";
 import { SimpleReviewPopup } from "@/components/ui/simple-review-popup";
 import { ArrowLeft, NotebookPen } from "lucide-react";
-import { openInSpotify } from "@/lib/spotify";
+import { openInMusicService } from "@/lib/spotify";
 import { NoSkipsReviewWithAlbum } from "@/hooks/use-no-skips-reviews";
 
 interface SharedNoSkipsData {
@@ -22,7 +22,8 @@ interface SharedNoSkipsData {
     topFourPosition?: number;
     album: {
       id: number;
-      spotifyId: string;
+      spotifyId?: string | null;
+      appleMusicId?: string | null;
       name: string;
       artist: string;
       imageUrl: string;
@@ -39,7 +40,8 @@ interface SharedNoSkipsData {
     topFourPosition?: number;
     album: {
       id: number;
-      spotifyId: string;
+      spotifyId?: string | null;
+      appleMusicId?: string | null;
       name: string;
       artist: string;
       imageUrl: string;
@@ -55,7 +57,8 @@ interface SharedNoSkipsData {
     reviewedAt: string;
     album: {
       id: number;
-      spotifyId: string;
+      spotifyId?: string | null;
+      appleMusicId?: string | null;
       name: string;
       artist: string;
       imageUrl: string;
@@ -78,9 +81,9 @@ export default function SharedNoSkipsPage() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
-  // Handle opening album in Spotify
-  const handleOpenAlbumInSpotify = (spotifyId: string) => {
-    openInSpotify(spotifyId);
+  // Handle opening album in music service
+  const handleOpenAlbumInMusicService = (album: { spotifyId?: string | null; appleMusicId?: string | null }) => {
+    openInMusicService(album);
   };
 
   // Handle opening album review
@@ -219,15 +222,15 @@ export default function SharedNoSkipsPage() {
                       </div>
                     )}
 
-                    {/* Spotify button in top right corner */}
+                    {/* Music service button in top right corner */}
                     <button 
                       className="absolute top-2 right-2 bg-black bg-opacity-75 w-6 h-6 flex items-center justify-center text-white hover:bg-opacity-90 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        handleOpenAlbumInSpotify(album.album.spotifyId);
+                        handleOpenAlbumInMusicService(album.album);
                       }}
-                      title="Open in Spotify"
+                      title="Open in music service"
                     >
                       ♪
                     </button>

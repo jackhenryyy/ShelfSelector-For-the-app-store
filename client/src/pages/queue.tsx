@@ -5,7 +5,7 @@ import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { AlbumGrid } from "@/components/ui/album-grid";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { openInSpotify } from "@/lib/spotify";
+import { openInMusicService } from "@/lib/spotify";
 import { SearchIcon, UploadIcon, DownloadIcon } from "lucide-react";
 import { exportAlbumsToCSV } from "@/lib/csv-export";
 import { parseCSVToAlbums } from "@/lib/csv-export";
@@ -133,9 +133,9 @@ export default function QueuePage() {
     handleOpenDetailsDialog(albumId);
   };
   
-  // Function to play album on Spotify (keep this for potential future use)
-  const handlePlayOnSpotify = (spotifyId: string) => {
-    openInSpotify(spotifyId);
+  // Function to play album in music service
+  const handlePlayInMusicService = (album: { spotifyId?: string | null; appleMusicId?: string | null }) => {
+    openInMusicService(album);
   };
   
   // Function to open the details dialog

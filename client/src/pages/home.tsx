@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQueueAlbums, useNoSkipsAlbums } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
-import { openInSpotify } from "@/lib/spotify";
+import { openInMusicService } from "@/lib/spotify";
 import { useAuth } from "@/hooks/use-auth";
 import { Album } from "@shared/schema";
 import { BlurredBackground } from "@/components/ui/blurred-background";
@@ -91,10 +91,10 @@ export default function HomePage() {
     setCurrentAlbum(album);
   };
   
-  // Handle opening album in Spotify
-  const handleOpenInSpotify = () => {
+  // Handle opening album in music service
+  const handleOpenInMusicService = () => {
     if (currentAlbum) {
-      openInSpotify(currentAlbum.spotifyId);
+      openInMusicService(currentAlbum);
     }
   };
 
@@ -150,7 +150,7 @@ export default function HomePage() {
             {currentAlbum ? (
               <div 
                 className="block w-40 sm:w-56 md:w-64 shadow-md cursor-pointer"
-                onClick={handleOpenInSpotify}
+                onClick={handleOpenInMusicService}
               >
                 <AlbumArt 
                   src={currentAlbum.imageUrl} 
