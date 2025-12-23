@@ -1,5 +1,3 @@
-import type { User } from "./schema";
-
 interface AlbumWithIds {
   spotifyId?: string | null;
   appleMusicId?: string | null;
