@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { CompactNowPlayingWidget } from "./compact-now-playing-widget";
+import { useAuth } from "@/hooks/use-auth";
 
 // Simple nav items without icons, matching the minimal design
 const navItems = [
@@ -23,13 +24,15 @@ const navItems = [
 
 export function NavBar() {
   const [location] = useLocation();
+  const { user } = useAuth();
 
-
+  // Only show Spotify widget for Spotify users (not Apple Music users)
+  const showSpotifyWidget = user?.musicService !== 'apple_music';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
-      {/* Show compact Spotify widget only on the home page */}
-      {location === "/" && (
+      {/* Show compact Spotify widget only on the home page for Spotify users */}
+      {location === "/" && showSpotifyWidget && (
         <div className="flex justify-center mb-0">
           <div className="w-1/2">
             <CompactNowPlayingWidget />
