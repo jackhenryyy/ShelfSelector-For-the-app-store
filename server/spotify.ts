@@ -1,6 +1,39 @@
 import { storage } from './storage';
 import { InsertUser, InsertAlbum } from '@shared/schema';
 
+// Function to get the base URL from environment or fallback
+export function getAppBaseUrl(): string {
+  // First priority: explicit APP_BASE_URL environment variable
+  if (process.env.APP_BASE_URL) {
+    // Remove trailing slash if present
+    return process.env.APP_BASE_URL.replace(/\/$/, '');
+  }
+  
+  // Fallback to localhost for local development
+  return 'http://localhost:5000';
+}
+
+// Function to get the redirect URI from request headers (for dynamic detection)
+export function getRedirectUriFromRequest(req: { headers: { host?: string; 'x-forwarded-proto'?: string } }): string {
+  if (process.env.APP_BASE_URL) {
+    return `${getAppBaseUrl()}/api/auth/callback`;
+  }
+  
+  // Try to derive from request headers
+  if (req.headers.host) {
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    return `${protocol}://${req.headers.host}/api/auth/callback`;
+  }
+  
+  // Fallback
+  return `${getAppBaseUrl()}/api/auth/callback`;
+}
+
+// Function to get the redirect URI (static version for when request is not available)
+export function getRedirectUri(): string {
+  return `${getAppBaseUrl()}/api/auth/callback`;
+}
+
 // Function to get Spotify API credentials
 export function getSpotifyCredentials() {
   const clientId = process.env.SPOTIFY_CLIENT_ID || '';
@@ -15,13 +48,6 @@ export function getSpotifyCredentials() {
     clientSecret,
     redirectUri: getRedirectUri()
   };
-}
-
-// Function to get the redirect URI
-export function getRedirectUri() {
-  // For this deployed app, always use the production URL
-  // The Spotify dashboard should have this exact URL configured
-  return 'https://shelf-selector-thejackattack.replit.app/api/auth/callback';
 }
 
 // Generate a login URL for Spotify
