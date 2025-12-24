@@ -78,16 +78,24 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### Apple Music API (Optional)
 
 1. Go to [Apple Developer Portal](https://developer.apple.com/account/resources/authkeys/list)
-2. Create a MusicKit key
-3. Download the `.p8` file
-4. Set in `.env`:
-   - `APPLE_TEAM_ID`: Your 10-character Team ID
-   - `APPLE_KEY_ID`: The Key ID shown in the portal
-   - `APPLE_MUSIC_PRIVATE_KEY`: Contents of the `.p8` file
+2. Create a MusicKit key and download the `.p8` file
+3. Note your **Team ID** (10 characters) and **Key ID** (10 characters)
 
-**Key Format Tips**:
-- You can paste the key with escaped newlines: `-----BEGIN PRIVATE KEY-----\nMIGT....\n-----END PRIVATE KEY-----`
-- Or use the raw multi-line format (works in most shells)
+4. **Base64 encode the private key**:
+
+   ```bash
+   base64 -i AuthKey_XXXXXXXXXX.p8 | tr -d '\n'
+   ```
+
+5. Set in `.env`:
+   ```
+   APPLE_TEAM_ID=XXXXXXXXXX
+   APPLE_MUSICKIT_KEY_ID=XXXXXXXXXX
+   APPLE_MUSICKIT_PRIVATE_KEY_BASE64=<output from base64 command>
+   APPLE_STOREFRONT=us
+   ```
+
+**Storefront**: The `APPLE_STOREFRONT` variable sets the region for Apple Music catalog searches. Default is `us`. Other examples: `gb`, `jp`, `de`.
 
 ---
 
@@ -117,8 +125,9 @@ For production, set:
 ### Apple Music Token Errors
 
 1. Verify `APPLE_TEAM_ID` is your 10-character Team ID (not the Key ID)
-2. Ensure the private key includes the `-----BEGIN/END PRIVATE KEY-----` headers
-3. If using escaped newlines (`\n`), make sure they're not double-escaped
+2. Verify `APPLE_MUSICKIT_KEY_ID` is the Key ID from the portal
+3. Ensure `APPLE_MUSICKIT_PRIVATE_KEY_BASE64` is the base64-encoded `.p8` file content
+4. Generate base64 correctly: `base64 -i AuthKey_XXX.p8 | tr -d '\n'`
 
 ### Database Connection Errors
 

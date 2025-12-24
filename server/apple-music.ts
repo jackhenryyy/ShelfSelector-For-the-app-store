@@ -1,68 +1,66 @@
-import jwt from 'jsonwebtoken';
+import * as jose from 'jose';
 import { storage } from './storage';
 import type { User, InsertAlbum } from '@shared/schema';
 
-function getAppleMusicCredentials() {
-  const teamId = process.env.APPLE_TEAM_ID;
-  const keyId = process.env.APPLE_KEY_ID;
-  const privateKey = process.env.APPLE_MUSIC_PRIVATE_KEY;
-  
-  if (!teamId || !keyId || !privateKey) {
-    throw new Error('Apple Music credentials not found. Please set APPLE_TEAM_ID, APPLE_KEY_ID, and APPLE_MUSIC_PRIVATE_KEY environment variables.');
-  }
-  
-  return { teamId, keyId, privateKey };
+// Get storefront (defaults to 'us')
+function getStorefront(): string {
+  return process.env.APPLE_STOREFRONT || 'us';
 }
 
-export function generateDeveloperToken(): string {
-  const { teamId, keyId, privateKey } = getAppleMusicCredentials();
+function getAppleMusicCredentials() {
+  const teamId = process.env.APPLE_TEAM_ID;
+  const keyId = process.env.APPLE_MUSICKIT_KEY_ID;
+  const privateKeyBase64 = process.env.APPLE_MUSICKIT_PRIVATE_KEY_BASE64;
   
-  let formattedKey = privateKey;
-  
-  // Handle escaped newlines from environment variable
-  if (formattedKey.includes('\\n')) {
-    formattedKey = formattedKey.replace(/\\n/g, '\n');
+  if (!teamId || !keyId || !privateKeyBase64) {
+    throw new Error('Apple Music credentials not found. Please set APPLE_TEAM_ID, APPLE_MUSICKIT_KEY_ID, and APPLE_MUSICKIT_PRIVATE_KEY_BASE64 environment variables.');
   }
   
-  // Ensure proper PEM format
-  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----')) {
-    formattedKey = `-----BEGIN PRIVATE KEY-----\n${formattedKey}\n-----END PRIVATE KEY-----`;
-  }
+  // Decode base64 to PEM string
+  const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
   
-  // Normalize whitespace in the key - ensure newlines after header and before footer
-  formattedKey = formattedKey
-    .replace(/-----BEGIN PRIVATE KEY-----\s*/, '-----BEGIN PRIVATE KEY-----\n')
-    .replace(/\s*-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----');
-  
-  const token = jwt.sign({}, formattedKey, {
-    algorithm: 'ES256',
-    expiresIn: '180d',
-    issuer: teamId,
-    header: {
-      alg: 'ES256',
-      kid: keyId
-    }
-  });
-  
-  return token;
+  return { teamId, keyId, privateKey };
 }
 
 let cachedDeveloperToken: string | null = null;
 let tokenExpiry: Date | null = null;
 
-export function getDeveloperToken(): string {
+export async function generateDeveloperToken(): Promise<string> {
+  const { teamId, keyId, privateKey } = getAppleMusicCredentials();
+  
+  // Import the private key for ES256 signing
+  const key = await jose.importPKCS8(privateKey, 'ES256');
+  
+  const now = Math.floor(Date.now() / 1000);
+  
+  // Sign JWT with jose
+  const token = await new jose.SignJWT({})
+    .setProtectedHeader({ alg: 'ES256', kid: keyId })
+    .setIssuer(teamId)
+    .setIssuedAt(now)
+    .setExpirationTime(now + 3600) // 1 hour
+    .setAudience('music')
+    .sign(key);
+  
+  return token;
+}
+
+export async function getDeveloperToken(): Promise<string> {
+  // Check if cached token is still valid (with 5 minute buffer)
   if (cachedDeveloperToken && tokenExpiry && tokenExpiry > new Date()) {
     return cachedDeveloperToken;
   }
   
-  cachedDeveloperToken = generateDeveloperToken();
-  tokenExpiry = new Date(Date.now() + 170 * 24 * 60 * 60 * 1000);
+  cachedDeveloperToken = await generateDeveloperToken();
+  // Cache for 55 minutes (slightly under 1 hour expiry)
+  tokenExpiry = new Date(Date.now() + 55 * 60 * 1000);
   
   return cachedDeveloperToken;
 }
 
 export async function searchAppleMusicAlbums(query: string, limit = 10): Promise<any> {
-  const developerToken = getDeveloperToken();
+  const developerToken = await getDeveloperToken();
+  const storefront = getStorefront();
   
   const params = new URLSearchParams({
     term: query,
@@ -70,7 +68,7 @@ export async function searchAppleMusicAlbums(query: string, limit = 10): Promise
     limit: limit.toString()
   });
   
-  const response = await fetch(`https://api.music.apple.com/v1/catalog/us/search?${params.toString()}`, {
+  const response = await fetch(`https://api.music.apple.com/v1/catalog/${storefront}/search?${params.toString()}`, {
     headers: {
       'Authorization': `Bearer ${developerToken}`
     }
@@ -86,9 +84,10 @@ export async function searchAppleMusicAlbums(query: string, limit = 10): Promise
 }
 
 export async function getAppleMusicAlbumDetails(albumId: string): Promise<any> {
-  const developerToken = getDeveloperToken();
+  const developerToken = await getDeveloperToken();
+  const storefront = getStorefront();
   
-  const response = await fetch(`https://api.music.apple.com/v1/catalog/us/albums/${albumId}`, {
+  const response = await fetch(`https://api.music.apple.com/v1/catalog/${storefront}/albums/${albumId}`, {
     headers: {
       'Authorization': `Bearer ${developerToken}`
     }
@@ -104,7 +103,7 @@ export async function getAppleMusicAlbumDetails(albumId: string): Promise<any> {
 }
 
 export async function getCurrentlyPlayingAppleMusic(userMusicToken: string): Promise<any> {
-  const developerToken = getDeveloperToken();
+  const developerToken = await getDeveloperToken();
   
   const response = await fetch('https://api.music.apple.com/v1/me/recent/played/tracks', {
     headers: {
@@ -239,14 +238,15 @@ export async function processAndSaveAppleMusicAlbum(albumData: any): Promise<any
 }
 
 export async function getAppleMusicNewReleases(limit = 20): Promise<any[]> {
-  const developerToken = getDeveloperToken();
+  const developerToken = await getDeveloperToken();
+  const storefront = getStorefront();
   
   const params = new URLSearchParams({
     types: 'albums',
     limit: limit.toString()
   });
   
-  const response = await fetch(`https://api.music.apple.com/v1/catalog/us/charts?${params.toString()}`, {
+  const response = await fetch(`https://api.music.apple.com/v1/catalog/${storefront}/charts?${params.toString()}`, {
     headers: {
       'Authorization': `Bearer ${developerToken}`
     }
