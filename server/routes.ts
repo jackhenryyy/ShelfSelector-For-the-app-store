@@ -301,37 +301,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Spotify authentication - uses portable getAppBaseUrl
+  // Spotify authentication - uses canonical /api/auth/callback
   app.get('/api/spotify/auth', async (req, res) => {
     console.log('=== SPOTIFY AUTH START ===');
     
     try {
-      const { getAppBaseUrl, getSpotifyCredentials } = await import('./spotify');
-      const { clientId } = getSpotifyCredentials();
-      const baseUrl = getAppBaseUrl();
-      const redirectUri = `${baseUrl}/api/spotify/callback`;
-      
-      const params = new URLSearchParams({
-        client_id: clientId,
-        response_type: 'code',
-        redirect_uri: redirectUri,
-        scope: 'user-read-currently-playing user-read-playback-state',
-        show_dialog: 'true'
-      });
-      
-      const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
+      const { getSpotifyLoginUrl } = await import('./spotify');
+      const authUrl = getSpotifyLoginUrl();
       console.log('Redirecting to Spotify:', authUrl);
       res.redirect(authUrl);
     } catch (error) {
-      console.error('Auth error:', error.message);
-      res.status(500).json({ error: error.message });
+      console.error('Auth error:', (error as Error).message);
+      res.status(500).json({ error: (error as Error).message });
     }
   });
 
-
-
-  app.get('/api/spotify/callback', async (req, res) => {
-    console.log('=== SIMPLE SPOTIFY CALLBACK ===');
+  // Canonical Spotify OAuth callback
+  app.get('/api/auth/callback', async (req, res) => {
+    console.log('=== SPOTIFY AUTH CALLBACK ===');
     console.log('Query:', req.query);
     
     try {
@@ -348,30 +335,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log('Exchanging code for tokens...');
-      const { getAppBaseUrl, getSpotifyCredentials } = await import('./spotify');
-      const { clientId, clientSecret } = getSpotifyCredentials();
-      const baseUrl = getAppBaseUrl();
-      const redirectUri = `${baseUrl}/api/spotify/callback`;
-      
-      const response = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: redirectUri,
-        }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Token exchange failed: ${response.status} ${error}`);
-      }
-      
-      const tokens = await response.json();
+      const { exchangeCodeForToken } = await import('./spotify');
+      const tokens = await exchangeCodeForToken(code);
       
       console.log('Got tokens, updating user...');
       
@@ -394,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.redirect('/?error=not_logged_in');
       }
     } catch (error) {
-      console.error('Callback error:', error.message);
+      console.error('Callback error:', (error as Error).message);
       res.redirect('/?error=callback_failed');
     }
   });
