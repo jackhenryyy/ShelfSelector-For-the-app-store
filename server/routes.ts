@@ -72,30 +72,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Test endpoint to verify Spotify configuration
-  app.get('/api/spotify/test-config', async (req, res) => {
-    try {
-      const { getAuthUrl } = await import('./spotify-simple');
-      const authUrl = getAuthUrl();
-      const url = new URL(authUrl);
-      const currentRedirectUri = url.searchParams.get('redirect_uri');
-      
-      res.json({
-        status: 'success',
-        message: 'Spotify configuration is ready',
-        environment: process.env.NODE_ENV || 'development',
-        redirectUri: currentRedirectUri,
-        authUrl: authUrl,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        status: 'error',
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
   
   // Get Spotify access token using client credentials flow
   const getClientCredentialsToken = async () => {
@@ -325,13 +301,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Simple Spotify authentication - fresh start
+  // Spotify authentication - uses portable getAppBaseUrl
   app.get('/api/spotify/auth', async (req, res) => {
-    console.log('=== SIMPLE SPOTIFY AUTH START ===');
+    console.log('=== SPOTIFY AUTH START ===');
     
     try {
-      const { getAuthUrl } = await import('./spotify-simple');
-      const authUrl = getAuthUrl();
+      const { getAppBaseUrl, getSpotifyCredentials } = await import('./spotify');
+      const { clientId } = getSpotifyCredentials();
+      const baseUrl = getAppBaseUrl();
+      const redirectUri = `${baseUrl}/api/spotify/callback`;
+      
+      const params = new URLSearchParams({
+        client_id: clientId,
+        response_type: 'code',
+        redirect_uri: redirectUri,
+        scope: 'user-read-currently-playing user-read-playback-state',
+        show_dialog: 'true'
+      });
+      
+      const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
       console.log('Redirecting to Spotify:', authUrl);
       res.redirect(authUrl);
     } catch (error) {
@@ -360,8 +348,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log('Exchanging code for tokens...');
-      const { exchangeCode } = await import('./spotify-simple');
-      const tokens = await exchangeCode(code);
+      const { getAppBaseUrl, getSpotifyCredentials } = await import('./spotify');
+      const { clientId, clientSecret } = getSpotifyCredentials();
+      const baseUrl = getAppBaseUrl();
+      const redirectUri = `${baseUrl}/api/spotify/callback`;
+      
+      const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Token exchange failed: ${response.status} ${error}`);
+      }
+      
+      const tokens = await response.json();
       
       console.log('Got tokens, updating user...');
       
