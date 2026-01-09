@@ -27,8 +27,11 @@ Thumbs.db
 # Replit specific (don't need these on GitHub)
 .replit
 replit.nix
+replit.md
 .cache/
 .config/
 .local/
 .upm/
+.replit-agent/
 attached_assets/
+generated-icon.png
