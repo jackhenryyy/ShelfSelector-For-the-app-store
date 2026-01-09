@@ -51,6 +51,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication with passport FIRST
   setupAuth(app);
   
+  // Health check endpoint - safe to expose
+  app.get('/api/health', async (req, res) => {
+    let dbStatus: 'ok' | 'error' = 'error';
+    try {
+      // Lightweight DB check - getUserByUsername returns undefined if not found (no throw)
+      await storage.getUserByUsername('__health_check__');
+      dbStatus = 'ok';
+    } catch {
+      dbStatus = 'error';
+    }
+
+    const { getAppBaseUrl } = await import('./spotify');
+    const { hasAppleMusicCredentials } = await import('./apple-music');
+
+    res.json({
+      server: 'ok',
+      db: dbStatus,
+      spotifyConfigured: !!(process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET),
+      appleMusicConfigured: hasAppleMusicCredentials(),
+      baseUrl: getAppBaseUrl(),
+      version: '1.0.0'
+    });
+  });
+
   // Simple test route first - no auth
   app.get('/api/test', (req, res) => {
     res.json({ 
