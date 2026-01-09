@@ -77,8 +77,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Simple test route first - no auth
+  // Debug/test endpoints - disabled in production
+  const isProduction = process.env.NODE_ENV === 'production';
+
   app.get('/api/test', (req, res) => {
+    if (isProduction) return res.status(404).json({ message: 'Not found' });
     res.json({ 
       message: 'Test route working', 
       authenticated: req.isAuthenticated ? req.isAuthenticated() : false,
@@ -87,8 +90,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Simple test for auth routes
   app.get('/api/auth/test', (req, res) => {
+    if (isProduction) return res.status(404).json({ message: 'Not found' });
     console.log('===== AUTH TEST ROUTE HIT =====');
     res.json({ 
       message: 'Auth routes are working', 
@@ -274,13 +277,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug endpoint - no auth required
+  // Debug endpoints - disabled in production
   app.get('/api/debug', async (req, res) => {
+    if (isProduction) return res.status(404).json({ message: 'Not found' });
     res.json({ message: "Debug endpoint working", timestamp: new Date().toISOString() });
   });
 
-  // Test Spotify configuration
   app.get('/api/debug/spotify', async (req, res) => {
+    if (isProduction) return res.status(404).json({ message: 'Not found' });
     try {
       const { getRedirectUri, getSpotifyCredentials, getSpotifyLoginUrl } = await import('./spotify');
       const redirectUri = getRedirectUri();
@@ -295,12 +299,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: (error as Error).message });
     }
   });
 
-  // Test endpoint to check redirect URI
   app.get('/api/spotify/config', async (req, res) => {
+    if (isProduction) return res.status(404).json({ message: 'Not found' });
     try {
       const { getRedirectUri, getSpotifyCredentials } = await import('./spotify');
       const redirectUri = getRedirectUri();
@@ -308,8 +312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         redirectUri, 
         clientIdPresent: !!clientId,
-        env: process.env.NODE_ENV,
-        domains: process.env.REPLIT_DOMAINS 
+        env: process.env.NODE_ENV
       });
     } catch (error) {
       console.error('Config check error:', error);
