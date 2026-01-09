@@ -55,8 +55,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/health', async (req, res) => {
     let dbStatus: 'ok' | 'error' = 'error';
     try {
-      // Lightweight DB check - getUserByUsername returns undefined if not found (no throw)
-      await storage.getUserByUsername('__health_check__');
+      // True connectivity check - execute raw SELECT 1
+      const { db } = await import('./db');
+      const { sql } = await import('drizzle-orm');
+      await db.execute(sql`SELECT 1`);
       dbStatus = 'ok';
     } catch {
       dbStatus = 'error';
