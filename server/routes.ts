@@ -920,6 +920,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Album reviews routes
+app.post('/api/import/reviews', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+
+    const schema = z.object({
+      rows: z.array(z.object({
+        artist: z.string().optional().nullable(),
+        album: z.string().optional().nullable(),
+        year: z.union([z.string(), z.number()]).optional().nullable(),
+        genre: z.string().optional().nullable(),
+        spotify_url: z.string().optional().nullable(),
+        rating: z.union([z.string(), z.number()]).optional().nullable(),
+        review: z.string().optional().nullable(),
+        listened_date: z.string().optional().nullable()
+      }))
+    });
+
+    const { rows } = schema.parse(req.body);
+
+    const results = {
+      imported: 0,
+      skipped: 0,
+      errors: [] as { row: number; message: string }[]
+    };
+
+    let accessToken: string | null = null;
+    const getAccessToken = async () => {
+      if (!accessToken) {
+        accessToken = await getClientCredentialsToken();
+      }
+      return accessToken;
+    };
+
+    for (let i = 0; i < rows.length; i++) {
+      const rowNumber = i + 1;
+      const row = rows[i];
+
+      const artist = (row.artist ?? "").toString().trim();
+      const albumName = (row.album ?? "").toString().trim();
+      const spotifyUrl = (row.spotify_url ?? "").toString().trim();
+
+      if (!artist || !albumName || !spotifyUrl) {
+        results.errors.push({ row: rowNumber, message: "Missing artist, album, or spotify_url." });
+        continue;
+      }
+
+      const match = spotifyUrl.match(/album\/([A-Za-z0-9]+)/);
+      if (!match) {
+        results.errors.push({ row: rowNumber, message: "Invalid spotify_url format." });
+        continue;
+      }
+
+      const spotifyId = match[1];
+
+      let album = await storage.getAlbumBySpotifyId(spotifyId);
+
+      if (!album) {
+        try {
+          const token = await getAccessToken();
+          const albumData = await getAlbumDetails(token, spotifyId);
+          album = await processAndSaveAlbum(albumData, token);
+        } catch {
+          results.errors.push({ row: rowNumber, message: "Failed to fetch album from Spotify." });
+          continue;
+        }
+      }
+
+      const existing = await storage.getAlbumReview(userId, album.id);
+      if (existing) {
+        results.skipped++;
+        continue;
+      }
+
+      // Rating (optional)
+      let ratingValue: number | undefined;
+      const ratingRaw = row.rating?.toString().trim();
+      if (ratingRaw) {
+        const parsed = parseFloat(ratingRaw);
+        if (Number.isNaN(parsed)) {
+          results.errors.push({ row: rowNumber, message: "Invalid rating value." });
+          continue;
+        }
+        ratingValue = parsed;
+      }
+
+      // Listened date (optional)
+      let listenedAt: Date | undefined;
+      const listenedRaw = row.listened_date?.toString().trim();
+      if (listenedRaw) {
+        const parsed = new Date(listenedRaw);
+        if (Number.isNaN(parsed.getTime())) {
+          results.errors.push({ row: rowNumber, message: "Invalid listened_date value." });
+          continue;
+        }
+        listenedAt = parsed;
+      }
+
+      const reviewText = row.review?.toString().trim() || undefined;
+
+      const payload: any = {
+        userId,
+        albumId: album.id,
+        reviewedAt: new Date(),
+      };
+
+      if (ratingValue !== undefined) payload.rating = ratingValue;
+      if (reviewText) payload.review = reviewText;
+      if (listenedAt) payload.listenedAt = listenedAt;
+
+      const parsed = insertAlbumReviewSchema.safeParse(payload);
+
+      if (!parsed.success) {
+        results.errors.push({
+          row: rowNumber,
+          message: parsed.error.errors[0]?.message || "Invalid review data."
+        });
+        continue;
+      }
+
+      await storage.createAlbumReview(parsed.data);
+      results.imported++;
+    }
+
+    res.json(results);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+    }
+    console.error("Import reviews error:", error);
+    res.status(500).json({ message: "Failed to import reviews" });
+  }
+});
+
   app.get('/api/reviews', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;

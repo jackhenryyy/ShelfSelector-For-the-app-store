@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { useAlbumReviews } from "@/hooks/use-albums";
 import { Layout } from "@/components/ui/layout";
 import { AlbumArt } from "@/components/ui/album-art";
 import { StarRating } from "@/components/ui/star-rating";
 import { ReviewPopup } from "@/components/ui/review-popup";
 import { ListShareDialog } from "@/components/ui/list-share-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { openInMusicService } from "@/lib/spotify";
 import { MenuIcon, DownloadIcon } from "lucide-react";
 import { AlbumReview } from "@/hooks/use-albums";
 import { exportAlbumsToCSV } from "@/lib/csv-export";
+import { apiRequest } from "@/lib/queryClient";
+import { useQueryClient } from "@tanstack/react-query";
+import Papa from "papaparse";
 
 import { 
   AlbumFilterSort, 
@@ -21,6 +25,8 @@ import {
 
 export default function ListPage() {
   const { albumReviews, searchReviews, updateReview, deleteReview } = useAlbumReviews();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReviews, setFilteredReviews] = useState<AlbumReview[]>([]);
@@ -28,6 +34,29 @@ export default function ListPage() {
   const [activeReview, setActiveReview] = useState<AlbumReview | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("date-added-newest");
   const [filterOptions, setFilterOptions] = useState<FilterOption>({});
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importRows, setImportRows] = useState<Record<string, string>[]>([]);
+  const [importPreview, setImportPreview] = useState<Record<string, string>[]>([]);
+  const [importFileName, setImportFileName] = useState("");
+  const [importParseError, setImportParseError] = useState<string | null>(null);
+  const [importMissingHeaders, setImportMissingHeaders] = useState<string[]>([]);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    skipped: number;
+    errors: { row: number; message: string }[];
+  } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const expectedHeaders = [
+    "artist",
+    "album",
+    "year",
+    "genre",
+    "spotify_url",
+    "rating",
+    "review",
+    "listened_date"
+  ];
   
   // Update filtered reviews when albums or search changes
   useEffect(() => {
@@ -93,6 +122,72 @@ export default function ListPage() {
     listenedAt?: Date;
   }) => {
     updateReview(reviewData);
+  };
+
+  const resetImportState = () => {
+    setImportRows([]);
+    setImportPreview([]);
+    setImportFileName("");
+    setImportParseError(null);
+    setImportMissingHeaders([]);
+    setImportResult(null);
+    setIsImporting(false);
+  };
+
+  const handleCsvSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportParseError(null);
+    setImportResult(null);
+    setImportFileName(file.name);
+
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (result) => {
+        const fields = result.meta.fields || [];
+        const missingHeaders = expectedHeaders.filter((header) => !fields.includes(header));
+        setImportMissingHeaders(missingHeaders);
+        setImportRows(result.data || []);
+        setImportPreview((result.data || []).slice(0, 10));
+        if (result.errors.length > 0) {
+          setImportParseError(result.errors[0]?.message || "Failed to parse CSV.");
+        }
+        setImportDialogOpen(true);
+      },
+      error: (error) => {
+        setImportParseError(error.message || "Failed to parse CSV.");
+        setImportRows([]);
+        setImportPreview([]);
+        setImportDialogOpen(true);
+      }
+    });
+
+    event.target.value = "";
+  };
+
+  const handleConfirmImport = async () => {
+    if (isImporting) return;
+    setIsImporting(true);
+    setImportParseError(null);
+
+    try {
+      const response = await apiRequest("/api/import/reviews", {
+        method: "POST",
+        body: JSON.stringify({ rows: importRows }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      const data = await response.json();
+      setImportResult(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/reviews"] });
+    } catch (error) {
+      setImportParseError(error instanceof Error ? error.message : "Import failed.");
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   // Get unique artists, genres, and years for filters
@@ -193,6 +288,21 @@ export default function ListPage() {
           {/* Share and Export Buttons */}
           <div className="flex gap-2">
             <ListShareDialog />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
+              title="Import from CSV"
+              data-testid="button-import-csv"
+            >
+              import csv
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleCsvSelect}
+              className="hidden"
+            />
             <button 
               onClick={() => exportAlbumsToCSV(filteredReviews, 'the-shelf-export.csv', true)}
               className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm flex items-center gap-1"
@@ -281,6 +391,121 @@ export default function ListPage() {
           console.log('Genre update requested for album', albumId, 'to', genre);
         }}
       />
+
+      <Dialog
+        open={importDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetImportState();
+          }
+          setImportDialogOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-mono">import csv</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 font-mono text-sm">
+            <div className="text-black/70">
+              {importFileName ? `File: ${importFileName}` : "No file selected"}
+            </div>
+            <div className="text-black/70">
+              {importRows.length} rows detected
+            </div>
+            {importMissingHeaders.length > 0 && (
+              <div className="text-red-600">
+                Missing headers: {importMissingHeaders.join(", ")}
+              </div>
+            )}
+            {importParseError && (
+              <div className="text-red-600">
+                {importParseError}
+              </div>
+            )}
+            <div className="border border-black/10">
+              <div className="px-3 py-2 border-b border-black/10 bg-gray-100">
+                Preview (first 10 rows)
+              </div>
+              <div className="max-h-64 overflow-auto">
+  <table className="w-full text-left text-xs table-fixed">
+    <thead className="bg-white sticky top-0">
+      <tr className="border-b border-black/10">
+        <th className="px-2 py-2 w-[140px]">artist</th>
+        <th className="px-2 py-2 w-[180px]">album</th>
+        <th className="px-2 py-2 w-[70px]">year</th>
+        <th className="px-2 py-2 w-[120px]">genre</th>
+        <th className="px-2 py-2 w-[80px]">rating</th>
+        <th className="px-2 py-2 w-[140px]">listened_date</th>
+        <th className="px-2 py-2">review</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {importPreview.length === 0 ? (
+        <tr>
+          <td className="px-2 py-3 text-black/70" colSpan={7}>
+            No rows to preview.
+          </td>
+        </tr>
+      ) : (
+        importPreview.map((row, index) => (
+          <tr key={index} className="border-b border-black/5 align-top">
+            <td className="px-2 py-2 truncate">{row?.artist || ""}</td>
+            <td className="px-2 py-2 truncate">{row?.album || ""}</td>
+            <td className="px-2 py-2">{row?.year || ""}</td>
+            <td className="px-2 py-2 truncate">{row?.genre || ""}</td>
+            <td className="px-2 py-2">{row?.rating || ""}</td>
+            <td className="px-2 py-2">{row?.listened_date || ""}</td>
+            <td className="px-2 py-2 whitespace-pre-wrap break-words text-black/80">
+              {row?.review || ""}
+            </td>
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
+            </div>
+            {importResult && (
+              <div className="border border-black/10 p-3 bg-gray-50">
+                <div>Imported: {importResult.imported}</div>
+                <div>Skipped: {importResult.skipped} (already in your list)</div>
+                <div>Errors: {importResult.errors.length}</div>
+                {importResult.errors.length > 0 && (
+                  <div className="mt-2 max-h-32 overflow-auto text-xs text-red-700">
+                    {importResult.errors.map((error) => (
+                      <div key={`${error.row}-${error.message}`}>
+                        Row {error.row}: {error.message}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <button
+              className="px-4 py-1 border border-black bg-white font-mono text-sm"
+              onClick={() => setImportDialogOpen(false)}
+              disabled={isImporting}
+            >
+              close
+            </button>
+            <button
+              className="px-4 py-1 border border-black bg-black text-white font-mono text-sm"
+              onClick={handleConfirmImport}
+              disabled={
+                isImporting ||
+                importRows.length === 0 ||
+                importMissingHeaders.length > 0 ||
+                !!importParseError
+              }
+            >
+              {isImporting ? "importing..." : "confirm import"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
