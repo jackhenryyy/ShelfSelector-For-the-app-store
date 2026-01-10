@@ -27,6 +27,8 @@ let tokenExpiry: Date | null = null;
 
 export async function generateDeveloperToken(): Promise<string> {
   const { teamId, keyId, privateKey } = getAppleMusicCredentials();
+
+console.log("Apple Music token generated. issuer(teamId) length:", teamId.length, "keyId length:", keyId.length);
   
   // Import the private key for ES256 signing
   const key = await jose.importPKCS8(privateKey, 'ES256');
