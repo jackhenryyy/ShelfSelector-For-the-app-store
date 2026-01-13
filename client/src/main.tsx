@@ -3,7 +3,11 @@ import App from "./App";
 import "./index.css";
 
 // Render the React app
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <div className="safe-area">
+    <App />
+  </div>
+);
 
 // Register service worker for PWA functionality
 if ('serviceWorker' in navigator) {
