@@ -8,16 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { RotatingBackground } from "@/components/ui/rotating-background";
 import { albumCovers } from "@/lib/album-covers";
 
-/**
- * OAuth endpoints
- * - Spotify is confirmed in your codebase as /api/spotify/auth
- * - Apple Music endpoint may differ. If Apple still doesn't work, run:
- *     grep -R "apple" server | head -n 50
- *   and update APPLE_AUTH_PATH accordingly.
- */
-const SPOTIFY_AUTH_PATH = "/api/spotify/auth";
-const APPLE_AUTH_PATH = "/api/apple/auth"; // <-- change if your server uses a different path
-
 const loginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -30,38 +20,6 @@ const registerSchema = loginSchema.extend({
 
 type LoginData = z.infer<typeof loginSchema>;
 type RegisterData = z.infer<typeof registerSchema>;
-
-function OAuthButtons() {
-  return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => {
-          window.location.href = SPOTIFY_AUTH_PATH;
-        }}
-        className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base bg-white hover:bg-gray-50 transition-colors"
-      >
-        continue with spotify
-      </button>
-
-      <button
-        type="button"
-        onClick={() => {
-          window.location.href = APPLE_AUTH_PATH;
-        }}
-        className="w-full p-1.5 sm:p-2 border border-black font-mono text-sm sm:text-base bg-white hover:bg-gray-50 transition-colors"
-      >
-        continue with apple music
-      </button>
-
-      <div className="flex items-center gap-3 py-2">
-        <div className="h-px bg-black flex-1" />
-        <div className="text-xs font-mono text-gray-600">or</div>
-        <div className="h-px bg-black flex-1" />
-      </div>
-    </div>
-  );
-}
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -96,7 +54,8 @@ export default function AuthPage() {
       onError: (error) => {
         toast({
           title: "Login failed",
-          description: error.message || "Please check your credentials and try again",
+          description:
+            error.message || "Please check your credentials and try again",
           variant: "destructive",
         });
       },
@@ -163,9 +122,6 @@ export default function AuthPage() {
             onSubmit={loginForm.handleSubmit(onLoginSubmit)}
             className="space-y-3 sm:space-y-4 border border-black p-4 sm:p-6"
           >
-            {/* OAuth buttons restored */}
-            <OAuthButtons />
-
             <div className="space-y-1">
               <label className="text-xs sm:text-sm font-mono">username</label>
               <input
@@ -210,9 +166,6 @@ export default function AuthPage() {
             onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
             className="space-y-3 sm:space-y-4 border border-black p-4 sm:p-6"
           >
-            {/* OAuth buttons restored */}
-            <OAuthButtons />
-
             <div className="space-y-1">
               <label className="text-xs sm:text-sm font-mono">username</label>
               <input
@@ -258,7 +211,6 @@ export default function AuthPage() {
               )}
             </div>
 
-            {/* music service selector restored (schema expects it) */}
             <div className="space-y-1">
               <label className="text-xs sm:text-sm font-mono">
                 default music service
@@ -270,11 +222,6 @@ export default function AuthPage() {
                 <option value="spotify">spotify</option>
                 <option value="apple_music">apple music</option>
               </select>
-              {registerForm.formState.errors.musicService && (
-                <p className="text-xs text-red-500">
-                  {registerForm.formState.errors.musicService.message}
-                </p>
-              )}
             </div>
 
             <button
@@ -289,10 +236,13 @@ export default function AuthPage() {
 
         <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200 text-center">
           <p className="text-xs sm:text-sm text-gray-600 px-2 sm:px-4 font-mono leading-relaxed">
-            <span className="font-semibold">eliminate album decision paralysis.</span>
+            <span className="font-semibold">
+              eliminate album decision paralysis.
+            </span>
             <br />
             the shelf is designed to help you decide what music to listen to.
-            organize your albums, build your listening queue, and track your no-skips collection.
+            organize your albums, build your listening queue, and track your
+            no-skips collection.
           </p>
           <p className="text-xs text-gray-500 mt-2 sm:mt-3 italic font-mono">
             © 2025 the shelf
