@@ -41,23 +41,17 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
+
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      const clientTemplate = path.resolve(import.meta.dirname, "..", "client", "index.html");
 
-      // always reload the index.html file from disk incase it changes
+      // Always reload index.html from disk in case it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
+      template = template.replace(`src="/src/main.tsx"`, `src="/src/main.tsx?v=${nanoid()}"`);
+
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -67,19 +61,68 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
-export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+function fileExists(p: string) {
+  try {
+    return fs.existsSync(p);
+  } catch {
+    return false;
+  }
+}
 
-  if (!fs.existsSync(distPath)) {
+function findClientBuildDir() {
+  // In production, server bundle lives in dist/, so import.meta.dirname is usually ".../dist"
+  const distDir = import.meta.dirname;
+
+  // Prefer dist/public (your original expectation), but fall back to other common outputs.
+  const candidates = [
+    path.resolve(distDir, "public"),                 // dist/public
+    path.resolve(distDir),                           // dist  (Vite default if outDir = dist)
+    path.resolve(process.cwd(), "dist", "public"),   // /opt/render/.../dist/public
+    path.resolve(process.cwd(), "dist"),             // /opt/render/.../dist
+  ];
+
+  for (const dir of candidates) {
+    const indexHtml = path.join(dir, "index.html");
+    if (fileExists(dir) && fileExists(indexHtml)) {
+      return dir;
+    }
+  }
+
+  return null;
+}
+
+export function serveStatic(app: Express) {
+  const clientDir = findClientBuildDir();
+
+  if (!clientDir) {
+    // Keep the error message helpful, but include all the places we checked.
+    const distDir = import.meta.dirname;
+    const checked = [
+      path.resolve(distDir, "public"),
+      path.resolve(distDir),
+      path.resolve(process.cwd(), "dist", "public"),
+      path.resolve(process.cwd(), "dist"),
+    ];
+
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the client build directory. Looked for index.html in: ${checked.join(
+        ", ",
+      )}. Make sure the client build runs on deploy.`,
     );
   }
 
-  app.use(express.static(distPath));
+  log(`Serving static client from: ${clientDir}`, "express");
 
-  // fall through to index.html if the file doesn't exist
+  // If the client ends up in the same folder as the server bundle (dist/),
+  // prevent accidentally serving the server bundle file itself.
+  app.get(["/index.js", "/index.js.map"], (_req, res) => {
+    res.status(404).end();
+  });
+
+  app.use(express.static(clientDir));
+
+  // Fall through to index.html for SPA routes
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile(path.resolve(clientDir, "index.html"));
   });
 }
