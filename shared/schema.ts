@@ -84,6 +84,19 @@ export const albumReviews = pgTable("album_reviews", {
   reviewedAt: timestamp("reviewed_at").notNull(),
   listenedAt: timestamp("listened_at"), // When the user listened to the album
 });
+// User album notes (per-user, like reviews)
+export const albumNotes = pgTable("album_notes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  albumId: integer("album_id").notNull(),
+  note: text("note"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertAlbumNoteSchema = createInsertSchema(albumNotes).omit({
+  id: true,
+  updatedAt: true,
+});
 
 export const insertAlbumReviewSchema = createInsertSchema(albumReviews).omit({
   id: true,
@@ -136,6 +149,9 @@ export type InsertNoSkipsAlbum = z.infer<typeof insertNoSkipsAlbumSchema>;
 
 export type AlbumReview = typeof albumReviews.$inferSelect;
 export type InsertAlbumReview = z.infer<typeof insertAlbumReviewSchema>;
+
+export type AlbumNote = typeof albumNotes.$inferSelect;
+export type InsertAlbumNote = z.infer<typeof insertAlbumNoteSchema>;
 
 export type NoSkipsReview = typeof noSkipsReviews.$inferSelect;
 export type InsertNoSkipsReview = z.infer<typeof insertNoSkipsReviewSchema>;

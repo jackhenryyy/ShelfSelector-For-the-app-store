@@ -729,6 +729,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to update album genre' });
     }
   });
+
+  // --------------------
+  // Album notes (per-user, like reviews)
+  // --------------------
+  app.get('/api/albums/:id/note', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const albumId = parseInt(req.params.id);
+
+      if (isNaN(albumId)) {
+        return res.status(400).json({ message: 'Invalid album ID' });
+      }
+
+      const noteRow = await storage.getAlbumNote(userId, albumId);
+      res.json({
+        note: noteRow?.note ?? null,
+        updatedAt: noteRow?.updatedAt ?? null,
+      });
+    } catch (error) {
+      console.error('Get album note error:', error);
+      res.status(500).json({ message: 'Failed to fetch album note' });
+    }
+  });
+
+  app.patch('/api/albums/:id/note', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const albumId = parseInt(req.params.id);
+
+      if (isNaN(albumId)) {
+        return res.status(400).json({ message: 'Invalid album ID' });
+      }
+
+      // Accept null to clear the note.
+      const schema = z.object({
+        note: z.union([z.string(), z.null()]),
+      });
+
+      const parsed = schema.parse(req.body);
+      let note: string | null = parsed.note;
+
+      if (typeof note === 'string') {
+        note = note.trim();
+        if (note.length === 0) note = null;
+        if (note !== null && note.length > 150) {
+          return res.status(400).json({ message: 'Note must be 150 characters or less' });
+        }
+      }
+
+      const saved = await storage.upsertAlbumNote(userId, albumId, note);
+      res.json(saved);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
+      }
+      console.error('Upsert album note error:', error);
+      res.status(500).json({ message: 'Failed to save album note' });
+    }
+  });
   
   // Queue routes
   app.get('/api/queue', requireAuth, async (req, res) => {
@@ -1104,46 +1163,62 @@ app.post('/api/import/reviews', requireAuth, async (req, res) => {
   });
   
   app.post('/api/reviews', requireAuth, async (req, res) => {
-    try {
-      const userId = req.user!.id;
-      
-      // Extract listened at date from request body if available
-      let { listenedAt, ...restBody } = req.body;
-      
-      // Convert listenedAt string to Date object if provided
-      if (listenedAt && typeof listenedAt === 'string') {
-        try {
-          const date = new Date(listenedAt);
-          // Verify that the date is valid
-          if (!isNaN(date.getTime())) {
-            listenedAt = date;
-          } else {
-            console.warn('Invalid date format received:', listenedAt);
-            listenedAt = null;
-          }
-        } catch (error) {
-          console.error('Error parsing date:', error);
-          listenedAt = null;
-        }
+  try {
+    const userId = req.user!.id;
+
+    // Extract listenedAt and normalize it to a Date (or null)
+    let { listenedAt, ...restBody } = req.body;
+
+    if (listenedAt && typeof listenedAt === "string") {
+      try {
+        const date = new Date(listenedAt);
+        listenedAt = !isNaN(date.getTime()) ? date : null;
+      } catch {
+        listenedAt = null;
       }
-      
-      const data = insertAlbumReviewSchema.parse({
-        ...restBody,
-        userId,
-        reviewedAt: new Date(),
-        listenedAt: listenedAt || new Date() // Default to current date if not provided
-      });
-      
-      const review = await storage.createAlbumReview(data);
-      res.json(review);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
-      }
-      console.error('Create review error:', error);
-      res.status(500).json({ message: 'Failed to create review' });
     }
-  });
+
+    // ✅ Allow rating to be missing. If missing, default to 0 (meaning "unrated").
+    const createReviewBodySchema = z.object({
+      albumId: z.preprocess(
+        (val) => (typeof val === "string" ? parseInt(val, 10) : val),
+        z.number().int().positive()
+      ),
+      rating: z.preprocess(
+        (val) => {
+          if (val === undefined || val === null || val === "") return 0;
+          if (typeof val === "string") return parseFloat(val);
+          return val;
+        },
+        z.number().refine(
+          (v) => v === 0 || (v >= 0.5 && v <= 5 && v % 0.5 === 0),
+          { message: "Rating must be 0 (unrated) or between 0.5 and 5.0 in 0.5 increments" }
+        )
+      ),
+      review: z.string().optional().default(""),
+    });
+
+    const parsed = createReviewBodySchema.parse(restBody);
+
+    const data = {
+      albumId: parsed.albumId,
+      rating: parsed.rating, // 0 allowed
+      review: parsed.review,
+      userId,
+      reviewedAt: new Date(),
+      listenedAt: (listenedAt as Date | null) || new Date(),
+    };
+
+    const review = await storage.createAlbumReview(data as any);
+    res.json(review);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+    }
+    console.error("Create review error:", error);
+    res.status(500).json({ message: "Failed to create review" });
+  }
+});
   
   app.put('/api/reviews/:id', requireAuth, async (req, res) => {
     try {
@@ -1155,12 +1230,17 @@ app.post('/api/import/reviews', requireAuth, async (req, res) => {
       
       // Validate request body
       const schema = z.object({
-        rating: z.union([z.number(), z.string()]).transform(val => {
-          const num = typeof val === 'string' ? parseFloat(val) : val;
-          return num;
-        }).refine(val => val >= 0.5 && val <= 5 && val % 0.5 === 0, {
-          message: "Rating must be between 0.5 and 5.0 in 0.5 increments"
-        }),
+        rating: z.preprocess(
+  (val) => {
+    if (val === undefined || val === null || val === "") return 0;
+    if (typeof val === "string") return parseFloat(val);
+    return val;
+  },
+  z.number().refine(
+    (v) => v === 0 || (v >= 0.5 && v <= 5 && v % 0.5 === 0),
+    { message: "Rating must be 0 (unrated) or between 0.5 and 5.0 in 0.5 increments" }
+  )
+),
         review: z.string().optional(),
         listenedAt: z.string().optional().transform(val => {
           if (!val) return undefined; // Keep undefined to preserve existing date

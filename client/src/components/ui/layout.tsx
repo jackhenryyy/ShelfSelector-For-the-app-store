@@ -24,34 +24,55 @@ export function Layout({
   const { logoutMutation, user } = useAuth();
 
   return (
-    <div className="relative min-h-screen bg-white overflow-hidden">
+    // FIXED ROOT: prevents the entire document/body from scrolling
+    <div className="fixed inset-0 w-full overflow-hidden bg-white">
+      {/* Background: must NOT intercept taps */}
       {backgroundImage && (
-        <BlurredBackground imageUrl={backgroundImage} />
-      )}
-      
-      <div className="absolute top-0 right-0 p-1 sm:p-2 z-50">
-        {user && (
-          <button 
-            onClick={() => logoutMutation.mutate()}
-            className="text-[10px] sm:text-xs flex items-center gap-0.5 sm:gap-1 text-black/80 hover:text-black"
-          >
-            <span>logout</span>
-            <LogOut className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-          </button>
-        )}
-      </div>
-      
-      {(title || subtitle) && (
-        <div className="p-2 sm:p-4 pb-0">
-          {title && <h1 className="text-base sm:text-lg font-medium mb-1 text-black">{title}</h1>}
-          {subtitle && <p className="text-[10px] sm:text-xs text-black/60 mb-2 sm:mb-4">{subtitle}</p>}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <BlurredBackground imageUrl={backgroundImage} />
         </div>
       )}
-      
-      <div className={`pb-12 ${className}`}>
+
+      {/* Logout: fixed, always tappable */}
+      {user && (
+        <div
+          className="fixed z-[1000]"
+          style={{
+            top: "calc(env(safe-area-inset-top) + 8px)",
+            right: "12px"
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => logoutMutation.mutate()}
+            className="text-[10px] sm:text-xs flex items-center gap-1 text-black/70 hover:text-black"
+          >
+            <span>logout</span>
+            <LogOut className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Optional header (only if provided) */}
+      {(title || subtitle) && (
+        <div
+          className="relative z-10 px-3"
+          style={{ paddingTop: "calc(env(safe-area-inset-top) + 8px)" }}
+        >
+          {title && (
+            <h1 className="text-base sm:text-lg font-medium text-black">
+              {title}
+            </h1>
+          )}
+          {subtitle && <p className="text-[10px] sm:text-xs text-black/60">{subtitle}</p>}
+        </div>
+      )}
+
+      {/* Content: fill viewport; keep nav space at bottom */}
+      <div className={`relative z-10 h-full pb-14 overflow-hidden ${className}`}>
         {children}
       </div>
-      
+
       {!hideNav && <NavBar />}
     </div>
   );

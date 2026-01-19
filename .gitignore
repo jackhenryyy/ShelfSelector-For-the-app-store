@@ -35,3 +35,6 @@ replit.md
 .replit-agent/
 attached_assets/
 generated-icon.png
+# Capacitor / mobile build outputs
+ios/
+dist-web/

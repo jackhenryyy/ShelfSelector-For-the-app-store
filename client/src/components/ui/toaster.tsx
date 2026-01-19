@@ -27,7 +27,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport className="top-[calc(env(safe-area-inset-top)+12px)] w-[calc(100%-1rem)] mx-auto left-0 right-0" />
     </ToastProvider>
   )
 }
