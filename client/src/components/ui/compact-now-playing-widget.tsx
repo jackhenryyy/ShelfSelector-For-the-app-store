@@ -35,27 +35,24 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { addToQueue, isAddingToQueue: hookIsAddingToQueue, isAlbumInQueue } = useQueueAlbums();
-  console.log('CompactNowPlayingWidget - addToQueue function:', addToQueue);
+  const { addToQueue, isAlbumInQueue } = useQueueAlbums();
   const { createReview } = useAlbumReviews();
   const { updateGenre } = useAlbumGenre();
+
   const [isAddingToQueue, setIsAddingToQueue] = useState(false);
   const [isAddingToList, setIsAddingToList] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<any>(null);
   const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
-  const [pendingDuplicateAlbum, setPendingDuplicateAlbum] = useState<{id: number, name: string} | null>(null);
+  const [pendingDuplicateAlbum, setPendingDuplicateAlbum] = useState<{ id: number; name: string } | null>(null);
 
   // Query for currently playing track
   const { data: nowPlaying, refetch, isError } = useQuery<NowPlayingData>({
     queryKey: ["/api/spotify/currently-playing"],
     enabled: !!user,
-    refetchInterval: 1000, // Refresh every 1 second for real-time updates
+    refetchInterval: 1000,
     retry: (failureCount, error: any) => {
-      // Don't retry if unauthorized (no Spotify token)
-      if (error?.response?.status === 401) {
-        return false;
-      }
+      if (error?.response?.status === 401) return false; // no token / unauthorized
       return failureCount < 3;
     },
   });
@@ -63,30 +60,25 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   // Auto-refetch every second
   useEffect(() => {
     const interval = setInterval(() => {
-      if (user) {
-        refetch();
-      }
+      if (user) refetch();
     }, 1000);
-    
+
     return () => clearInterval(interval);
   }, [refetch, user]);
 
   const handleAddToQueue = async () => {
-    console.log('handleAddToQueue clicked', { nowPlaying, isAddingToQueue });
     if (!nowPlaying || isAddingToQueue) return;
-    
+
     setIsAddingToQueue(true);
     try {
-      console.log('Processing album:', nowPlaying.track.album);
       const albumData = await processAndSaveAlbum({
         id: nowPlaying.track.album.spotifyId,
         name: nowPlaying.track.album.name,
         artists: [{ name: nowPlaying.track.album.artist }],
         images: [{ url: nowPlaying.track.album.imageUrl }],
-        release_date: nowPlaying.track.album.releaseYear?.toString()
+        release_date: nowPlaying.track.album.releaseYear?.toString(),
       });
 
-      // Check for duplicate
       if (isAlbumInQueue(albumData.id)) {
         setPendingDuplicateAlbum({ id: albumData.id, name: albumData.name });
         setDuplicateDialogOpen(true);
@@ -94,18 +86,16 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         return;
       }
 
-      console.log('Album processed, adding to queue:', albumData.id);
       await addToQueue(albumData.id);
-      console.log('Successfully added to queue');
-      
+
       toast({
         title: "Added to queue",
         description: "Album has been added to your queue",
       });
-      
+
       setLocation("/queue");
     } catch (error) {
-      console.error('Error adding to queue:', error);
+      console.error("Error adding to queue:", error);
       toast({
         title: "Error",
         description: "Failed to add album to queue",
@@ -115,22 +105,21 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
       setIsAddingToQueue(false);
     }
   };
-  
+
   const handleConfirmDuplicate = async () => {
-    if (pendingDuplicateAlbum) {
-      await addToQueue(pendingDuplicateAlbum.id);
-      toast({
-        title: "Added to queue",
-        description: "Album has been added to your queue",
-      });
-      setPendingDuplicateAlbum(null);
-      setLocation("/queue");
-    }
+    if (!pendingDuplicateAlbum) return;
+    await addToQueue(pendingDuplicateAlbum.id);
+    toast({
+      title: "Added to queue",
+      description: "Album has been added to your queue",
+    });
+    setPendingDuplicateAlbum(null);
+    setLocation("/queue");
   };
 
   const handleAddToList = async () => {
     if (!nowPlaying || isAddingToList) return;
-    
+
     setIsAddingToList(true);
     try {
       const albumData = await processAndSaveAlbum({
@@ -138,14 +127,13 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         name: nowPlaying.track.album.name,
         artists: [{ name: nowPlaying.track.album.artist }],
         images: [{ url: nowPlaying.track.album.imageUrl }],
-        release_date: nowPlaying.track.album.releaseYear?.toString()
+        release_date: nowPlaying.track.album.releaseYear?.toString(),
       });
 
       setSelectedAlbum(albumData);
       setDetailsDialogOpen(true);
-      
     } catch (error) {
-      console.error('Error processing album:', error);
+      console.error("Error processing album:", error);
       toast({
         title: "Error",
         description: "Failed to process album",
@@ -168,14 +156,14 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
         albumId: data.albumId,
         rating: data.rating,
         review: data.review || "",
-        listenedAt: data.listenedAt
+        listenedAt: data.listenedAt,
       });
-      
+
       toast({
         title: "Review submitted",
         description: "Album has been added to your list",
       });
-      
+
       setSelectedAlbum(null);
       setDetailsDialogOpen(false);
     } catch (error) {
@@ -183,7 +171,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
       toast({
         title: "Review failed",
         description: "There was an error submitting your review",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -200,7 +188,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
       toast({
         title: "Update failed",
         description: "There was an error updating the genre",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -208,77 +196,63 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   const formatTime = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   // Don't show anything if user is not logged in
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
+
+  // Shared width: match the album plaque width
+  const widthClass = "w-[22rem] sm:w-[26rem] mx-auto";
 
   // Show Spotify login button if user doesn't have Spotify connected
   if (isError || !user?.accessToken) {
     return (
-      <div className={`bg-white border border-black px-2 py-2 text-center ${className}`}>
+      <div className={`${widthClass} bg-white border border-black px-3 py-2 text-center ${className}`}>
         <p className="font-mono text-xs text-gray-500 mb-2">Connect Spotify</p>
-        <button 
+        <button
           onClick={() => {
-            console.log('Compact Spotify login button clicked - opening popup');
-            
-            // Open Spotify authentication in a popup
+            // Popup first (best UX), fallback to full redirect
             const popup = window.open(
-              '/api/spotify/auth',
-              'spotify-auth',
-              'width=500,height=600,left=' + (window.screen.width / 2 - 250) + ',top=' + (window.screen.height / 2 - 300)
+              "/api/spotify/auth",
+              "spotify-auth",
+              "width=500,height=600,left=" +
+                (window.screen.width / 2 - 250) +
+                ",top=" +
+                (window.screen.height / 2 - 300)
             );
-            
+
             if (!popup) {
-              console.log('Popup blocked, falling back to redirect');
-              window.location.href = '/api/spotify/auth';
+              window.location.href = "/api/spotify/auth";
               return;
             }
 
-            // Listen for messages from the popup
             const messageHandler = (event: MessageEvent) => {
-              if (event.data?.type === 'SPOTIFY_AUTH_SUCCESS') {
-                console.log('Received authentication success message from popup');
-                window.removeEventListener('message', messageHandler);
+              if (event.data?.type === "SPOTIFY_AUTH_SUCCESS") {
+                window.removeEventListener("message", messageHandler);
                 clearInterval(checkClosed);
                 clearTimeout(timeout);
-                
-                // Refresh the page to show the now playing widget
-                setTimeout(() => {
-                  window.location.reload();
-                }, 500);
+                setTimeout(() => window.location.reload(), 500);
               }
             };
-            
-            window.addEventListener('message', messageHandler);
 
-            // Listen for popup completion (fallback)
+            window.addEventListener("message", messageHandler);
+
             const checkClosed = setInterval(() => {
               if (popup.closed) {
                 clearInterval(checkClosed);
-                window.removeEventListener('message', messageHandler);
-                console.log('Popup closed, checking authentication status');
-                
-                // Refresh the page to check if authentication succeeded
-                setTimeout(() => {
-                  window.location.reload();
-                }, 1000);
+                window.removeEventListener("message", messageHandler);
+                setTimeout(() => window.location.reload(), 1000);
               }
             }, 1000);
 
-            // Close popup after 5 minutes if still open
             const timeout = setTimeout(() => {
-              if (!popup.closed) {
-                popup.close();
-              }
+              if (!popup.closed) popup.close();
               clearInterval(checkClosed);
-              window.removeEventListener('message', messageHandler);
+              window.removeEventListener("message", messageHandler);
             }, 5 * 60 * 1000);
           }}
-          className="px-2 py-1 border border-black bg-black text-white font-mono text-xs hover:bg-gray-800"
+          className="px-3 py-1.5 border border-black bg-black text-white font-mono text-xs hover:bg-gray-800"
         >
           Connect
         </button>
@@ -287,15 +261,13 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   }
 
   // Don't show anything if no currently playing data
-  if (!nowPlaying) {
-    return null;
-  }
+  if (!nowPlaying) return null;
 
   const progressPercent = (nowPlaying.progressMs / nowPlaying.durationMs) * 100;
 
   return (
     <>
-      <div className={`bg-white border border-black px-0 py-2 ${className}`}>
+      <div className={`${widthClass} bg-white border border-black px-0 py-2 ${className}`}>
         <div className="flex items-center justify-between mb-1 px-2">
           <h3 className="font-mono text-xs font-medium">
             {nowPlaying.isPlaying ? "Now Playing" : "Paused"}
@@ -304,15 +276,12 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
             {formatTime(nowPlaying.progressMs)} / {formatTime(nowPlaying.durationMs)}
           </div>
         </div>
-        
+
         {/* Progress bar */}
         <div className="bg-gray-200 h-0.5 mb-2 mx-2">
-          <div 
-            className="bg-black h-0.5 transition-all duration-1000"
-            style={{ width: `${progressPercent}%` }}
-          />
+          <div className="bg-black h-0.5 transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
         </div>
-        
+
         <div className="flex items-center gap-2 px-2">
           <AlbumArt
             src={nowPlaying.track.album.imageUrl}
@@ -320,22 +289,15 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
             size="small"
             className="flex-shrink-0 w-8 h-8"
           />
-          
+
           <div className="flex-1 min-w-0">
-            <h4 className="font-mono text-xs font-medium truncate">
-              {nowPlaying.track.name}
-            </h4>
-            <p className="font-mono text-xs text-gray-500 truncate">
-              {nowPlaying.track.album.name}
-            </p>
+            <h4 className="font-mono text-xs font-medium truncate">{nowPlaying.track.name}</h4>
+            <p className="font-mono text-xs text-gray-500 truncate">{nowPlaying.track.album.name}</p>
           </div>
-          
+
           <div className="flex gap-1 flex-shrink-0">
             <button
-              onClick={(e) => {
-                console.log('Queue button clicked!', e);
-                handleAddToQueue();
-              }}
+              onClick={handleAddToQueue}
               disabled={isAddingToQueue}
               className="px-1.5 py-0.5 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 disabled:opacity-50"
             >
@@ -362,7 +324,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
           onUpdateGenre={handleUpdateGenre}
         />
       )}
-      
+
       {/* Duplicate Album Dialog */}
       <DuplicateAlbumDialog
         isOpen={duplicateDialogOpen}

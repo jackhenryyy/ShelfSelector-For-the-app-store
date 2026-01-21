@@ -86,6 +86,12 @@ export default function HomePage() {
 
   const isCoverBright = useMemo(() => coverBrightness >= 140, [coverBrightness]);
 
+  // Detect web vs native using the <html> class set in main.tsx
+  const isWeb = useMemo(() => {
+    if (typeof document === "undefined") return false;
+    return document.documentElement.classList.contains("web");
+  }, []);
+
   const diceColorClass = useMemo(() => {
     return isCoverBright ? "text-black" : "text-white";
   }, [isCoverBright]);
@@ -135,6 +141,25 @@ export default function HomePage() {
     });
     return Array.from(genresSet);
   };
+
+  const DiceButton = (
+    <button
+      type="button"
+      onClick={handleDiceShuffle}
+      className={[
+        "p-2",
+        "bg-transparent border-0",
+        "active:scale-[0.98] transition-transform",
+        !isCoverBright
+          ? "drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]"
+          : "drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)]",
+      ].join(" ")}
+      aria-label="shuffle"
+      title="shuffle"
+    >
+      <Dices className={`w-12 h-12 ${diceColorClass} ${isRolling ? "dice-roll" : ""}`} />
+    </button>
+  );
 
   return (
     <Layout hideNav={false}>
@@ -200,7 +225,7 @@ export default function HomePage() {
 
           {/* Album + left-aligned genre button */}
           <div className="flex-1 min-h-0 flex flex-col items-center justify-start px-4 -mt-[1px]">
-            {/* Genre button: closer to album */}
+            {/* Genre button */}
             <div className="w-full flex justify-center mt-7 mb-1 translate-y-[20px] relative z-[5000] pointer-events-auto">
               <div className="w-[22rem] sm:w-[26rem] flex justify-start">
                 <AlbumFilterSort
@@ -219,18 +244,25 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Album + plaque: nudged DOWN slightly */}
-            <div className="mt-3 translate-y-[6px] relative z-[10]">
+            {/* Album + plaque */}
+            <div className="mt-3 translate-y-[6px] relative z-[10] w-full flex flex-col items-center">
               {currentAlbum ? (
                 <>
-                  <div
-                    className="block w-[22rem] sm:w-[26rem] shadow-md cursor-pointer"
-                    onClick={handleOpenInMusicService}
-                  >
-                    <AlbumArt src={currentAlbum.imageUrl} alt={currentAlbum.name} size="large" />
+                  {/* Album art container is relative so WEB dice can sit top-right */}
+                  <div className="relative w-[22rem] sm:w-[26rem] shadow-md">
+                    <div className="cursor-pointer" onClick={handleOpenInMusicService}>
+                      <AlbumArt src={currentAlbum.imageUrl} alt={currentAlbum.name} size="large" />
+                    </div>
+
+                    {/* WEB ONLY: dice goes top-right over the album */}
+                    {isWeb && (
+                      <div className="absolute -top-14 -right-2 z-[3000] pointer-events-auto">
+                        {DiceButton}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Text plaque (always readable) */}
+                  {/* Text plaque */}
                   <div className="mt-3 w-full max-w-md mx-auto">
                     <div className="border border-black bg-white/85 backdrop-blur-sm px-3 py-2 text-center">
                       <h2 className="text-sm sm:text-base font-mono font-bold uppercase text-black">
@@ -262,30 +294,17 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* BIG Dice Shuffle (no circle, no background) */}
-        <div
-          className="fixed left-1/2 -translate-x-1/2 z-[2000]"
-          style={{
-            bottom: "calc(env(safe-area-inset-bottom) + 90px)",
-          }}
-        >
-          <button
-            type="button"
-            onClick={handleDiceShuffle}
-            className={[
-              "p-3",
-              "bg-transparent border-0",
-              "active:scale-[0.98] transition-transform",
-              !isCoverBright
-                ? "drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]"
-                : "drop-shadow-[0_2px_10px_rgba(255,255,255,0.35)]",
-            ].join(" ")}
-            aria-label="shuffle"
-            title="shuffle"
+        {/* NATIVE ONLY: keep dice fixed near bottom (app stays the same) */}
+        {!isWeb && (
+          <div
+            className="fixed left-1/2 -translate-x-1/2 z-[2000]"
+            style={{
+              bottom: "calc(env(safe-area-inset-bottom) + 90px)",
+            }}
           >
-            <Dices className={`w-12 h-12 ${diceColorClass} ${isRolling ? "dice-roll" : ""}`} />
-          </button>
-        </div>
+            {DiceButton}
+          </div>
+        )}
       </div>
     </Layout>
   );

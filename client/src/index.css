@@ -3,6 +3,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   * {
     @apply border-border;
@@ -18,6 +19,7 @@
     overflow-x: hidden;
   }
 
+  /* Main wrapper */
   .safe-area {
     min-height: 100vh;
     min-height: 100dvh;
@@ -34,4 +36,43 @@
   select, button, input {
     @apply font-mono;
   }
+}
+
+/* ============================================================
+   WEB-ONLY FIXES (will NOT affect the Capacitor app)
+   ============================================================ */
+
+/* Reserve space for your fixed bottom nav on web Safari */
+:root {
+  --bottom-nav-h: 88px; /* slightly larger than we think, to be safe */
+}
+
+.web html,
+.web body {
+  min-height: 100dvh;
+}
+
+/* IMPORTANT:
+   Put the bottom-nav padding on the wrapper that actually contains your app.
+   This prevents the fixed bottom nav from covering content. */
+.web .safe-area {
+  min-height: 100dvh;
+  padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+}
+
+/* Make sure scrolling works normally on web */
+.web body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* If toasts exist, keep them floating (optional safety) */
+.web .toast-container,
+.web [data-toast],
+.web .sonner-toast-container {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
 }
