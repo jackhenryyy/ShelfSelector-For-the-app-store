@@ -108,11 +108,13 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
 
   const handleConfirmDuplicate = async () => {
     if (!pendingDuplicateAlbum) return;
+
     await addToQueue(pendingDuplicateAlbum.id);
     toast({
       title: "Added to queue",
       description: "Album has been added to your queue",
     });
+
     setPendingDuplicateAlbum(null);
     setLocation("/queue");
   };
@@ -202,60 +204,65 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
   // Don't show anything if user is not logged in
   if (!user) return null;
 
-  // Shared width: match the album plaque width
-  const widthClass = "w-[22rem] sm:w-[26rem] mx-auto";
+  // Centering strategy:
+  // - outer wrapper is full width and centers contents
+  // - inner wrapper is fixed width matching your album plaque
+  const outerWidthClass = "w-full flex justify-center";
+  const innerWidthClass = "w-[22rem] sm:w-[26rem]";
 
   // Show Spotify login button if user doesn't have Spotify connected
   if (isError || !user?.accessToken) {
     return (
-      <div className={`${widthClass} bg-white border border-black px-3 py-2 text-center ${className}`}>
-        <p className="font-mono text-xs text-gray-500 mb-2">Connect Spotify</p>
-        <button
-          onClick={() => {
-            // Popup first (best UX), fallback to full redirect
-            const popup = window.open(
-              "/api/spotify/auth",
-              "spotify-auth",
-              "width=500,height=600,left=" +
-                (window.screen.width / 2 - 250) +
-                ",top=" +
-                (window.screen.height / 2 - 300)
-            );
+      <div className={`${outerWidthClass} ${className}`}>
+        <div className={`${innerWidthClass} bg-white border border-black px-3 py-2 text-center`}>
+          <p className="font-mono text-xs text-gray-500 mb-2">Connect Spotify</p>
+          <button
+            onClick={() => {
+              // Popup first (best UX), fallback to full redirect
+              const popup = window.open(
+                "/api/spotify/auth",
+                "spotify-auth",
+                "width=500,height=600,left=" +
+                  (window.screen.width / 2 - 250) +
+                  ",top=" +
+                  (window.screen.height / 2 - 300)
+              );
 
-            if (!popup) {
-              window.location.href = "/api/spotify/auth";
-              return;
-            }
-
-            const messageHandler = (event: MessageEvent) => {
-              if (event.data?.type === "SPOTIFY_AUTH_SUCCESS") {
-                window.removeEventListener("message", messageHandler);
-                clearInterval(checkClosed);
-                clearTimeout(timeout);
-                setTimeout(() => window.location.reload(), 500);
+              if (!popup) {
+                window.location.href = "/api/spotify/auth";
+                return;
               }
-            };
 
-            window.addEventListener("message", messageHandler);
+              const messageHandler = (event: MessageEvent) => {
+                if (event.data?.type === "SPOTIFY_AUTH_SUCCESS") {
+                  window.removeEventListener("message", messageHandler);
+                  clearInterval(checkClosed);
+                  clearTimeout(timeout);
+                  setTimeout(() => window.location.reload(), 500);
+                }
+              };
 
-            const checkClosed = setInterval(() => {
-              if (popup.closed) {
+              window.addEventListener("message", messageHandler);
+
+              const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                  clearInterval(checkClosed);
+                  window.removeEventListener("message", messageHandler);
+                  setTimeout(() => window.location.reload(), 1000);
+                }
+              }, 1000);
+
+              const timeout = setTimeout(() => {
+                if (!popup.closed) popup.close();
                 clearInterval(checkClosed);
                 window.removeEventListener("message", messageHandler);
-                setTimeout(() => window.location.reload(), 1000);
-              }
-            }, 1000);
-
-            const timeout = setTimeout(() => {
-              if (!popup.closed) popup.close();
-              clearInterval(checkClosed);
-              window.removeEventListener("message", messageHandler);
-            }, 5 * 60 * 1000);
-          }}
-          className="px-3 py-1.5 border border-black bg-black text-white font-mono text-xs hover:bg-gray-800"
-        >
-          Connect
-        </button>
+              }, 5 * 60 * 1000);
+            }}
+            className="px-3 py-1.5 border border-black bg-black text-white font-mono text-xs hover:bg-gray-800"
+          >
+            Connect
+          </button>
+        </div>
       </div>
     );
   }
@@ -267,49 +274,49 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
 
   return (
     <>
-      <div className={`${widthClass} bg-white border border-black px-0 py-2 ${className}`}>
-        <div className="flex items-center justify-between mb-1 px-2">
-          <h3 className="font-mono text-xs font-medium">
-            {nowPlaying.isPlaying ? "Now Playing" : "Paused"}
-          </h3>
-          <div className="font-mono text-xs text-gray-500">
-            {formatTime(nowPlaying.progressMs)} / {formatTime(nowPlaying.durationMs)}
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="bg-gray-200 h-0.5 mb-2 mx-2">
-          <div className="bg-black h-0.5 transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
-        </div>
-
-        <div className="flex items-center gap-2 px-2">
-          <AlbumArt
-            src={nowPlaying.track.album.imageUrl}
-            alt={nowPlaying.track.album.name}
-            size="small"
-            className="flex-shrink-0 w-8 h-8"
-          />
-
-          <div className="flex-1 min-w-0">
-            <h4 className="font-mono text-xs font-medium truncate">{nowPlaying.track.name}</h4>
-            <p className="font-mono text-xs text-gray-500 truncate">{nowPlaying.track.album.name}</p>
+      <div className={`${outerWidthClass} ${className}`}>
+        <div className={`${innerWidthClass} bg-white border border-black px-0 py-2`}>
+          <div className="flex items-center justify-between mb-1 px-2">
+            <h3 className="font-mono text-xs font-medium">{nowPlaying.isPlaying ? "Now Playing" : "Paused"}</h3>
+            <div className="font-mono text-xs text-gray-500">
+              {formatTime(nowPlaying.progressMs)} / {formatTime(nowPlaying.durationMs)}
+            </div>
           </div>
 
-          <div className="flex gap-1 flex-shrink-0">
-            <button
-              onClick={handleAddToQueue}
-              disabled={isAddingToQueue}
-              className="px-1.5 py-0.5 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 disabled:opacity-50"
-            >
-              {isAddingToQueue ? "..." : "Queue"}
-            </button>
-            <button
-              onClick={handleAddToList}
-              disabled={isAddingToList}
-              className="px-1.5 py-0.5 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 disabled:opacity-50"
-            >
-              {isAddingToList ? "..." : "List"}
-            </button>
+          {/* Progress bar */}
+          <div className="bg-gray-200 h-0.5 mb-2 mx-2">
+            <div className="bg-black h-0.5 transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
+          </div>
+
+          <div className="flex items-center gap-2 px-2">
+            <AlbumArt
+              src={nowPlaying.track.album.imageUrl}
+              alt={nowPlaying.track.album.name}
+              size="small"
+              className="flex-shrink-0 w-8 h-8"
+            />
+
+            <div className="flex-1 min-w-0">
+              <h4 className="font-mono text-xs font-medium truncate">{nowPlaying.track.name}</h4>
+              <p className="font-mono text-xs text-gray-500 truncate">{nowPlaying.track.album.name}</p>
+            </div>
+
+            <div className="flex gap-1 flex-shrink-0">
+              <button
+                onClick={handleAddToQueue}
+                disabled={isAddingToQueue}
+                className="px-1.5 py-0.5 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 disabled:opacity-50"
+              >
+                {isAddingToQueue ? "..." : "Queue"}
+              </button>
+              <button
+                onClick={handleAddToList}
+                disabled={isAddingToList}
+                className="px-1.5 py-0.5 border border-black bg-white text-black font-mono text-xs hover:bg-gray-50 disabled:opacity-50"
+              >
+                {isAddingToList ? "..." : "List"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
