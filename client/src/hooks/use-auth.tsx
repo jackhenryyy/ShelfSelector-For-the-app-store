@@ -16,6 +16,7 @@ type AuthContextType = {
   error: Error | null;
   loginMutation: UseMutationResult<User, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
+  deleteAccountMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<User, Error, RegisterData>;
 };
 
@@ -122,6 +123,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("/api/account", {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      queryClient.setQueryData(["/api/user"], null);
+      toast({
+        title: "Account deleted",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Account deletion failed",
+        description: error.message || "Failed to delete account. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <AuthContext.Provider
       value={{
@@ -130,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         loginMutation,
         logoutMutation,
+        deleteAccountMutation,
         registerMutation,
       }}
     >

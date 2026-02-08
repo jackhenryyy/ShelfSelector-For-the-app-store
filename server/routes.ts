@@ -661,6 +661,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       appleMusicAvailable: hasAppleMusicCredentials()
     });
   });
+
+  app.delete('/api/account', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      await storage.deleteAccount(userId);
+
+      await new Promise<void>((resolve, reject) => {
+        req.logout((error) => (error ? reject(error) : resolve()));
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        req.session.destroy((error) => (error ? reject(error) : resolve()));
+      });
+
+      res.clearCookie('connect.sid');
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Delete account error:', error);
+      res.status(500).json({ message: 'Failed to delete account' });
+    }
+  });
   
   app.get('/api/albums', requireAuth, async (req, res) => {
     const { query } = req.query;

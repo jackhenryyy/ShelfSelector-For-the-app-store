@@ -41,6 +41,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserBySpotifyId(spotifyId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  deleteAccount(userId: number): Promise<void>;
   updateUserTokens(
     id: number,
     accessToken: string,
@@ -186,6 +187,26 @@ export class MemStorage implements IStorage {
 
     this.users.set(id, user);
     return user;
+  }
+
+  async deleteAccount(userId: number): Promise<void> {
+    Array.from(this.queueAlbums.entries()).forEach(([id, qa]) => {
+      if (qa.userId === userId) this.queueAlbums.delete(id);
+    });
+
+    Array.from(this.noSkipsAlbums.entries()).forEach(([id, ns]) => {
+      if (ns.userId === userId) this.noSkipsAlbums.delete(id);
+    });
+
+    Array.from(this.albumReviews.entries()).forEach(([id, review]) => {
+      if (review.userId === userId) this.albumReviews.delete(id);
+    });
+
+    Array.from(this.albumNotes.keys()).forEach((key) => {
+      if (key.startsWith(`${userId}:`)) this.albumNotes.delete(key);
+    });
+
+    this.users.delete(userId);
   }
 
   async updateUserTokens(
@@ -534,6 +555,18 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
+  }
+
+  async deleteAccount(userId: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx.delete(queueAlbums).where(eq(queueAlbums.userId, userId));
+      await tx.delete(noSkipsAlbums).where(eq(noSkipsAlbums.userId, userId));
+      await tx.delete(albumNotes).where(eq(albumNotes.userId, userId));
+      await tx.delete(albumReviews).where(eq(albumReviews.userId, userId));
+      await tx.delete(noSkipsReviews).where(eq(noSkipsReviews.userId, userId));
+      await tx.delete(listShareTokens).where(eq(listShareTokens.userId, userId));
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   async updateUserTokens(id: number, accessToken: string, refreshToken: string, tokenExpiry: Date): Promise<User | undefined> {

@@ -13,6 +13,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import SharedNoSkipsPage from "@/pages/shared-no-skips";
 import EmbedListPage from "@/pages/embed-list";
+import SupportPage from "@/pages/support";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <ProtectedRoute path="/no-skips" component={NoSkipsPage} />
       <ProtectedRoute path="/list" component={ListPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/support" component={SupportPage} />
       <Route path="/shared/:userId" component={SharedNoSkipsPage} />
       <Route path="/embed/list/:token" component={EmbedListPage} />
       <Route component={NotFound} />

@@ -1,8 +1,13 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { NavBar } from "./nav-bar";
 import { BlurredBackground } from "./blurred-background";
 import { useAuth } from "@/hooks/use-auth";
-import { LogOut } from "lucide-react";
+import { ChevronDown, LogOut, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
+import { Button } from "./button";
+import { Input } from "./input";
+import { useLocation } from "wouter";
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,7 +26,12 @@ export function Layout({
   hideNav = false,
   className = ""
 }: LayoutProps) {
-  const { logoutMutation, user } = useAuth();
+  const { logoutMutation, deleteAccountMutation, user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  const canDelete = deleteConfirmText === "DELETE";
 
   return (
     // FIXED ROOT: prevents the entire document/body from scrolling
@@ -42,16 +52,96 @@ export function Layout({
             right: "12px"
           }}
         >
-          <button
-            type="button"
-            onClick={() => logoutMutation.mutate()}
-            className="text-[10px] sm:text-xs flex items-center gap-1 text-black/70 hover:text-black"
-          >
-            <span>logout</span>
-            <LogOut className="w-3 h-3" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="text-[10px] sm:text-xs flex items-center gap-1 text-black/70 hover:text-black"
+              >
+                <span>Account</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={() => {
+                  logoutMutation.mutate(undefined, {
+                    onSuccess: () => setLocation("/auth"),
+                  });
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setDeleteDialogOpen(true);
+                }}
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete account</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
+
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setDeleteConfirmText("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete account?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes your account and all saved data. Type DELETE to confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={deleteConfirmText}
+            onChange={(event) => setDeleteConfirmText(event.target.value)}
+            placeholder="Type DELETE"
+            autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setDeleteConfirmText("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!canDelete || deleteAccountMutation.isPending}
+              onClick={() => {
+                deleteAccountMutation.mutate(undefined, {
+                  onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setDeleteConfirmText("");
+                    setLocation("/auth");
+                  },
+                });
+              }}
+            >
+              {deleteAccountMutation.isPending ? "Deleting..." : "Delete account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Optional header (only if provided) */}
       {(title || subtitle) && (
