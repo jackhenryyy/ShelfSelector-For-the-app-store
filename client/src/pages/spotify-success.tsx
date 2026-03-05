@@ -19,13 +19,6 @@ export default function SpotifySuccessPage() {
       .catch(() => setChecking(false));
   }, []);
 
-  useEffect(() => {
-    // Only attempt deep link on iOS
-    if (!checking && verified && isIOS()) {
-      window.location.href = "theshelf://spotify-connected";
-    }
-  }, [checking, verified]);
-
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="text-center font-mono">
@@ -37,14 +30,7 @@ export default function SpotifySuccessPage() {
             <p className="text-sm mb-6">
               To complete setup, fully close The Shelf app and reopen it.
             </p>
-            {isIOS() ? (
-              <a
-                href="theshelf://spotify-connected"
-                className="inline-block px-4 py-2 border border-black bg-green-300 text-sm no-underline"
-              >
-                Return to app
-              </a>
-            ) : (
+            {!isIOS() && (
               <a
                 href="/"
                 className="inline-block px-4 py-2 border border-black bg-green-300 text-sm no-underline"
