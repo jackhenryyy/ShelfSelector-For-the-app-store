@@ -33,20 +33,17 @@ export default function SpotifySuccessPage() {
           <p className="text-sm text-black/60">verifying connection...</p>
         ) : verified ? (
           <>
-            <p className="text-2xl mb-2">&#10003;</p>
-            <p className="text-sm font-bold mb-4">Spotify connected successfully!</p>
+            <p className="text-base font-bold mb-4">Spotify connected successfully! ✓</p>
+            <p className="text-sm mb-6">
+              To complete setup, fully close The Shelf app and reopen it.
+            </p>
             {isIOS() ? (
-              <>
-                <a
-                  href="theshelf://spotify-connected"
-                  className="inline-block px-4 py-2 border border-black bg-green-300 text-sm no-underline mb-4"
-                >
-                  Return to app
-                </a>
-                <p className="text-xs text-black/50">
-                  You can close this tab and return to The Shelf app
-                </p>
-              </>
+              <a
+                href="theshelf://spotify-connected"
+                className="inline-block px-4 py-2 border border-black bg-green-300 text-sm no-underline"
+              >
+                Return to app
+              </a>
             ) : (
               <a
                 href="/"
