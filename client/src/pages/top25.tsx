@@ -164,7 +164,7 @@ export default function Top25Page() {
 
   return (
     <Layout hideNav={false}>
-      <div className="h-full overflow-y-auto px-4 pb-24">
+      <div className="h-full overflow-y-auto px-4 pb-24" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
         <div className="max-w-md mx-auto pt-4">
           <h1 className="text-base font-bold tracking-widest text-center mb-6">TOP 25</h1>
           <div className="grid grid-cols-2 gap-3">
@@ -523,7 +523,7 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
     <Layout hideNav={false}>
-      <div className="h-full overflow-y-auto px-3 pb-24">
+      <div className="h-full overflow-y-auto px-3 pb-24" style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}>
 
         {/* ══ PICK VIEW ══ */}
         {view === "pick" && (
@@ -922,7 +922,7 @@ export function SharedTop25Page({ params }: { params: { token: string } }) {
 
   return (
     <div className="min-h-screen bg-white font-mono pb-20">
-      <div className="text-center px-4 pt-5 pb-4">
+      <div className="text-center px-4 pb-4" style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}>
         {spotifyPlaylistUrl ? (
           <a
             href={spotifyPlaylistUrl}

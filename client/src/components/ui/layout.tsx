@@ -159,7 +159,10 @@ export function Layout({
       )}
 
       {/* Content: fill viewport; keep nav space at bottom */}
-      <div className={`relative z-10 h-full pb-14 overflow-hidden ${className}`}>
+      <div
+        className={`relative z-10 h-full pb-14 overflow-hidden ${className}`}
+        style={!(title || subtitle) ? { paddingTop: "calc(env(safe-area-inset-top) + 8px)" } : undefined}
+      >
         {children}
       </div>
 
