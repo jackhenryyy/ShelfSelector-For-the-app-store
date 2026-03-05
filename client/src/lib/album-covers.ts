@@ -3,7 +3,7 @@
 
 // Import album cover images
 import taatAlbum from "@assets/TAAT.jpg"; // The Autobiography of a Thug (Basquiat)
-import tlopAlbum from "@assets/TLOP.png"; // The Life of Pablo
+import tlopAlbum from "@assets/TLOP.jpg"; // The Life of Pablo
 import arobtthAlbum from "@assets/AROBTTH.jpg"; // A Rush of Blood to the Head
 import goodFaithAlbum from "@assets/Good_Faith.jpg"; // Good Faith
 import cmiyglAlbum from "@assets/CMIYGL.jpg"; // Call Me If You Get Lost
