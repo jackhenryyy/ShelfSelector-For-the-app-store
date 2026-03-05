@@ -560,9 +560,15 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
             ) : playlistsError ? (
               <div className="border border-black p-5 bg-white text-center">
                 <p className="text-sm mb-3">couldn't load playlists — spotify may need reconnecting</p>
-                <a href="/api/spotify/auth" className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm no-underline">
+                <button
+                  onClick={async () => {
+                    await fetch("/api/spotify/disconnect", { method: "DELETE", credentials: "include" });
+                    window.location.href = "/api/spotify/auth";
+                  }}
+                  className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm cursor-pointer"
+                >
                   reconnect spotify
-                </a>
+                </button>
               </div>
             ) : playlists.length === 0 ? (
               <p className="text-black/60 text-sm">no playlists found on your spotify account</p>

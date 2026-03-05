@@ -2,12 +2,13 @@ import { ReactNode, useState } from "react";
 import { NavBar } from "./nav-bar";
 import { BlurredBackground } from "./blurred-background";
 import { useAuth } from "@/hooks/use-auth";
-import { ChevronDown, LogOut, Trash2 } from "lucide-react";
+import { ChevronDown, LogOut, Trash2, Unplug, Music } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
 import { Button } from "./button";
 import { Input } from "./input";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,9 +28,13 @@ export function Layout({
   className = ""
 }: LayoutProps) {
   const { logoutMutation, deleteAccountMutation, user } = useAuth();
+  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const hasSpotify = !!user?.accessToken;
 
   const canDelete = deleteConfirmText === "DELETE";
 
@@ -63,6 +68,33 @@ export function Layout({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {hasSpotify ? (
+                <DropdownMenuItem
+                  disabled={disconnecting}
+                  onSelect={async () => {
+                    setDisconnecting(true);
+                    try {
+                      await fetch("/api/spotify/disconnect", { method: "DELETE", credentials: "include" });
+                      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/spotify/playlists"] });
+                    } finally {
+                      setDisconnecting(false);
+                    }
+                  }}
+                >
+                  <Unplug className="w-4 h-4" />
+                  <span>{disconnecting ? "Disconnecting..." : "Disconnect Spotify"}</span>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    window.location.href = "/api/spotify/auth";
+                  }}
+                >
+                  <Music className="w-4 h-4" />
+                  <span>Connect Spotify</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onSelect={() => {
                   logoutMutation.mutate(undefined, {

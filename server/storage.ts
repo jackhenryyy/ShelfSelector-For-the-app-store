@@ -50,6 +50,7 @@ export interface IStorage {
     refreshToken: string,
     tokenExpiry: Date
   ): Promise<User | undefined>;
+  disconnectSpotify(id: number): Promise<User | undefined>;
 
   // Album operations
   getAlbum(id: number): Promise<Album | undefined>;
@@ -222,6 +223,14 @@ export class MemStorage implements IStorage {
     const updatedUser: User = { ...user, accessToken, refreshToken, tokenExpiry };
     this.users.set(id, updatedUser);
     return updatedUser;
+  }
+
+  async disconnectSpotify(id: number): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    const updated: User = { ...user, accessToken: null, refreshToken: null, tokenExpiry: null, spotifyId: null };
+    this.users.set(id, updated);
+    return updated;
   }
 
   // --------------------
@@ -576,6 +585,15 @@ export class DatabaseStorage implements IStorage {
     const [updatedUser] = await db
       .update(users)
       .set({ accessToken, refreshToken, tokenExpiry })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async disconnectSpotify(id: number): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ accessToken: null, refreshToken: null, tokenExpiry: null, spotifyId: null })
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
