@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useLocation } from "wouter";
 import Papa from "papaparse";
 import { useQueryClient } from "@tanstack/react-query";
 import { DownloadIcon, MenuIcon, SearchIcon } from "lucide-react";
@@ -22,6 +23,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { groupAlbumsByMonth, sortAlbums } from "@/components/ui/album-filter-sort";
 
 export default function ListPage() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -330,6 +332,15 @@ export default function ListPage() {
                 title="Add an album"
               >
                 + add
+              </button>
+
+              <button
+                type="button"
+                className={`${btnBase} w-28`}
+                onClick={() => setLocation("/top25")}
+                title="Top 25"
+              >
+                top 25
               </button>
             </div>
 

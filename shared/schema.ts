@@ -158,3 +158,28 @@ export type InsertNoSkipsReview = z.infer<typeof insertNoSkipsReviewSchema>;
 
 export type ListShareToken = typeof listShareTokens.$inferSelect;
 export type InsertListShareToken = z.infer<typeof insertListShareTokenSchema>;
+
+// Top 25 Showcases — stores a user's saved Top 25 showcase
+export const top25Showcases = pgTable("top25_showcases", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  year: integer("year").notNull().default(2025),   // one showcase per user per year
+  token: text("token").notNull().unique(),          // short random share token
+  title: text("title").notNull().default("my top 25"),
+  tracksJson: text("tracks_json").notNull().default("[]"),  // JSON array of track objects
+  albumsJson: text("albums_json").notNull().default("[]"),  // JSON array of album objects
+  showSongs: boolean("show_songs").notNull().default(true),
+  showAlbums: boolean("show_albums").notNull().default(true),
+  spotifyPlaylistUrl: text("spotify_playlist_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTop25ShowcaseSchema = createInsertSchema(top25Showcases).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Top25Showcase = typeof top25Showcases.$inferSelect;
+export type InsertTop25Showcase = z.infer<typeof insertTop25ShowcaseSchema>;

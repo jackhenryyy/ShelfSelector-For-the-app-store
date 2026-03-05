@@ -382,7 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         
         console.log('Tokens saved successfully');
-        res.redirect('/?spotify=connected');
+        res.redirect('/spotify-success');
       } else {
         console.log('No user logged in');
         res.redirect('/?error=not_logged_in');
@@ -1499,6 +1499,131 @@ app.post('/api/import/reviews', requireAuth, async (req, res) => {
     } catch (error) {
       console.error('Get shared list error:', error);
       res.status(500).json({ message: 'Failed to get shared list' });
+    }
+  });
+
+  // ─── TOP 25 SHOWCASE ROUTES ───────────────────────────────────────────────
+
+  // GET /api/spotify/playlists — fetch the logged-in user's Spotify playlists
+  app.get('/api/spotify/playlists', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      if (!user.accessToken) {
+        return res.status(401).json({ message: 'Spotify not connected' });
+      }
+      const { makeSpotifyAPICall } = await import('./spotify-token-refresh');
+      const data = await makeSpotifyAPICall(user, async (accessToken) => {
+        const resp = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!resp.ok) throw new Error(`Spotify error: ${resp.statusText}`);
+        return resp.json();
+      });
+      if (!data) return res.status(401).json({ message: 'Spotify authentication required' });
+      res.json(data);
+    } catch (error) {
+      console.error('Get playlists error:', error);
+      res.status(500).json({ message: 'Failed to fetch playlists' });
+    }
+  });
+
+  // GET /api/spotify/playlists/:playlistId/tracks — fetch tracks from a playlist
+  app.get('/api/spotify/playlists/:playlistId/tracks', requireAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { playlistId } = req.params;
+      if (!user.accessToken) {
+        return res.status(401).json({ message: 'Spotify not connected' });
+      }
+      const { makeSpotifyAPICall } = await import('./spotify-token-refresh');
+      const data = await makeSpotifyAPICall(user, async (accessToken) => {
+        const resp = await fetch(
+          `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50&fields=items(track(name,artists,album(name,images),preview_url,external_urls))`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        if (!resp.ok) throw new Error(`Spotify error: ${resp.statusText}`);
+        return resp.json();
+      });
+      if (!data) return res.status(401).json({ message: 'Spotify authentication required' });
+      res.json(data);
+    } catch (error) {
+      console.error('Get playlist tracks error:', error);
+      res.status(500).json({ message: 'Failed to fetch playlist tracks' });
+    }
+  });
+
+  // POST /api/top25 — save (or overwrite) a showcase for a given year
+  app.post('/api/top25', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { year, title, tracksJson, albumsJson, showSongs, showAlbums, spotifyPlaylistUrl } = req.body;
+      const yr = parseInt(year) || new Date().getFullYear();
+      const showcase = await storage.saveTop25Showcase(userId, yr, {
+        title: title || 'my top 25',
+        tracksJson: JSON.stringify(tracksJson || []),
+        albumsJson: JSON.stringify(albumsJson || []),
+        showSongs: showSongs !== false,
+        showAlbums: showAlbums !== false,
+        spotifyPlaylistUrl: spotifyPlaylistUrl || null,
+      });
+      res.json(showcase);
+    } catch (error) {
+      console.error('Save top25 error:', error);
+      res.status(500).json({ message: 'Failed to save showcase' });
+    }
+  });
+
+  // GET /api/top25 — get all showcases for the logged-in user
+  app.get('/api/top25', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const showcases = await storage.getTop25ShowcasesByUserId(userId);
+      res.json(showcases);
+    } catch (error) {
+      console.error('Get top25 error:', error);
+      res.status(500).json({ message: 'Failed to get showcases' });
+    }
+  });
+
+  // GET /api/top25/:year — get a specific year's showcase
+  app.get('/api/top25/:year', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      if (isNaN(year)) return res.status(400).json({ message: 'Invalid year' });
+      const showcase = await storage.getTop25ShowcaseByUserIdAndYear(userId, year);
+      if (!showcase) return res.status(404).json({ message: 'No showcase found' });
+      res.json(showcase);
+    } catch (error) {
+      console.error('Get top25 error:', error);
+      res.status(500).json({ message: 'Failed to get showcase' });
+    }
+  });
+
+  // GET /api/shared/top25/:token — public, no auth required
+  app.get('/api/shared/top25/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const showcase = await storage.getTop25ShowcaseByToken(token);
+      if (!showcase) return res.status(404).json({ message: 'Showcase not found' });
+      res.json(showcase);
+    } catch (error) {
+      console.error('Get shared top25 error:', error);
+      res.status(500).json({ message: 'Failed to get shared showcase' });
+    }
+  });
+
+  // DELETE /api/top25/:year — delete a specific year's showcase
+  app.delete('/api/top25/:year', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const year = parseInt(req.params.year);
+      if (isNaN(year)) return res.status(400).json({ message: 'Invalid year' });
+      await storage.deleteTop25Showcase(userId, year);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete top25 error:', error);
+      res.status(500).json({ message: 'Failed to delete showcase' });
     }
   });
 

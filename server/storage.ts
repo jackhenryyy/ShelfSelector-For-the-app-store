@@ -12,6 +12,7 @@ import {
   noSkipsAlbums,
   noSkipsReviews,
   queueAlbums,
+  top25Showcases,
   users,
 } from "@shared/schema";
 
@@ -29,12 +30,13 @@ import type {
   NoSkipsAlbum,
   NoSkipsReview,
   QueueAlbum,
+  Top25Showcase,
   User,
 } from "@shared/schema";
 
 export interface IStorage {
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -142,7 +144,7 @@ export class MemStorage implements IStorage {
     albumNote: 1,
   };
 
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 
   constructor() {
     // Mem session store for local/dev fallback
@@ -565,6 +567,7 @@ export class DatabaseStorage implements IStorage {
       await tx.delete(albumReviews).where(eq(albumReviews.userId, userId));
       await tx.delete(noSkipsReviews).where(eq(noSkipsReviews.userId, userId));
       await tx.delete(listShareTokens).where(eq(listShareTokens.userId, userId));
+      await tx.delete(top25Showcases).where(eq(top25Showcases.userId, userId));
       await tx.delete(users).where(eq(users.id, userId));
     });
   }
@@ -895,6 +898,92 @@ export class DatabaseStorage implements IStorage {
 
   async deleteListShareToken(userId: number): Promise<void> {
     await db.delete(listShareTokens).where(eq(listShareTokens.userId, userId));
+  }
+
+  // --------------------
+  // Top 25 Showcase operations
+  // --------------------
+  async saveTop25Showcase(
+    userId: number,
+    year: number,
+    data: {
+      title: string;
+      tracksJson: string;
+      albumsJson: string;
+      showSongs: boolean;
+      showAlbums: boolean;
+      spotifyPlaylistUrl?: string | null;
+    }
+  ): Promise<Top25Showcase> {
+    // Check if one already exists for this user + year
+    const existing = await db
+      .select()
+      .from(top25Showcases)
+      .where(and(eq(top25Showcases.userId, userId), eq(top25Showcases.year, year)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update in place, keep the same token so share links don't break
+      const [updated] = await db
+        .update(top25Showcases)
+        .set({
+          title: data.title,
+          tracksJson: data.tracksJson,
+          albumsJson: data.albumsJson,
+          showSongs: data.showSongs,
+          showAlbums: data.showAlbums,
+          spotifyPlaylistUrl: data.spotifyPlaylistUrl ?? null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(top25Showcases.userId, userId), eq(top25Showcases.year, year)))
+        .returning();
+      return updated;
+    }
+
+    // Create new with a fresh random token
+    const { randomBytes } = await import("crypto");
+    const token = randomBytes(12).toString("hex"); // 24-char hex string
+    const [created] = await db
+      .insert(top25Showcases)
+      .values({
+        userId,
+        year,
+        token,
+        ...data,
+      })
+      .returning();
+    return created;
+  }
+
+  async getTop25ShowcasesByUserId(userId: number): Promise<Top25Showcase[]> {
+    return db
+      .select()
+      .from(top25Showcases)
+      .where(eq(top25Showcases.userId, userId));
+  }
+
+  async getTop25ShowcaseByUserIdAndYear(userId: number, year: number): Promise<Top25Showcase | null> {
+    const rows = await db
+      .select()
+      .from(top25Showcases)
+      .where(and(eq(top25Showcases.userId, userId), eq(top25Showcases.year, year)))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async getTop25ShowcaseByToken(token: string): Promise<Top25Showcase | null> {
+    const rows = await db
+      .select()
+      .from(top25Showcases)
+      .where(eq(top25Showcases.token, token))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async deleteTop25Showcase(userId: number, year: number): Promise<void> {
+    await db
+      .delete(top25Showcases)
+      .where(and(eq(top25Showcases.userId, userId), eq(top25Showcases.year, year)));
   }
 }
 
