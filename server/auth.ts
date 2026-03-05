@@ -72,9 +72,15 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
+      if (!user) {
+        // User was deleted or session references a stale user — clear gracefully
+        return done(null, false);
+      }
       done(null, user);
     } catch (err) {
-      done(err);
+      // Don't crash the server on deserialization failure — just invalidate the session
+      console.error("Failed to deserialize user out of session:", err);
+      done(null, false);
     }
   });
 
