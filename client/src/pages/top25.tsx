@@ -79,6 +79,17 @@ function calcRows(count: number): number[] {
   return rows;
 }
 
+// ─── Responsive tile size calculator ─────────────────────────────────────────
+function calcTileSize(containerWidth: number, rows: number[], desiredBase: number, desiredFirst: number): { base: number; first: number } {
+  if (!containerWidth || rows.length === 0) return { base: desiredBase, first: desiredFirst };
+  const maxItems = Math.max(...rows);
+  const gap = 4; // gap-1 = 4px
+  const maxBase = Math.floor((containerWidth - (maxItems - 1) * gap) / maxItems);
+  const base = Math.min(desiredBase, maxBase);
+  const first = Math.min(desiredFirst, Math.floor(base * 1.5));
+  return { base, first };
+}
+
 // ─── API helper ───────────────────────────────────────────────────────────────
 async function apiRequest(method: string, path: string, body?: any) {
   const res = await fetch(path, {
@@ -245,7 +256,9 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
   const [isSaving, setIsSaving] = useState(false);
 
   const pyramidRef = useRef<HTMLDivElement>(null);
+  const pyramidWrapRef = useRef<HTMLDivElement>(null);
   const [pyramidHeight, setPyramidHeight] = useState(0);
+  const [pyramidWidth, setPyramidWidth] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentPlaying, setCurrentPlaying] = useState<number | null>(null);
   const [nowPlaying, setNowPlaying] = useState<{ name: string; artist: string } | null>(null);
@@ -304,6 +317,14 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
     if (!pyramidRef.current) return;
     const obs = new ResizeObserver(([entry]) => setPyramidHeight(entry.contentRect.height));
     obs.observe(pyramidRef.current);
+    return () => obs.disconnect();
+  }, [view, showSongs, tracks.length]);
+
+  // ── Measure pyramid container width for responsive tile sizing ─────────
+  useEffect(() => {
+    if (!pyramidWrapRef.current) return;
+    const obs = new ResizeObserver(([entry]) => setPyramidWidth(entry.contentRect.width));
+    obs.observe(pyramidWrapRef.current);
     return () => obs.disconnect();
   }, [view, showSongs, tracks.length]);
 
@@ -497,6 +518,7 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
   const hasSpotify = !!user?.accessToken;
   const playlists: SpotifyPlaylist[] = playlistsData?.items || [];
   const pyramidRows = calcRows(tracks.length);
+  const tileSize = calcTileSize(pyramidWidth, pyramidRows, 80, 120);
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
@@ -611,11 +633,11 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
             </div>
 
             {/* Songs + Albums — side by side on desktop, stacked on mobile */}
-            <div className="flex flex-col items-center lg:items-start lg:inline-flex lg:flex-row gap-5 mx-auto" style={{ display: "flex", justifyContent: "center" }}>
+            <div className="flex flex-col items-center lg:items-start lg:inline-flex lg:flex-row gap-5 mx-auto w-full" style={{ display: "flex", justifyContent: "center" }}>
 
               {/* Songs pyramid */}
               {showSongs && tracks.length > 0 && (
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 w-full lg:w-auto" ref={pyramidWrapRef}>
                   <h2 className="text-xs tracking-widest text-center mb-2">SONGS</h2>
                   <div ref={pyramidRef}>
                   {(() => {
@@ -625,7 +647,7 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
                         {Array.from({ length: count }).map(() => {
                           const i = idx++;
                           const t = tracks[i];
-                          const sz = rowIdx === 0 ? 120 : 80;
+                          const sz = rowIdx === 0 ? tileSize.first : tileSize.base;
                           const isPlaying = currentPlaying === i;
                           return (
                             <div
@@ -823,7 +845,9 @@ export function SharedTop25Page({ params }: { params: { token: string } }) {
   const [openAlbum, setOpenAlbum] = useState<AlbumSlot | null>(null);
 
   const sharedPyramidRef = useRef<HTMLDivElement>(null);
+  const sharedPyramidWrapRef = useRef<HTMLDivElement>(null);
   const [sharedPyramidHeight, setSharedPyramidHeight] = useState(0);
+  const [sharedPyramidWidth, setSharedPyramidWidth] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentPlaying, setCurrentPlaying] = useState<number | null>(null);
   const [nowPlaying, setNowPlaying] = useState<{ name: string; artist: string } | null>(null);
@@ -875,7 +899,15 @@ export function SharedTop25Page({ params }: { params: { token: string } }) {
     return () => obs.disconnect();
   }, [loading, showSongs, tracks.length]);
 
+  useEffect(() => {
+    if (!sharedPyramidWrapRef.current) return;
+    const obs = new ResizeObserver(([entry]) => setSharedPyramidWidth(entry.contentRect.width));
+    obs.observe(sharedPyramidWrapRef.current);
+    return () => obs.disconnect();
+  }, [loading, showSongs, tracks.length]);
+
   const pyramidRows = calcRows(tracks.length);
+  const sharedTileSize = calcTileSize(sharedPyramidWidth, pyramidRows, 64, 100);
 
   if (loading) return (
     <div className="min-h-screen bg-white flex items-center justify-center">
@@ -905,9 +937,9 @@ export function SharedTop25Page({ params }: { params: { token: string } }) {
         )}
       </div>
 
-      <div className="flex flex-col items-center lg:flex-row lg:justify-center lg:items-start gap-5 px-4">
+      <div className="flex flex-col items-center lg:flex-row lg:justify-center lg:items-start gap-5 px-4 w-full">
         {showSongs && tracks.length > 0 && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-full lg:w-auto" ref={sharedPyramidWrapRef}>
             <h2 className="text-xs tracking-widest text-center mb-2">SONGS</h2>
             <div ref={sharedPyramidRef}>
             {(() => {
@@ -917,7 +949,7 @@ export function SharedTop25Page({ params }: { params: { token: string } }) {
                   {Array.from({ length: count }).map(() => {
                     const i = idx++;
                     const t = tracks[i];
-                    const sz = rowIdx === 0 ? 100 : 64;
+                    const sz = rowIdx === 0 ? sharedTileSize.first : sharedTileSize.base;
                     return (
                       <div
                         key={i}
