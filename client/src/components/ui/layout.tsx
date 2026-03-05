@@ -1,8 +1,9 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { NavBar } from "./nav-bar";
 import { BlurredBackground } from "./blurred-background";
 import { useAuth } from "@/hooks/use-auth";
-import { ChevronDown, LogOut, Trash2, Unplug, Music } from "lucide-react";
+import { ChevronDown, LogOut, Trash2, Unplug, Music, RotateCcw } from "lucide-react";
+import { TutorialOverlay } from "./tutorial-overlay";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
 import { Button } from "./button";
@@ -33,8 +34,20 @@ export function Layout({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [disconnecting, setDisconnecting] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const hasSpotify = !!user?.accessToken;
+
+  // Auto-start tutorial for new users
+  const tutorialCheckedRef = useRef(false);
+  useEffect(() => {
+    if (user && user.hasSeenTutorial === false && !tutorialCheckedRef.current) {
+      tutorialCheckedRef.current = true;
+      // Small delay so the page renders first
+      const t = setTimeout(() => setShowTutorial(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [user]);
 
   const canDelete = deleteConfirmText === "DELETE";
 
@@ -61,6 +74,7 @@ export function Layout({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                data-tutorial="account-btn"
                 className="text-[10px] sm:text-xs flex items-center gap-1 text-black/70 hover:text-black"
               >
                 <span>Account</span>
@@ -95,6 +109,16 @@ export function Layout({
                   <span>Connect Spotify</span>
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem
+                onSelect={async () => {
+                  await fetch("/api/user/tutorial-reset", { method: "PATCH", credentials: "include" });
+                  queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                  setShowTutorial(true);
+                }}
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Restart tutorial</span>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
                   logoutMutation.mutate(undefined, {
@@ -199,6 +223,16 @@ export function Layout({
       </div>
 
       {!hideNav && <NavBar />}
+
+      {showTutorial && (
+        <TutorialOverlay
+          onComplete={async () => {
+            setShowTutorial(false);
+            await fetch("/api/user/tutorial-complete", { method: "PATCH", credentials: "include" });
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          }}
+        />
+      )}
     </div>
   );
 }

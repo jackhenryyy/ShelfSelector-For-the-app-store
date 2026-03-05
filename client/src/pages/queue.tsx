@@ -311,6 +311,7 @@ export default function QueuePage() {
                 </div>
 
                 <button
+                  data-tutorial="add-album-btn"
                   className="whitespace-nowrap px-2 py-1 border border-black bg-white font-mono text-xs"
                   onClick={() => setMobileSearchDialogOpen(true)}
                 >
@@ -366,6 +367,7 @@ export default function QueuePage() {
                     className="px-4 py-1 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black w-40"
                   />
                   <button
+                    data-tutorial="add-album-btn"
                     className="whitespace-nowrap px-4 py-1 border border-black bg-white font-mono text-sm"
                     onClick={() => setSearchDialogOpen(true)}
                   >

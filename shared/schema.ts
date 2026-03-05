@@ -17,6 +17,8 @@ export const users = pgTable("users", {
   // Apple Music specific fields
   appleMusicToken: text("apple_music_token"),
   appleMusicTokenExpiry: timestamp("apple_music_token_expiry"),
+  // Tutorial
+  hasSeenTutorial: boolean("has_seen_tutorial").default(false),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -28,6 +30,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   tokenExpiry: true,
   appleMusicToken: true,
   appleMusicTokenExpiry: true,
+  hasSeenTutorial: true,
 });
 
 // Album model - supports both Spotify and Apple Music

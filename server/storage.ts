@@ -51,6 +51,7 @@ export interface IStorage {
     tokenExpiry: Date
   ): Promise<User | undefined>;
   disconnectSpotify(id: number): Promise<User | undefined>;
+  setTutorialSeen(id: number, seen: boolean): Promise<void>;
 
   // Album operations
   getAlbum(id: number): Promise<Album | undefined>;
@@ -186,6 +187,7 @@ export class MemStorage implements IStorage {
       tokenExpiry: (insertUser as any).tokenExpiry ?? null,
       appleMusicToken: (insertUser as any).appleMusicToken ?? null,
       appleMusicTokenExpiry: (insertUser as any).appleMusicTokenExpiry ?? null,
+      hasSeenTutorial: (insertUser as any).hasSeenTutorial ?? false,
     };
 
     this.users.set(id, user);
@@ -231,6 +233,11 @@ export class MemStorage implements IStorage {
     const updated: User = { ...user, accessToken: null, refreshToken: null, tokenExpiry: null, spotifyId: null };
     this.users.set(id, updated);
     return updated;
+  }
+
+  async setTutorialSeen(id: number, seen: boolean): Promise<void> {
+    const user = await this.getUser(id);
+    if (user) this.users.set(id, { ...user, hasSeenTutorial: seen });
   }
 
   // --------------------
@@ -597,6 +604,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+
+  async setTutorialSeen(id: number, seen: boolean): Promise<void> {
+    await db.update(users).set({ hasSeenTutorial: seen }).where(eq(users.id, id));
   }
 
   // --------------------

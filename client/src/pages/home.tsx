@@ -145,6 +145,7 @@ export default function HomePage() {
   const DiceButton = (
     <button
       type="button"
+      data-tutorial="shuffle-btn"
       onClick={handleDiceShuffle}
       className={[
         "p-2",
@@ -193,6 +194,7 @@ export default function HomePage() {
           <div className="w-full max-w-md mx-auto px-4">
             <div className="flex items-center justify-center relative">
               <h1
+                data-tutorial="shelf-logo"
                 className={["text-lg font-mono text-center mt-1 mb-2", logoColorClass].join(" ")}
                 style={{ transform: `translateY(${logoNudgeY}px)` }}
               >
@@ -226,7 +228,7 @@ export default function HomePage() {
           {/* Album + left-aligned genre button */}
           <div className="flex-1 min-h-0 flex flex-col items-center justify-start px-4 -mt-[1px]">
             {/* Genre button */}
-            <div className="w-full flex justify-center mt-7 mb-1 translate-y-[20px] relative z-[5000] pointer-events-auto">
+            <div data-tutorial="genre-filter-btn" className="w-full flex justify-center mt-7 mb-1 translate-y-[20px] relative z-[5000] pointer-events-auto">
               <div className="w-[22rem] sm:w-[26rem] flex justify-start">
                 <AlbumFilterSort
                   onFilterChange={setFilterOptions}
@@ -249,7 +251,7 @@ export default function HomePage() {
               {currentAlbum ? (
                 <>
                   {/* Album art container is relative so WEB dice can sit top-right */}
-                  <div className="relative w-[22rem] sm:w-[26rem] shadow-md">
+                  <div data-tutorial="album-card" className="relative w-[22rem] sm:w-[26rem] shadow-md">
                     <div className="cursor-pointer" onClick={handleOpenInMusicService}>
                       <AlbumArt src={currentAlbum.imageUrl} alt={currentAlbum.name} size="large" />
                     </div>

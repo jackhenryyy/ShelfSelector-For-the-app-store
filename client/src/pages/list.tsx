@@ -336,6 +336,7 @@ export default function ListPage() {
 
               <button
                 type="button"
+                data-tutorial="top25-btn"
                 className={`${btnBase} w-28`}
                 onClick={() => setLocation("/top25")}
                 title="Top 25"

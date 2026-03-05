@@ -124,6 +124,7 @@ export function AlbumFilterSort({
       <div className="flex gap-2 items-center">
         {!showGenreOnly && (
           <select
+            data-tutorial="sort-btn"
             value={selectedSort}
             onChange={handleSortChange}
             className="whitespace-nowrap px-3 py-2 border border-black bg-white text-black font-mono text-xs appearance-none rounded-none"

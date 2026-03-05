@@ -675,6 +675,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // PATCH /api/user/tutorial-complete — mark tutorial as seen
+  app.patch('/api/user/tutorial-complete', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      await storage.setTutorialSeen(userId, true);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Tutorial complete error:', error);
+      res.status(500).json({ message: 'Failed to update tutorial status' });
+    }
+  });
+
+  // PATCH /api/user/tutorial-reset — reset tutorial so it shows again
+  app.patch('/api/user/tutorial-reset', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      await storage.setTutorialSeen(userId, false);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Tutorial reset error:', error);
+      res.status(500).json({ message: 'Failed to reset tutorial status' });
+    }
+  });
+
   app.delete('/api/account', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
