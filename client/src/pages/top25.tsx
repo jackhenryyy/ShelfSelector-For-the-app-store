@@ -125,21 +125,15 @@ export default function Top25Page() {
     queryFn: () => apiRequest("GET", "/api/top25"),
   });
 
-  const [addYearInput, setAddYearInput] = useState("");
-
   const currentYear = new Date().getFullYear();
   const list = Array.isArray(showcases) ? showcases : [];
   const savedYears: number[] = list.map((s: any) => s.year);
   const [extraYears, setExtraYears] = useState<number[]>([]);
   const allYears = Array.from(new Set([currentYear, ...savedYears, ...extraYears])).sort((a, b) => b - a);
 
-  function handleAddYear() {
-    const yr = parseInt(addYearInput);
-    if (yr && yr >= 1950 && yr <= currentYear && !allYears.includes(yr)) {
-      setExtraYears(prev => [...prev, yr]);
-    }
-    setAddYearInput("");
-  }
+  // Years available in the picker that aren't already shown
+  const pickerYears = Array.from({ length: currentYear - 1999 }, (_, i) => currentYear - i)
+    .filter(y => !allYears.includes(y));
 
   return (
     <Layout hideNav={false}>
@@ -165,24 +159,22 @@ export default function Top25Page() {
             })}
           </div>
 
-          <div className="flex gap-2 mt-4">
-            <input
-              type="number"
-              value={addYearInput}
-              onChange={e => setAddYearInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleAddYear()}
-              placeholder="add a year..."
-              min={1950}
-              max={currentYear}
-              className="flex-1 px-3 py-2 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black"
-            />
-            <button
-              onClick={handleAddYear}
-              className="px-4 py-2 border border-black bg-white font-mono text-sm hover:opacity-80"
-            >
-              + add
-            </button>
-          </div>
+          {pickerYears.length > 0 && (
+            <div className="mt-4">
+              <select
+                defaultValue=""
+                onChange={e => {
+                  const yr = parseInt(e.target.value);
+                  if (yr) setExtraYears(prev => [...prev, yr]);
+                  e.target.value = "";
+                }}
+                className="w-full px-3 py-2 border border-black font-mono text-sm bg-white focus:outline-none focus:ring-1 focus:ring-black"
+              >
+                <option value="" disabled>+ add another year</option>
+                {pickerYears.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+          )}
 
           <p className="text-center text-xs text-black/50 mt-3 font-mono">
             {savedYears.length > 0
@@ -207,8 +199,7 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
   const [view, setView] = useState<"pick" | "building" | "showcase">("pick");
   const [buildStatus, setBuildStatus] = useState("");
 
-  const [titleInput, setTitleInput] = useState("");
-  const [showcaseTitle, setShowcaseTitle] = useState("my top 25");
+  const showcaseTitle = `my top 25 of ${year}`;
   const [showSongs, setShowSongs] = useState(true);
   const [showAlbums, setShowAlbums] = useState(true);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -274,8 +265,6 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
     apiRequest("GET", `/api/top25/${year}`)
       .then((showcase) => {
         setSavedToken(showcase.token);
-        setShowcaseTitle(showcase.title);
-        setTitleInput(showcase.title);
         setShowSongs(showcase.showSongs);
         setShowAlbums(showcase.showAlbums);
         setTracks(JSON.parse(showcase.tracksJson || "[]"));
@@ -342,8 +331,6 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
   // ── Build from playlist ───────────────────────────────────────────────────
   async function buildFromPlaylist(playlist: SpotifyPlaylist) {
     setView("building");
-    const title = titleInput.trim() || playlist.name;
-    setShowcaseTitle(title);
     setBuildStatus(`loading tracks from "${playlist.name}"...`);
 
     let data: { items: SpotifyTrackItem[] };
@@ -392,8 +379,6 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
       setPasteLoading(true);
       setPasteError("");
       setView("building");
-      const title = titleInput.trim() || "my top 25";
-      setShowcaseTitle(title);
       setBuildStatus("loading tracks from playlist...");
 
       try {
@@ -432,8 +417,6 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
       setPasteLoading(true);
       setPasteError("");
       setView("building");
-      const title = titleInput.trim() || "my top 25";
-      setShowcaseTitle(title);
       setBuildStatus("apple music shared playlists aren't directly supported yet — try the manual search instead");
       setTimeout(() => { setView("pick"); setPasteLoading(false); setSourceMode("menu"); }, 3000);
     }
@@ -468,8 +451,7 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
 
   function startManualMode() {
     setSourceMode("manual");
-    const title = titleInput.trim() || "my top 25";
-    setShowcaseTitle(title);
+    // title is derived from year automatically
     setTracks([]);
     setAlbums(Array(10).fill(null));
     setSpotifyPlaylistUrl(null);
@@ -597,17 +579,6 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
         {/* ══ PICK VIEW ══ */}
         {view === "pick" && (
           <div className="max-w-lg mx-auto pt-2">
-            <div className="mb-4">
-              <label className="text-xs text-black/60 block mb-1">showcase title (optional)</label>
-              <input
-                type="text"
-                value={titleInput}
-                onChange={e => setTitleInput(e.target.value)}
-                placeholder="my top 25, summer 2025, etc."
-                className="w-full px-3 py-2 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black"
-              />
-            </div>
-
             <div className="flex gap-4 mb-5">
               <label className="flex items-center gap-2 cursor-pointer font-mono text-sm">
                 <input type="checkbox" checked={showSongs} onChange={e => setShowSongs(e.target.checked)} /> show songs
@@ -627,14 +598,6 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
                   >
                     choose from your spotify playlists
                   </button>
-                )}
-                {isSpotify && !hasSpotifyToken && (
-                  <a
-                    href={`/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`}
-                    className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50 block no-underline text-black"
-                  >
-                    connect spotify to pick from playlists
-                  </a>
                 )}
                 {isSpotify && (
                   <button
