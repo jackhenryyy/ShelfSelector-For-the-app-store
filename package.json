@@ -8,7 +8,7 @@
   "dev": "tsx server/index.ts",
   "dev:client": "vite",
   "dev:server": "tsx server/index.ts",
-  "build": "drizzle-kit push && vite build --outDir ../dist/public && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+  "build": "vite build --outDir ../dist/public && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
   "check": "tsc",
   "dev:check": "tsx scripts/check-env.ts",
   "db:push": "drizzle-kit push"
