@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect, useRef } from "react";
 import { NavBar } from "./nav-bar";
 import { BlurredBackground } from "./blurred-background";
 import { useAuth } from "@/hooks/use-auth";
-import { ChevronDown, LogOut, Trash2, Unplug, Music, RotateCcw, Ticket } from "lucide-react";
+import { ChevronDown, LogOut, Trash2, RotateCcw, Ticket } from "lucide-react";
 import { TutorialOverlay } from "./tutorial-overlay";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
@@ -33,14 +33,11 @@ export function Layout({
   const [, setLocation] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [disconnecting, setDisconnecting] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [inviteSubmitting, setInviteSubmitting] = useState(false);
-
-  const hasSpotify = !!user?.accessToken;
 
   // Auto-start tutorial for new users
   const tutorialCheckedRef = useRef(false);
@@ -85,33 +82,6 @@ export function Layout({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {hasSpotify ? (
-                <DropdownMenuItem
-                  disabled={disconnecting}
-                  onSelect={async () => {
-                    setDisconnecting(true);
-                    try {
-                      await fetch("/api/spotify/disconnect", { method: "DELETE", credentials: "include" });
-                      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-                      queryClient.invalidateQueries({ queryKey: ["/api/spotify/playlists"] });
-                    } finally {
-                      setDisconnecting(false);
-                    }
-                  }}
-                >
-                  <Unplug className="w-4 h-4" />
-                  <span>{disconnecting ? "Disconnecting..." : "Disconnect Spotify"}</span>
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onSelect={() => {
-                    window.location.href = `/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`;
-                  }}
-                >
-                  <Music className="w-4 h-4" />
-                  <span>Connect Spotify</span>
-                </DropdownMenuItem>
-              )}
               <DropdownMenuItem
                 onSelect={async () => {
                   await fetch("/api/user/tutorial-reset", { method: "PATCH", credentials: "include" });

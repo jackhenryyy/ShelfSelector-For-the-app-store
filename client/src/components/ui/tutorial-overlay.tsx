@@ -61,12 +61,7 @@ const STEPS: TutorialStep[] = [
   },
   {
     target: "account-btn",
-    text: "connect spotify here to unlock currently playing and top 25 features.",
-    placement: "bottom",
-  },
-  {
-    target: "shelf-logo",
-    text: "you're all set! enjoy the shelf.",
+    text: "manage your account, enter invite codes, and restart this tour.",
     placement: "bottom",
     isFinal: true,
     finalButtonText: "let's go!",
