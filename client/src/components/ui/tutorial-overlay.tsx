@@ -171,57 +171,60 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
     }
   };
 
-  if (!rect || !tooltipPos) return null;
-
   const cutoutPad = 6;
+  const ready = !!rect && !!tooltipPos;
 
   return (
-    <div className="fixed inset-0 z-[10000]">
+    <div className="fixed inset-0 z-[10000]" style={{ visibility: ready ? "visible" : "hidden" }}>
       {/* Dark overlay with cutout */}
-      <svg className="fixed inset-0 w-full h-full" style={{ zIndex: 1 }}>
-        <defs>
-          <mask id="tutorial-cutout">
-            <rect width="100%" height="100%" fill="white" />
+      {rect && (
+        <>
+          <svg className="fixed inset-0 w-full h-full" style={{ zIndex: 1 }}>
+            <defs>
+              <mask id="tutorial-cutout">
+                <rect width="100%" height="100%" fill="white" />
+                <rect
+                  x={rect.left - cutoutPad}
+                  y={rect.top - cutoutPad}
+                  width={rect.width + cutoutPad * 2}
+                  height={rect.height + cutoutPad * 2}
+                  rx="4"
+                  fill="black"
+                />
+              </mask>
+            </defs>
             <rect
-              x={rect.left - cutoutPad}
-              y={rect.top - cutoutPad}
-              width={rect.width + cutoutPad * 2}
-              height={rect.height + cutoutPad * 2}
-              rx="4"
-              fill="black"
+              width="100%"
+              height="100%"
+              fill="rgba(0,0,0,0.6)"
+              mask="url(#tutorial-cutout)"
             />
-          </mask>
-        </defs>
-        <rect
-          width="100%"
-          height="100%"
-          fill="rgba(0,0,0,0.6)"
-          mask="url(#tutorial-cutout)"
-        />
-      </svg>
+          </svg>
 
-      {/* Highlight border */}
-      <div
-        className="fixed border-2 border-green-400 rounded pointer-events-none"
-        style={{
-          top: rect.top - cutoutPad,
-          left: rect.left - cutoutPad,
-          width: rect.width + cutoutPad * 2,
-          height: rect.height + cutoutPad * 2,
-          zIndex: 2,
-        }}
-      />
+          {/* Highlight border */}
+          <div
+            className="fixed border-2 border-green-400 rounded pointer-events-none"
+            style={{
+              top: rect.top - cutoutPad,
+              left: rect.left - cutoutPad,
+              width: rect.width + cutoutPad * 2,
+              height: rect.height + cutoutPad * 2,
+              zIndex: 2,
+            }}
+          />
+        </>
+      )}
 
       {/* Click blocker - prevents interacting with underlying UI */}
       <div className="fixed inset-0" style={{ zIndex: 2 }} />
 
-      {/* Tooltip */}
+      {/* Tooltip — always rendered so the ref can be measured */}
       <div
         ref={tooltipRef}
         className="fixed bg-white border-2 border-black font-mono p-4 shadow-lg"
         style={{
-          top: tooltipPos.top,
-          left: tooltipPos.left,
+          top: tooltipPos?.top ?? -9999,
+          left: tooltipPos?.left ?? -9999,
           zIndex: 3,
           maxWidth: "min(280px, calc(100vw - 24px))",
         }}
