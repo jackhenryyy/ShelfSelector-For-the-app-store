@@ -714,6 +714,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/user/redeem-invite-code — unlock Spotify widget with invite code
+  app.post('/api/user/redeem-invite-code', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = req.user!;
+      if (user.spotifyWidgetEnabled) {
+        return res.json({ ok: true, message: 'Spotify widget already active' });
+      }
+      const { code } = req.body;
+      const correctCode = process.env.SPOTIFY_INVITE_CODE;
+      if (!correctCode || code !== correctCode) {
+        return res.status(400).json({ message: 'Invalid invite code' });
+      }
+      await storage.setSpotifyWidgetEnabled(userId, true);
+      res.json({ ok: true, message: 'Spotify widget unlocked!' });
+    } catch (error) {
+      console.error('Redeem invite code error:', error);
+      res.status(500).json({ message: 'Failed to redeem invite code' });
+    }
+  });
+
+  // GET /api/spotify/playlist/:playlistId/public — fetch public playlist via client credentials
+  app.get('/api/spotify/playlist/:playlistId/public', requireAuth, async (req, res) => {
+    try {
+      const { playlistId } = req.params;
+      const { getSpotifyCredentials } = await import('./spotify');
+      const { clientId, clientSecret } = getSpotifyCredentials();
+
+      // Get client credentials token (no user auth needed)
+      const tokenResp = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'grant_type=client_credentials',
+      });
+      if (!tokenResp.ok) throw new Error('Failed to get client credentials token');
+      const { access_token } = await tokenResp.json();
+
+      const resp = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50&fields=items(track(name,artists,album(name,images),preview_url,external_urls))`,
+        { headers: { Authorization: `Bearer ${access_token}` } }
+      );
+      if (!resp.ok) throw new Error(`Spotify error: ${resp.status}`);
+      res.json(await resp.json());
+    } catch (error) {
+      console.error('Public playlist fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch public playlist' });
+    }
+  });
+
   app.delete('/api/account', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;

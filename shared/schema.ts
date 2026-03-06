@@ -19,6 +19,8 @@ export const users = pgTable("users", {
   appleMusicTokenExpiry: timestamp("apple_music_token_expiry"),
   // Tutorial
   hasSeenTutorial: boolean("has_seen_tutorial").default(false),
+  // Spotify widget access (invite-only)
+  spotifyWidgetEnabled: boolean("spotify_widget_enabled").default(false),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -31,6 +33,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   appleMusicToken: true,
   appleMusicTokenExpiry: true,
   hasSeenTutorial: true,
+  spotifyWidgetEnabled: true,
 });
 
 // Album model - supports both Spotify and Apple Music

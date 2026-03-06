@@ -119,32 +119,11 @@ async function getItunesPreview(name: string, artist: string): Promise<string> {
 export default function Top25Page() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const isAppleMusic = user?.musicService === "apple_music";
 
   const { data: showcases } = useQuery({
     queryKey: ["/api/top25"],
     queryFn: () => apiRequest("GET", "/api/top25"),
-    enabled: !isAppleMusic,
   });
-
-  // Spotify-only gate
-  if (isAppleMusic) {
-    return (
-      <Layout hideNav={false}>
-        <div className="h-full flex items-center justify-center px-4">
-          <div className="text-center">
-            <p className="font-mono text-sm mb-4">top 25 is only available for spotify users</p>
-            <button
-              onClick={() => setLocation("/")}
-              className="px-4 py-2 border border-black bg-white font-mono text-sm hover:opacity-80"
-            >
-              ← back to shelf
-            </button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 
   const [addYearInput, setAddYearInput] = useState("");
 
@@ -222,25 +201,8 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const year = parseInt(params.year) || new Date().getFullYear();
-
-  // Spotify-only gate
-  if (user?.musicService === "apple_music") {
-    return (
-      <Layout hideNav={false}>
-        <div className="h-full flex items-center justify-center px-4">
-          <div className="text-center">
-            <p className="font-mono text-sm mb-4">top 25 is only available for spotify users</p>
-            <button
-              onClick={() => setLocation("/")}
-              className="px-4 py-2 border border-black bg-white font-mono text-sm hover:opacity-80"
-            >
-              ← back to shelf
-            </button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  const isSpotify = user?.musicService !== "apple_music";
+  const hasSpotifyToken = !!user?.accessToken;
 
   const [view, setView] = useState<"pick" | "building" | "showcase">("pick");
   const [buildStatus, setBuildStatus] = useState("");
@@ -280,6 +242,18 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  // Source mode: "playlists" (Spotify OAuth), "paste" (public link), "manual" (iTunes search)
+  const [sourceMode, setSourceMode] = useState<"menu" | "playlists" | "paste" | "manual">("menu");
+  const [pasteLink, setPasteLink] = useState("");
+  const [pasteLoading, setPasteLoading] = useState(false);
+  const [pasteError, setPasteError] = useState("");
+
+  // Manual search state
+  const [manualQuery, setManualQuery] = useState("");
+  const [manualResults, setManualResults] = useState<any[]>([]);
+  const [manualHint, setManualHint] = useState("type a song name to search");
+  const manualTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -406,6 +380,102 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
     showToast("showcase ready!");
   }
 
+  // ── Build from pasted link (Spotify or Apple Music) ────────────────────────
+  async function buildFromPasteLink() {
+    const link = pasteLink.trim();
+
+    if (isSpotify) {
+      // Spotify: extract playlist ID
+      const match = link.match(/playlist\/([a-zA-Z0-9]+)/);
+      if (!match) { setPasteError("couldn't find a playlist ID in that link"); return; }
+      const playlistId = match[1];
+      setPasteLoading(true);
+      setPasteError("");
+      setView("building");
+      const title = titleInput.trim() || "my top 25";
+      setShowcaseTitle(title);
+      setBuildStatus("loading tracks from playlist...");
+
+      try {
+        const data = await apiRequest("GET", `/api/spotify/playlist/${playlistId}/public`);
+        const raw = (data.items || [])
+          .filter((i: SpotifyTrackItem) => i.track !== null)
+          .slice(0, 50)
+          .reverse()
+          .slice(0, 25);
+        if (!raw.length) { setBuildStatus("no tracks found"); setTimeout(() => { setView("pick"); setPasteLoading(false); }, 2000); return; }
+
+        const initialTracks: Track[] = raw.map((item: SpotifyTrackItem) => ({
+          name: item.track!.name,
+          artist: item.track!.artists.map(a => a.name).join(", "),
+          album: item.track!.album.name,
+          artwork: item.track!.album.images[0]?.url || "",
+          preview: item.track!.preview_url || "",
+          spotifyUrl: item.track!.external_urls.spotify,
+        }));
+
+        setTracks(initialTracks);
+        setAlbums(Array(10).fill(null));
+        setSpotifyPlaylistUrl(`https://open.spotify.com/playlist/${playlistId}`);
+        setSavedToken(null);
+        setView("showcase");
+        showToast("showcase ready!");
+      } catch {
+        setBuildStatus("failed to load playlist — check the link and try again");
+        setTimeout(() => setView("pick"), 2000);
+      }
+      setPasteLoading(false);
+    } else {
+      // Apple Music: extract playlist ID and use iTunes lookup
+      const match = link.match(/pl\.[a-zA-Z0-9_-]+/);
+      if (!match) { setPasteError("couldn't find a playlist ID in that link"); return; }
+      setPasteLoading(true);
+      setPasteError("");
+      setView("building");
+      const title = titleInput.trim() || "my top 25";
+      setShowcaseTitle(title);
+      setBuildStatus("apple music shared playlists aren't directly supported yet — try the manual search instead");
+      setTimeout(() => { setView("pick"); setPasteLoading(false); setSourceMode("menu"); }, 3000);
+    }
+  }
+
+  // ── Manual search helpers ────────────────────────────────────────────────
+  function handleManualQueryChange(q: string) {
+    setManualQuery(q);
+    clearTimeout(manualTimer.current);
+    if (!q.trim()) { setManualResults([]); setManualHint("type a song name to search"); return; }
+    setManualHint("searching...");
+    manualTimer.current = setTimeout(async () => {
+      const res = await itunesSearch(q, "song", 10);
+      setManualResults(res);
+      setManualHint(res.length ? "" : "no results found");
+    }, 400);
+  }
+
+  function addManualTrack(r: any) {
+    if (tracks.length >= 25) { showToast("maximum 25 songs"); return; }
+    const newTrack: Track = {
+      name: r.trackName || r.trackCensoredName || "",
+      artist: r.artistName || "",
+      album: r.collectionName || "",
+      artwork: (r.artworkUrl100 || "").replace("100x100bb", "300x300bb"),
+      preview: r.previewUrl || "",
+      spotifyUrl: "",
+    };
+    setTracks(prev => [...prev, newTrack]);
+    showToast(`added #${tracks.length + 1}: ${newTrack.name}`);
+  }
+
+  function startManualMode() {
+    setSourceMode("manual");
+    const title = titleInput.trim() || "my top 25";
+    setShowcaseTitle(title);
+    setTracks([]);
+    setAlbums(Array(10).fill(null));
+    setSpotifyPlaylistUrl(null);
+    setSavedToken(null);
+  }
+
   // ── Save showcase ─────────────────────────────────────────────────────────
   async function handleSave() {
     setIsSaving(true);
@@ -515,7 +585,6 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
     setAlbumModal({ open: false, index: null });
   }
 
-  const hasSpotify = !!user?.accessToken;
   const playlists: SpotifyPlaylist[] = playlistsData?.items || [];
   const pyramidRows = calcRows(tracks.length);
   const tileSize = calcTileSize(pyramidWidth, pyramidRows, 80, 120);
@@ -548,51 +617,184 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
               </label>
             </div>
 
-            {!hasSpotify ? (
-              <div className="border border-black p-5 bg-white text-center">
-                <p className="mb-3 text-sm">connect spotify to pick from your playlists</p>
-                <a href={`/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`} className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm no-underline">
-                  connect spotify
-                </a>
-              </div>
-            ) : playlistsLoading ? (
-              <p className="text-black/60 text-sm">loading your playlists...</p>
-            ) : playlistsError ? (
-              <div className="border border-black p-5 bg-white text-center">
-                <p className="text-sm mb-3">couldn't load playlists — spotify may need reconnecting</p>
+            {/* ── Source menu ── */}
+            {sourceMode === "menu" && (
+              <div className="flex flex-col gap-2">
+                {isSpotify && hasSpotifyToken && (
+                  <button
+                    onClick={() => setSourceMode("playlists")}
+                    className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
+                  >
+                    choose from your spotify playlists
+                  </button>
+                )}
+                {isSpotify && !hasSpotifyToken && (
+                  <a
+                    href={`/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`}
+                    className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50 block no-underline text-black"
+                  >
+                    connect spotify to pick from playlists
+                  </a>
+                )}
+                {isSpotify && (
+                  <button
+                    onClick={() => setSourceMode("paste")}
+                    className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
+                  >
+                    paste a public spotify playlist link
+                  </button>
+                )}
+                {!isSpotify && (
+                  <button
+                    onClick={() => setSourceMode("paste")}
+                    className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
+                  >
+                    paste an apple music shared playlist link
+                  </button>
+                )}
                 <button
-                  onClick={async () => {
-                    await fetch("/api/spotify/disconnect", { method: "DELETE", credentials: "include" });
-                    window.location.href = `/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`;
-                  }}
-                  className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm cursor-pointer"
+                  onClick={startManualMode}
+                  className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
                 >
-                  reconnect spotify
+                  search manually
                 </button>
               </div>
-            ) : playlists.length === 0 ? (
-              <p className="text-black/60 text-sm">no playlists found on your spotify account</p>
-            ) : (
+            )}
+
+            {/* ── Spotify playlists ── */}
+            {sourceMode === "playlists" && (
               <>
-                <label className="text-xs text-black/60 block mb-2">choose a playlist</label>
-                <div className="flex flex-col gap-2">
-                  {playlists.map(pl => (
-                    <div
-                      key={pl.id}
-                      onClick={() => buildFromPlaylist(pl)}
-                      className="flex items-center gap-3 px-3 py-2 border border-black bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                <button onClick={() => setSourceMode("menu")} className="text-xs text-black/50 mb-3 hover:text-black font-mono">← back</button>
+                {playlistsLoading ? (
+                  <p className="text-black/60 text-sm">loading your playlists...</p>
+                ) : playlistsError ? (
+                  <div className="border border-black p-5 bg-white text-center">
+                    <p className="text-sm mb-3">couldn't load playlists — spotify may need reconnecting</p>
+                    <button
+                      onClick={async () => {
+                        await fetch("/api/spotify/disconnect", { method: "DELETE", credentials: "include" });
+                        window.location.href = `/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`;
+                      }}
+                      className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm cursor-pointer"
                     >
-                      {pl.images[0]?.url
-                        ? <img src={pl.images[0].url} alt="" className="w-10 h-10 object-cover flex-shrink-0" />
-                        : <div className="w-10 h-10 bg-gray-200 flex-shrink-0" />}
-                      <div className="flex-1 overflow-hidden">
-                        <div className="text-sm font-bold truncate">{pl.name}</div>
-                        <div className="text-xs text-black/60">{pl.tracks.total} tracks</div>
+                      reconnect spotify
+                    </button>
+                  </div>
+                ) : playlists.length === 0 ? (
+                  <p className="text-black/60 text-sm">no playlists found on your spotify account</p>
+                ) : (
+                  <>
+                    <label className="text-xs text-black/60 block mb-2">choose a playlist</label>
+                    <div className="flex flex-col gap-2">
+                      {playlists.map(pl => (
+                        <div
+                          key={pl.id}
+                          onClick={() => buildFromPlaylist(pl)}
+                          className="flex items-center gap-3 px-3 py-2 border border-black bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                        >
+                          {pl.images[0]?.url
+                            ? <img src={pl.images[0].url} alt="" className="w-10 h-10 object-cover flex-shrink-0" />
+                            : <div className="w-10 h-10 bg-gray-200 flex-shrink-0" />}
+                          <div className="flex-1 overflow-hidden">
+                            <div className="text-sm font-bold truncate">{pl.name}</div>
+                            <div className="text-xs text-black/60">{pl.tracks.total} tracks</div>
+                          </div>
+                          <span className="text-xs text-black/40">&rarr;</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* ── Paste link ── */}
+            {sourceMode === "paste" && (
+              <>
+                <button onClick={() => setSourceMode("menu")} className="text-xs text-black/50 mb-3 hover:text-black font-mono">← back</button>
+                <label className="text-xs text-black/60 block mb-1">
+                  {isSpotify ? "paste a public spotify playlist link" : "paste an apple music shared playlist link"}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={pasteLink}
+                    onChange={e => setPasteLink(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && buildFromPasteLink()}
+                    placeholder={isSpotify ? "https://open.spotify.com/playlist/..." : "https://music.apple.com/..."}
+                    className="flex-1 px-3 py-2 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black"
+                  />
+                  <button
+                    onClick={buildFromPasteLink}
+                    disabled={pasteLoading || !pasteLink.trim()}
+                    className="px-4 py-2 border border-black bg-green-300 font-mono text-sm hover:opacity-80 disabled:opacity-50"
+                  >
+                    {pasteLoading ? "..." : "go"}
+                  </button>
+                </div>
+                {pasteError && <p className="text-red-600 text-xs mt-1 font-mono">{pasteError}</p>}
+              </>
+            )}
+
+            {/* ── Manual search (inline — songs get added to pyramid live) ── */}
+            {sourceMode === "manual" && (
+              <>
+                <button onClick={() => { setSourceMode("menu"); setTracks([]); }} className="text-xs text-black/50 mb-3 hover:text-black font-mono">← back</button>
+                <label className="text-xs text-black/60 block mb-1">search for songs ({tracks.length}/25)</label>
+                <input
+                  type="text"
+                  value={manualQuery}
+                  onChange={e => handleManualQueryChange(e.target.value)}
+                  placeholder="search for a song..."
+                  className="w-full px-3 py-2 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black mb-2"
+                />
+                {manualHint && <p className="text-xs text-black/50 mb-2 font-mono">{manualHint}</p>}
+                <div className="flex flex-col gap-1 mb-4 max-h-48 overflow-y-auto">
+                  {manualResults.map((r, i) => (
+                    <div
+                      key={i}
+                      onClick={() => addManualTrack(r)}
+                      className="flex items-center gap-2 px-2 py-1.5 border border-black/20 bg-white cursor-pointer hover:bg-gray-50"
+                    >
+                      {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="w-8 h-8 object-cover flex-shrink-0" />}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold truncate">{r.trackName}</div>
+                        <div className="text-xs text-black/60 truncate">{r.artistName}</div>
                       </div>
-                      <span className="text-xs text-black/40">→</span>
+                      <span className="text-xs text-green-600 flex-shrink-0">+ add</span>
                     </div>
                   ))}
                 </div>
+
+                {/* Live pyramid preview */}
+                {tracks.length > 0 && (
+                  <>
+                    <div className="text-xs text-black/60 mb-1 font-mono">your songs ({tracks.length}/25)</div>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {tracks.map((t, i) => (
+                        <div key={i} className="relative w-10 h-10 border border-black/20 flex-shrink-0">
+                          {t.artwork && <img src={t.artwork} alt="" className="w-full h-full object-cover" />}
+                          <button
+                            onClick={() => setTracks(prev => prev.filter((_, idx) => idx !== i))}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] rounded-full flex items-center justify-center"
+                          >
+                            x
+                          </button>
+                          <span className="absolute bottom-0 right-0.5 text-white font-mono" style={{ fontSize: 7, background: "rgba(0,0,0,0.55)", padding: "0 2px" }}>
+                            #{i + 1}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => { setView("showcase"); setSourceMode("menu"); }}
+                      disabled={tracks.length === 0}
+                      className="w-full px-4 py-2 border border-black bg-green-300 font-mono text-sm hover:opacity-80 disabled:opacity-50"
+                    >
+                      done — view showcase
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -615,10 +817,10 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
               </div>
               <div className="flex justify-center gap-2 flex-wrap">
                 <button
-                  onClick={() => { stopAudio(); setView("pick"); }}
+                  onClick={() => { stopAudio(); setView("pick"); setSourceMode("menu"); }}
                   className="px-3 py-1.5 border border-black bg-white font-mono text-xs hover:opacity-80"
                 >
-                  ← change playlist
+                  ← change source
                 </button>
                 <button
                   onClick={handleSave}

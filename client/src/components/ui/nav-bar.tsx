@@ -30,8 +30,8 @@ export function NavBar() {
   const [location] = useLocation();
   const { user } = useAuth();
 
-  // Only show Spotify widget for Spotify users (not Apple Music users)
-  const showSpotifyWidget = user?.musicService !== 'apple_music';
+  // Only show Spotify widget for users who have it enabled via invite code
+  const showSpotifyWidget = !!user?.spotifyWidgetEnabled;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">

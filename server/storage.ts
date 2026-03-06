@@ -52,6 +52,7 @@ export interface IStorage {
   ): Promise<User | undefined>;
   disconnectSpotify(id: number): Promise<User | undefined>;
   setTutorialSeen(id: number, seen: boolean): Promise<void>;
+  setSpotifyWidgetEnabled(id: number, enabled: boolean): Promise<void>;
 
   // Album operations
   getAlbum(id: number): Promise<Album | undefined>;
@@ -188,6 +189,7 @@ export class MemStorage implements IStorage {
       appleMusicToken: (insertUser as any).appleMusicToken ?? null,
       appleMusicTokenExpiry: (insertUser as any).appleMusicTokenExpiry ?? null,
       hasSeenTutorial: (insertUser as any).hasSeenTutorial ?? false,
+      spotifyWidgetEnabled: (insertUser as any).spotifyWidgetEnabled ?? false,
     };
 
     this.users.set(id, user);
@@ -238,6 +240,11 @@ export class MemStorage implements IStorage {
   async setTutorialSeen(id: number, seen: boolean): Promise<void> {
     const user = await this.getUser(id);
     if (user) this.users.set(id, { ...user, hasSeenTutorial: seen });
+  }
+
+  async setSpotifyWidgetEnabled(id: number, enabled: boolean): Promise<void> {
+    const user = await this.getUser(id);
+    if (user) this.users.set(id, { ...user, spotifyWidgetEnabled: enabled });
   }
 
   // --------------------
@@ -608,6 +615,10 @@ export class DatabaseStorage implements IStorage {
 
   async setTutorialSeen(id: number, seen: boolean): Promise<void> {
     await db.update(users).set({ hasSeenTutorial: seen }).where(eq(users.id, id));
+  }
+
+  async setSpotifyWidgetEnabled(id: number, enabled: boolean): Promise<void> {
+    await db.update(users).set({ spotifyWidgetEnabled: enabled }).where(eq(users.id, id));
   }
 
   // --------------------

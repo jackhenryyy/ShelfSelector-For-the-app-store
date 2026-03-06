@@ -14,6 +14,7 @@ export const db = drizzle(client, { schema });
 export async function runAutoMigrations() {
   try {
     await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS has_seen_tutorial BOOLEAN DEFAULT false`;
+    await client`ALTER TABLE users ADD COLUMN IF NOT EXISTS spotify_widget_enabled BOOLEAN DEFAULT false`;
     console.log('Auto-migrations completed');
   } catch (err) {
     console.error('Auto-migration warning:', err);
