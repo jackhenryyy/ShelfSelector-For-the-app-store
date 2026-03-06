@@ -36,7 +36,7 @@ const STEPS: TutorialStep[] = [
   },
   {
     target: "album-card",
-    text: "tap an album to add it to your queue.",
+    text: "tap an album to listen on your music service.",
     placement: "top",
   },
   {
