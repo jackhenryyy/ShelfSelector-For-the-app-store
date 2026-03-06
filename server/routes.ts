@@ -333,10 +333,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Spotify authentication - uses canonical /api/auth/callback
   app.get('/api/spotify/auth', async (req, res) => {
     console.log('=== SPOTIFY AUTH START ===');
-    
+
     try {
       const { getSpotifyLoginUrl } = await import('./spotify');
-      const authUrl = getSpotifyLoginUrl();
+      const userId = req.user ? (req.user as any).id : undefined;
+      const authUrl = getSpotifyLoginUrl(userId);
       console.log('Redirecting to Spotify:', authUrl);
       res.redirect(authUrl);
     } catch (error) {
@@ -349,44 +350,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/callback', async (req, res) => {
     console.log('=== SPOTIFY AUTH CALLBACK ===');
     console.log('Query:', req.query);
-    
+
     try {
-      const { code, error } = req.query;
-      
+      const { code, error, state } = req.query;
+
       if (error) {
         console.log('Spotify error:', error);
         return res.redirect('/?error=spotify_denied');
       }
-      
+
       if (!code || typeof code !== 'string') {
         console.log('No code provided');
         return res.redirect('/?error=no_code');
       }
-      
+
+      // Determine user ID from session or from state parameter (native app fallback)
+      let userId: number | null = null;
+      if (req.user) {
+        userId = (req.user as any).id;
+      } else if (state && typeof state === 'string' && /^\d+$/.test(state)) {
+        userId = parseInt(state, 10);
+        // Verify this user actually exists
+        const user = await storage.getUser(userId);
+        if (!user) userId = null;
+      }
+
+      if (!userId) {
+        console.log('No user identified (no session, no valid state)');
+        return res.redirect('/?error=not_logged_in');
+      }
+
       console.log('Exchanging code for tokens...');
       const { exchangeCodeForToken } = await import('./spotify');
       const tokens = await exchangeCodeForToken(code);
-      
-      console.log('Got tokens, updating user...');
-      
-      // Update current user with Spotify tokens
-      if (req.user) {
-        const userId = (req.user as any).id;
-        const expiryDate = new Date(Date.now() + tokens.expires_in * 1000);
-        
-        await storage.updateUserTokens(
-          userId,
-          tokens.access_token,
-          tokens.refresh_token || '',
-          expiryDate
-        );
-        
-        console.log('Tokens saved successfully');
-        res.redirect('/spotify-success');
-      } else {
-        console.log('No user logged in');
-        res.redirect('/?error=not_logged_in');
-      }
+
+      console.log('Got tokens, updating user', userId);
+      const expiryDate = new Date(Date.now() + tokens.expires_in * 1000);
+
+      await storage.updateUserTokens(
+        userId,
+        tokens.access_token,
+        tokens.refresh_token || '',
+        expiryDate
+      );
+
+      console.log('Tokens saved successfully');
+      res.redirect('/spotify-success');
     } catch (error) {
       console.error('Callback error:', (error as Error).message);
       res.redirect('/?error=callback_failed');

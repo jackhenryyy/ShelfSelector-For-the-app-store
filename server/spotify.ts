@@ -51,9 +51,9 @@ export function getSpotifyCredentials() {
 }
 
 // Generate a login URL for Spotify
-export function getSpotifyLoginUrl() {
+export function getSpotifyLoginUrl(userId?: number) {
   const { clientId, redirectUri } = getSpotifyCredentials();
-  
+
   const scopes = [
     'user-read-private',
     'user-read-email',
@@ -63,15 +63,21 @@ export function getSpotifyLoginUrl() {
     'user-read-currently-playing',
     'user-read-playback-state'
   ];
-  
+
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'code',
     redirect_uri: redirectUri,
     scope: scopes.join(' '),
-    show_dialog: 'true'
+    show_dialog: 'true',
   });
-  
+
+  // Pass user ID in state so the callback can identify the user
+  // even when the session doesn't carry over (e.g. native app → Safari)
+  if (userId) {
+    params.set('state', String(userId));
+  }
+
   return `https://accounts.spotify.com/authorize?${params.toString()}`;
 }
 

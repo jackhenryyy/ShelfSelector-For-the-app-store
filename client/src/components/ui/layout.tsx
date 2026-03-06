@@ -41,7 +41,7 @@ export function Layout({
   // Auto-start tutorial for new users
   const tutorialCheckedRef = useRef(false);
   useEffect(() => {
-    if (user && user.hasSeenTutorial === false && !tutorialCheckedRef.current) {
+    if (user && !user.hasSeenTutorial && !tutorialCheckedRef.current) {
       tutorialCheckedRef.current = true;
       // Small delay so the page renders first
       const t = setTimeout(() => setShowTutorial(true), 600);
