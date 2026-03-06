@@ -178,7 +178,7 @@ export default function HomePage() {
         }
       `}</style>
 
-      <div className="relative w-full h-[100dvh] overflow-hidden">
+      <div className="relative w-full h-full overflow-hidden">
         {/* Background pinned */}
         <div className="fixed inset-0 z-0">
           {currentAlbum && <BlurredBackground imageUrl={currentAlbum.imageUrl} blurPx={4} />}
@@ -187,10 +187,6 @@ export default function HomePage() {
         {/* Content */}
         <div
           className="relative z-10 h-full flex flex-col overflow-hidden"
-          style={{
-            paddingTop: "calc(env(safe-area-inset-top) + 4px)",
-            paddingBottom: "calc(env(safe-area-inset-bottom) + 4px)",
-          }}
         >
           {/* Top controls */}
           <div className="w-full max-w-md mx-auto px-4">
