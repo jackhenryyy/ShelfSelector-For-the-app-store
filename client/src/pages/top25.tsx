@@ -367,59 +367,46 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
     showToast("showcase ready!");
   }
 
-  // ── Build from pasted link (Spotify or Apple Music) ────────────────────────
+  // ── Build from pasted Spotify playlist link ────────────────────────────────
   async function buildFromPasteLink() {
     const link = pasteLink.trim();
+    const match = link.match(/playlist\/([a-zA-Z0-9]+)/);
+    if (!match) { setPasteError("couldn't find a playlist ID in that link"); return; }
+    const playlistId = match[1];
+    setPasteLoading(true);
+    setPasteError("");
+    setView("building");
+    setBuildStatus("loading tracks from playlist...");
 
-    if (isSpotify) {
-      // Spotify: extract playlist ID
-      const match = link.match(/playlist\/([a-zA-Z0-9]+)/);
-      if (!match) { setPasteError("couldn't find a playlist ID in that link"); return; }
-      const playlistId = match[1];
-      setPasteLoading(true);
-      setPasteError("");
-      setView("building");
-      setBuildStatus("loading tracks from playlist...");
+    try {
+      const data = await apiRequest("GET", `/api/spotify/playlist/${playlistId}/public`);
+      const raw = (data.items || [])
+        .filter((i: SpotifyTrackItem) => i.track !== null)
+        .slice(0, 50)
+        .reverse()
+        .slice(0, 25);
+      if (!raw.length) { setBuildStatus("no tracks found"); setTimeout(() => { setView("pick"); setPasteLoading(false); }, 2000); return; }
 
-      try {
-        const data = await apiRequest("GET", `/api/spotify/playlist/${playlistId}/public`);
-        const raw = (data.items || [])
-          .filter((i: SpotifyTrackItem) => i.track !== null)
-          .slice(0, 50)
-          .reverse()
-          .slice(0, 25);
-        if (!raw.length) { setBuildStatus("no tracks found"); setTimeout(() => { setView("pick"); setPasteLoading(false); }, 2000); return; }
+      const initialTracks: Track[] = raw.map((item: SpotifyTrackItem) => ({
+        name: item.track!.name,
+        artist: item.track!.artists.map(a => a.name).join(", "),
+        album: item.track!.album.name,
+        artwork: item.track!.album.images[0]?.url || "",
+        preview: item.track!.preview_url || "",
+        spotifyUrl: item.track!.external_urls.spotify,
+      }));
 
-        const initialTracks: Track[] = raw.map((item: SpotifyTrackItem) => ({
-          name: item.track!.name,
-          artist: item.track!.artists.map(a => a.name).join(", "),
-          album: item.track!.album.name,
-          artwork: item.track!.album.images[0]?.url || "",
-          preview: item.track!.preview_url || "",
-          spotifyUrl: item.track!.external_urls.spotify,
-        }));
-
-        setTracks(initialTracks);
-        setAlbums(Array(10).fill(null));
-        setSpotifyPlaylistUrl(`https://open.spotify.com/playlist/${playlistId}`);
-        setSavedToken(null);
-        setView("showcase");
-        showToast("showcase ready!");
-      } catch {
-        setBuildStatus("failed to load playlist — check the link and try again");
-        setTimeout(() => setView("pick"), 2000);
-      }
-      setPasteLoading(false);
-    } else {
-      // Apple Music: extract playlist ID and use iTunes lookup
-      const match = link.match(/pl\.[a-zA-Z0-9_-]+/);
-      if (!match) { setPasteError("couldn't find a playlist ID in that link"); return; }
-      setPasteLoading(true);
-      setPasteError("");
-      setView("building");
-      setBuildStatus("apple music shared playlists aren't directly supported yet — try the manual search instead");
-      setTimeout(() => { setView("pick"); setPasteLoading(false); setSourceMode("menu"); }, 3000);
+      setTracks(initialTracks);
+      setAlbums(Array(10).fill(null));
+      setSpotifyPlaylistUrl(`https://open.spotify.com/playlist/${playlistId}`);
+      setSavedToken(null);
+      setView("showcase");
+      showToast("showcase ready!");
+    } catch {
+      setBuildStatus("failed to load playlist — check the link and try again");
+      setTimeout(() => setView("pick"), 2000);
     }
+    setPasteLoading(false);
   }
 
   // ── Manual search helpers ────────────────────────────────────────────────
@@ -599,22 +586,12 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
                     choose from your spotify playlists
                   </button>
                 )}
-                {isSpotify && (
-                  <button
-                    onClick={() => setSourceMode("paste")}
-                    className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
-                  >
-                    paste a public spotify playlist link
-                  </button>
-                )}
-                {!isSpotify && (
-                  <button
-                    onClick={() => setSourceMode("paste")}
-                    className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
-                  >
-                    paste an apple music shared playlist link
-                  </button>
-                )}
+                <button
+                  onClick={() => setSourceMode("paste")}
+                  className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
+                >
+                  paste a public spotify playlist link
+                </button>
                 <button
                   onClick={startManualMode}
                   className="w-full px-4 py-3 border border-black bg-white font-mono text-sm text-left hover:bg-gray-50"
@@ -675,16 +652,14 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
             {sourceMode === "paste" && (
               <>
                 <button onClick={() => setSourceMode("menu")} className="text-xs text-black/50 mb-3 hover:text-black font-mono">← back</button>
-                <label className="text-xs text-black/60 block mb-1">
-                  {isSpotify ? "paste a public spotify playlist link" : "paste an apple music shared playlist link"}
-                </label>
+                <label className="text-xs text-black/60 block mb-1">paste a public spotify playlist link</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={pasteLink}
                     onChange={e => setPasteLink(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && buildFromPasteLink()}
-                    placeholder={isSpotify ? "https://open.spotify.com/playlist/..." : "https://music.apple.com/..."}
+                    placeholder="https://open.spotify.com/playlist/..."
                     className="flex-1 px-3 py-2 border border-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-black"
                   />
                   <button
