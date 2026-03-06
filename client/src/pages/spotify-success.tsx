@@ -44,6 +44,18 @@ export default function SpotifySuccessPage() {
             <p className="text-sm font-bold mb-4">Something went wrong connecting Spotify.</p>
             <a
               href="/api/spotify/auth"
+              onClick={(e) => {
+                // Try to extract uid from current session for retry
+                e.preventDefault();
+                fetch("/api/user", { credentials: "include" })
+                  .then(res => res.ok ? res.json() : null)
+                  .then(u => {
+                    window.location.href = `/api/spotify/auth${u?.id ? `?uid=${u.id}` : ""}`;
+                  })
+                  .catch(() => {
+                    window.location.href = "/api/spotify/auth";
+                  });
+              }}
               className="inline-block px-4 py-2 border border-black bg-green-300 text-sm no-underline mb-2"
             >
               Try again

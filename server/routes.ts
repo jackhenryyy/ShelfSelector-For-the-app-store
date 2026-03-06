@@ -336,7 +336,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { getSpotifyLoginUrl } = await import('./spotify');
-      const userId = req.user ? (req.user as any).id : undefined;
+      // Get user ID from session or from query parameter (native app fallback)
+      let userId: number | undefined;
+      if (req.user) {
+        userId = (req.user as any).id;
+      } else if (req.query.uid && /^\d+$/.test(String(req.query.uid))) {
+        userId = parseInt(String(req.query.uid), 10);
+      }
       const authUrl = getSpotifyLoginUrl(userId);
       console.log('Redirecting to Spotify:', authUrl);
       res.redirect(authUrl);

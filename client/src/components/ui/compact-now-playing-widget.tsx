@@ -31,6 +31,10 @@ interface CompactNowPlayingWidgetProps {
   className?: string;
 }
 
+function spotifyAuthUrl(userId?: number) {
+  return `/api/spotify/auth${userId ? `?uid=${userId}` : ""}`;
+}
+
 export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWidgetProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -220,7 +224,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
             onClick={() => {
               // Popup first (best UX), fallback to full redirect
               const popup = window.open(
-                "/api/spotify/auth",
+                spotifyAuthUrl(user?.id),
                 "spotify-auth",
                 "width=500,height=600,left=" +
                   (window.screen.width / 2 - 250) +
@@ -229,7 +233,7 @@ export function CompactNowPlayingWidget({ className = "" }: CompactNowPlayingWid
               );
 
               if (!popup) {
-                window.location.href = "/api/spotify/auth";
+                window.location.href = spotifyAuthUrl(user?.id);
                 return;
               }
 

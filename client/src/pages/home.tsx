@@ -93,15 +93,17 @@ export default function HomePage() {
   }, []);
 
   const diceColorClass = useMemo(() => {
+    if (!currentAlbum) return "text-black";
     return isCoverBright ? "text-black" : "text-white";
-  }, [isCoverBright]);
+  }, [isCoverBright, currentAlbum]);
 
-  // LOGO: auto-contrast + subtle shadow
+  // LOGO: black when no album, otherwise auto-contrast + subtle shadow
   const logoColorClass = useMemo(() => {
+    if (!currentAlbum) return "text-black";
     return isCoverBright
       ? "text-black drop-shadow-[0_2px_8px_rgba(255,255,255,0.35)]"
       : "text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]";
-  }, [isCoverBright]);
+  }, [isCoverBright, currentAlbum]);
 
   // LOGO "SLIDER" (px): + moves DOWN, - moves UP (only affects the logo)
   const logoNudgeY = 30;

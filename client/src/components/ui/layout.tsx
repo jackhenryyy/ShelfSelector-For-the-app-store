@@ -43,9 +43,8 @@ export function Layout({
   useEffect(() => {
     if (user && !user.hasSeenTutorial && !tutorialCheckedRef.current) {
       tutorialCheckedRef.current = true;
-      // Small delay so the page renders first
-      const t = setTimeout(() => setShowTutorial(true), 600);
-      return () => clearTimeout(t);
+      // Delay so the home page renders its elements first
+      setTimeout(() => setShowTutorial(true), 1000);
     }
   }, [user]);
 
@@ -102,7 +101,7 @@ export function Layout({
               ) : (
                 <DropdownMenuItem
                   onSelect={() => {
-                    window.location.href = "/api/spotify/auth";
+                    window.location.href = `/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`;
                   }}
                 >
                   <Music className="w-4 h-4" />

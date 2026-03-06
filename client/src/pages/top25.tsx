@@ -551,7 +551,7 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
             {!hasSpotify ? (
               <div className="border border-black p-5 bg-white text-center">
                 <p className="mb-3 text-sm">connect spotify to pick from your playlists</p>
-                <a href="/api/spotify/auth" className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm no-underline">
+                <a href={`/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`} className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm no-underline">
                   connect spotify
                 </a>
               </div>
@@ -563,7 +563,7 @@ export function Top25YearPage({ params }: { params: { year: string } }) {
                 <button
                   onClick={async () => {
                     await fetch("/api/spotify/disconnect", { method: "DELETE", credentials: "include" });
-                    window.location.href = "/api/spotify/auth";
+                    window.location.href = `/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`;
                   }}
                   className="inline-block px-4 py-2 border border-black bg-green-300 font-mono text-sm cursor-pointer"
                 >

@@ -28,6 +28,10 @@ interface CurrentlyPlayingData {
   durationMs: number;
 }
 
+function spotifyAuthUrl(userId?: number) {
+  return `/api/spotify/auth${userId ? `?uid=${userId}` : ""}`;
+}
+
 export function NowPlayingWidget() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -65,14 +69,14 @@ export function NowPlayingWidget() {
               
               // Open Spotify authentication in a popup
               const popup = window.open(
-                '/api/spotify/auth',
+                spotifyAuthUrl(user?.id),
                 'spotify-auth',
                 'width=500,height=600,left=' + (window.screen.width / 2 - 250) + ',top=' + (window.screen.height / 2 - 300)
               );
               
               if (!popup) {
                 console.log('Popup blocked, falling back to redirect');
-                window.location.href = '/api/spotify/auth';
+                window.location.href = spotifyAuthUrl(user?.id);
                 return;
               }
 
