@@ -202,9 +202,22 @@ export function Layout({
             spellCheck={false}
           />
           {inviteStatus && (
-            <p className={`text-sm font-mono ${inviteStatus.includes("unlocked") || inviteStatus.includes("already") ? "text-green-600" : "text-red-600"}`}>
-              {inviteStatus}
-            </p>
+            <div>
+              <p className={`text-sm font-mono ${inviteStatus.includes("unlocked") || inviteStatus.includes("already") ? "text-green-600" : "text-red-600"}`}>
+                {inviteStatus}
+              </p>
+              {(inviteStatus.includes("unlocked") || inviteStatus.includes("already")) && !user?.accessToken && (
+                <Button
+                  type="button"
+                  className="w-full mt-3"
+                  onClick={() => {
+                    window.location.href = `/api/spotify/auth${user?.id ? `?uid=${user.id}` : ""}`;
+                  }}
+                >
+                  Connect Spotify
+                </Button>
+              )}
+            </div>
           )}
           <DialogFooter>
             <Button
